@@ -1,0 +1,5 @@
+name: WallsPopulator
+authors: [codename_B, NeonMaster, mbaxter, kabbage]
+version: 1.0
+main: de.bananaco.laggy.Walls
+load: startup

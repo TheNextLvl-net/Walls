@@ -1,0 +1,49 @@
+# TheWalls
+ServerNumber: 1
+host: 127.0.0.1
+port: 3306
+username: username
+password: password
+database: wallsTable
+Language: en
+peaceTimeMins: 15
+preGameAutoStartPlayers: 11
+preGameAutoStartSeconds: 120
+wallsAdvert: 
+# --------------------------------------
+# cpsTrigger is the milliseconds between each hit before it will trigger a monitor (60 = 17 clicks per second, smaller number = higher CPS)
+cpsTrigger: 70
+# if the cpsTrigger is triggered, it will look at how long since the last one.. if less than cpsRepeatCancelTrigger (milliseconds)  it'll cancel the hit. (includes right clicks - for breezily bridging) 
+cpsRepeatCancelTrigger: 500
+# --------------------------------------
+
+# tournamentMode true will prevent "autostart happening" requires an op / admin to start the game.
+tournamentMode: false
+# --------------------------------------
+# 0-ANYONE, 1-VIP, 2-PRO, 3-LEGENDARY, 4-STAFF, 5-YOUTUBER 
+playerJoinRestriction: ANYONE
+allowPickTeams: true
+# --------------------------------------
+# --------------------------------------
+debugMode: false
+# --------------------------------------
+# --------------------------------------
+# fullDiamond = random diamond, iron, chain games (usually 3 mins peace time)
+fullDiamond: false
+# --------------------------------------
+# --------------------------------------
+# diamondONLY restricts the above to ONLY diamond games. Top one sets priority. If diamond is true, iron will be ignored and so on...
+diamondONLY: false
+ironONLY: false
+# --------------------------------------
+# --------------------------------------
+# lobbyTrail sets the trail in the lobby { flowerpower / diamond / richboi / bodyguard / ez / hungry / blockbawz / random / flashy / sweets / dangerous }
+lobbyTrail: 
+# --------------------------------------
+# --------------------------------------
+# clanBattle allows clan1 naming - which affects team names. restricts to only those with the clan names to join and play.
+clanBattle: false
+clan1: t1
+clan2: t2
+clan3: t3
+clan4: t4
