@@ -1,19 +1,18 @@
 package me.glennEboy.Walls.kits;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
 import me.glennEboy.Walls.TheWalls;
-
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class VipStartPlayerKitPerks {
-	
-    private final List<ItemStack> items = new ArrayList<ItemStack>();
+    
+    private final List<ItemStack> items = new ArrayList<>();
 
     
     public VipStartPlayerKitPerks(){
@@ -36,11 +35,11 @@ public class VipStartPlayerKitPerks {
         this.items.add(new ItemStack(Material.MONSTER_EGG, 1, (short) 120));
         this.items.add(new ItemStack(Material.MONSTER_EGG, 1, (short) 90));
         this.items.add(new ItemStack(Material.EXP_BOTTLE, 1));
-		
-	}
-	
+        
+    }
+    
 
-	public void givePlayerKit(Player p) {
+    public void givePlayerKit(Player p) {
 
         p.setLevel(5);
         ItemStack item;
@@ -49,7 +48,7 @@ public class VipStartPlayerKitPerks {
         item = this.items.get(TheWalls.random.nextInt(this.items.size()));
         p.getInventory().addItem(item);
 
-		
-	}
+        
+    }
 
 }

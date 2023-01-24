@@ -16,12 +16,12 @@ import org.bukkit.entity.Player;
 
 
 public class ClanChatCmd implements CommandExecutor{
-	
-	TheWalls myWalls;
-	
-	public ClanChatCmd(TheWalls tw){
-		myWalls=tw;
-	}
+    
+    TheWalls myWalls;
+    
+    public ClanChatCmd(TheWalls tw){
+        myWalls=tw;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
@@ -32,21 +32,21 @@ public class ClanChatCmd implements CommandExecutor{
         
         
         if (tWP.clan==null){
-        	return true;
+            return true;
         }
 
         myWalls.getLogger().log(Level.INFO, TheWalls.chatPrefix + "/CC: " + sender.getName() + ": " + messageToSend);
 
         for (UUID u : myWalls.getAllPlayers().keySet()) {
-        	if (Bukkit.getPlayer(u)!=null){        		
-        		WallsPlayer anotherWP = myWalls.getWallsPlayer(u);
-        		if ((anotherWP.clan!=null && anotherWP.clan.equals(tWP.clan)) || (Bukkit.getPlayer(u).isOp() && myWalls.staffListSnooper.contains(u))){        			
-        			Bukkit.getPlayer(u).sendMessage(TheWalls.CLANCHAT_PREFIX.replace("??", ChatColor.translateAlternateColorCodes('&', tWP.clan)) + TheWalls.teamChatColors[tWP.playerState.ordinal()] + sender.getName() + ChatColor.WHITE + ": " + messageToSend);
-        		}
-        	}
+            if (Bukkit.getPlayer(u)!=null){                
+                WallsPlayer anotherWP = myWalls.getWallsPlayer(u);
+                if ((anotherWP.clan!=null && anotherWP.clan.equals(tWP.clan)) || (Bukkit.getPlayer(u).isOp() && myWalls.staffListSnooper.contains(u))){                    
+                    Bukkit.getPlayer(u).sendMessage(TheWalls.CLANCHAT_PREFIX.replace("??", ChatColor.translateAlternateColorCodes('&', tWP.clan)) + TheWalls.teamChatColors[tWP.playerState.ordinal()] + sender.getName() + ChatColor.WHITE + ": " + messageToSend);
+                }
+            }
         }
 
-    	return true;
+        return true;
     }
     
 }

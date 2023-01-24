@@ -1,20 +1,20 @@
 package me.glennEboy.Walls.utils;
 
 
-import java.util.Random;
-
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Random;
+
 public class TrailGenerator {
 
-	
-	private static ItemStack diamond1 = new ItemStack(Material.DIAMOND);
-	private static ItemStack gold1 = new ItemStack(Material.GOLD_INGOT);
-	private static ItemStack emerald1 = new ItemStack(Material.EMERALD);
-	private static ItemStack iron1 = new ItemStack(Material.IRON_INGOT);
+    
+    private static ItemStack diamond1 = new ItemStack(Material.DIAMOND);
+    private static ItemStack gold1 = new ItemStack(Material.GOLD_INGOT);
+    private static ItemStack emerald1 = new ItemStack(Material.EMERALD);
+    private static ItemStack iron1 = new ItemStack(Material.IRON_INGOT);
 
-	
+    
     private static ItemStack redrose = new ItemStack(Material.RED_ROSE);
     private static ItemStack dandelion = new ItemStack(Material.YELLOW_FLOWER);
 
@@ -54,148 +54,142 @@ public class TrailGenerator {
     private static ItemStack cake = new ItemStack(Material.CAKE);
     private static ItemStack sugar = new ItemStack(Material.SUGAR);
 
-    /**
-				chest.addItem(this.plugin.changeItemName(new ItemStack(Material.LAVA, 1), "Dangerous"));
+    public static ItemStack getItem(String trailType){
+        if (trailType.equalsIgnoreCase("FlowerPower")){
+            
+            Random dropchance = new Random();
+            int newflower = dropchance.nextInt(10);
+            if (newflower < 5){
+                return redrose;
+            }else if (newflower > 6){
+                return dandelion;
+            }
 
-	 * @param trailType
-	 * @return
-	 */
-	public static ItemStack getItem(String trailType){
-		if (trailType.equalsIgnoreCase("FlowerPower")){
-			
-			Random dropchance = new Random();
-	        int newflower = dropchance.nextInt(10);
-	        if (newflower < 5){
-	        	return redrose;
-	        }else if (newflower > 6){
-	        	return dandelion;
-	        }
+        }else if (trailType.equalsIgnoreCase("diamond")){
+            
+            Random dropchance = new Random();
+            int dropped = dropchance.nextInt(5);
+            if (dropped == 1) {
+                return diamond1;
+            } else if (dropped == 2) {
+                return chestplate;
+            } else if (dropped == 3) {
+                return sword;
+            } else if (dropped == 4) {
+                return boots;
+            }
+        }else if (trailType.equalsIgnoreCase("RichBoi")){
+            
+            Random dropchance = new Random();
+            int dropped = dropchance.nextInt(5);
+            if (dropped == 1) {
+                return diamond1;
+            } else if (dropped == 2) {
+                return gold1;
+            } else if (dropped == 3) {
+                return iron1;
+            } else if (dropped == 4) {
+                return emerald1;
+            }
+        }else if (trailType.equalsIgnoreCase("BodyGuard")){
+            
+            Random dropchance = new Random();
+            int dropped = dropchance.nextInt(5);
+            if (dropped == 1) {
+                return chestplate;
+            } else if (dropped == 2) {
+                return pants;
+            } else if (dropped == 3) {
+                return helmet;
+            } else if (dropped == 4) {
+                return boots;
+            }
+        }else if (trailType.equalsIgnoreCase("eZ")){
+            
+            Random dropchance = new Random();
+            int dropped = dropchance.nextInt(5);
+            if (dropped == 1) {
+                return sword;
+            } else if (dropped == 2) {
+                return axe;
+            } else if (dropped == 3) {
+                return bow;
+            } else if (dropped == 4) {
+                return rod;
+            }
+        }else if (trailType.equalsIgnoreCase("Hungry")){
+            
+            Random dropchance = new Random();
+            int dropped = dropchance.nextInt(5);
+            if (dropped == 1) {
+                return beef;
+            } else if (dropped == 2) {
+                return chicken;
+            } else if (dropped == 3) {
+                return fish;
+            } else if (dropped == 4) {
+                return soup;
+            }
+        }else if (trailType.equalsIgnoreCase("BlockBawz")){
+            
+            Random dropchance = new Random();
+            int dropped = dropchance.nextInt(5);
+            if (dropped == 1) {
+                return dirt;
+            } else if (dropped == 2) {
+                return bedrock;
+            } else if (dropped == 3) {
+                return stone;
+            } else if (dropped == 4) {
+                return cobble;
+            }
+        }else if (trailType.equalsIgnoreCase("random")){
+            
+            Random dropchance = new Random();
+            int dropped = dropchance.nextInt(5);
+            if (dropped == 1) {
+                return bed;
+            } else if (dropped == 2) {
+                return anvil;
+            } else if (dropped == 3) {
+                return portal;
+            } else if (dropped == 4) {
+                return table;
+            }
+        }else if (trailType.equalsIgnoreCase("Flashy")){
+            
+            Random dropchance = new Random();
+            int dropped = dropchance.nextInt(4);
+            if (dropped == 1) {
+                return torch;
+            } else if (dropped == 2) {
+                return redtorch;
+            } else if (dropped == 3) {
+                return lamp;
+            }
+        }else if (trailType.equalsIgnoreCase("Sweets")){
+            
+            Random dropchance = new Random();
+            int dropped = dropchance.nextInt(4);
+            if (dropped == 1) {
+                return cookie;
+            } else if (dropped == 2) {
+                return cake;
+            } else if (dropped == 3) {
+                return sugar;
+            }
+        }else if (trailType.equalsIgnoreCase("dangerous")){
+            
+            Random dropchance = new Random();
+            int newflower = dropchance.nextInt(10);
+            if (newflower < 5){
+                return lava;
+            }else if (newflower > 6){
+                return fire;
+            }
+        }
+        
+        return null;
 
-		}else if (trailType.equalsIgnoreCase("diamond")){
-			
-			Random dropchance = new Random();
-			int dropped = dropchance.nextInt(5);
-			if (dropped == 1) {
-				return diamond1;
-			} else if (dropped == 2) {
-				return chestplate;
-			} else if (dropped == 3) {
-				return sword;
-			} else if (dropped == 4) {
-				return boots;
-			}
-		}else if (trailType.equalsIgnoreCase("RichBoi")){
-			
-			Random dropchance = new Random();
-			int dropped = dropchance.nextInt(5);
-			if (dropped == 1) {
-				return diamond1;
-			} else if (dropped == 2) {
-				return gold1;
-			} else if (dropped == 3) {
-				return iron1;
-			} else if (dropped == 4) {
-				return emerald1;
-			}
-		}else if (trailType.equalsIgnoreCase("BodyGuard")){
-			
-			Random dropchance = new Random();
-			int dropped = dropchance.nextInt(5);
-			if (dropped == 1) {
-				return chestplate;
-			} else if (dropped == 2) {
-				return pants;
-			} else if (dropped == 3) {
-				return helmet;
-			} else if (dropped == 4) {
-				return boots;
-			}
-		}else if (trailType.equalsIgnoreCase("eZ")){
-			
-			Random dropchance = new Random();
-			int dropped = dropchance.nextInt(5);
-			if (dropped == 1) {
-				return sword;
-			} else if (dropped == 2) {
-				return axe;
-			} else if (dropped == 3) {
-				return bow;
-			} else if (dropped == 4) {
-				return rod;
-			}
-		}else if (trailType.equalsIgnoreCase("Hungry")){
-			
-			Random dropchance = new Random();
-			int dropped = dropchance.nextInt(5);
-			if (dropped == 1) {
-				return beef;
-			} else if (dropped == 2) {
-				return chicken;
-			} else if (dropped == 3) {
-				return fish;
-			} else if (dropped == 4) {
-				return soup;
-			}
-		}else if (trailType.equalsIgnoreCase("BlockBawz")){
-			
-			Random dropchance = new Random();
-			int dropped = dropchance.nextInt(5);
-			if (dropped == 1) {
-				return dirt;
-			} else if (dropped == 2) {
-				return bedrock;
-			} else if (dropped == 3) {
-				return stone;
-			} else if (dropped == 4) {
-				return cobble;
-			}
-		}else if (trailType.equalsIgnoreCase("random")){
-			
-			Random dropchance = new Random();
-			int dropped = dropchance.nextInt(5);
-			if (dropped == 1) {
-				return bed;
-			} else if (dropped == 2) {
-				return anvil;
-			} else if (dropped == 3) {
-				return portal;
-			} else if (dropped == 4) {
-				return table;
-			}
-		}else if (trailType.equalsIgnoreCase("Flashy")){
-			
-			Random dropchance = new Random();
-			int dropped = dropchance.nextInt(4);
-			if (dropped == 1) {
-				return torch;
-			} else if (dropped == 2) {
-				return redtorch;
-			} else if (dropped == 3) {
-				return lamp;
-			}
-		}else if (trailType.equalsIgnoreCase("Sweets")){
-			
-			Random dropchance = new Random();
-			int dropped = dropchance.nextInt(4);
-			if (dropped == 1) {
-				return cookie;
-			} else if (dropped == 2) {
-				return cake;
-			} else if (dropped == 3) {
-				return sugar;
-			}
-		}else if (trailType.equalsIgnoreCase("dangerous")){
-			
-			Random dropchance = new Random();
-	        int newflower = dropchance.nextInt(10);
-	        if (newflower < 5){
-	        	return lava;
-	        }else if (newflower > 6){
-	        	return fire;
-	        }
-		}
-		
-		return null;
-
-	}
+    }
 }

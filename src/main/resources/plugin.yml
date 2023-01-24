@@ -1,5 +1,64 @@
 name: "TheWalls"
-authors: ["NonSwag", "codename_B", "NeonMaster", "mbaxter", "kabbage", "glennEboy"]
-version: "1.0.0"
-main: "de.bananaco.laggy.Walls"
-load: "STARTUP"
+authors: ["NonSwag", "glennEboy"]
+version: "2.0"
+description: "An updated version of the original"
+main: "me.glennEboy.Walls.TheWalls"
+website: "https://www.thenextlvl.net"
+commands:
+  clan:
+    description: clan management :)
+    usage: /clan invite | accept | kick | leave
+  corner:
+    description: tp to the corner of your biome
+    usage: /corner
+  cc:
+    description: Clan chat (Clan ONLY Command)
+    usage: /cc <message goes here>
+  giveall:
+    description: giveall <diamond / iron / gold>
+    usage: /giveall <diamond / iron / gold>
+  kit:
+    description: kit selector
+    usage: /kit <kitname>
+  msg:
+    description: msg command
+    usage: /msg message
+  oc:
+    description: OP chat (OP ONLY Command)
+    usage: /oc <message goes here>
+  shout:
+    description: Shout to whole server (VIP+ Command)
+    usage: /shout <message goes here>
+  r:
+    description: Reply to a whisper
+    usage: /r <message goes here>
+  sc:
+    description: Staff chat (STAFF ONLY Command)
+    usage: /sc <message goes here>
+  share:
+    description: Share selected in hotbar with player on your team
+    usage: /share player
+  spawn:
+    description: tp to the spawn in your biome
+    usage: /spawn
+  surface:
+    description: tp to the surface
+    usage: /surface
+  team:
+    description: Select a team from 1-4
+    usage: /team [1-4]
+  teamlist:
+    description: Show team list from 1-4
+    usage: /teamlist [1-4]
+  tell:
+    description: Tell command
+    usage: /tell message
+  tp:
+    description: Teleport to a player
+    usage: /tp player
+  walls:
+    description: Walls specific commands
+    usage: /walls .. stuff
+  w:
+    description: W command
+    usage: /w message

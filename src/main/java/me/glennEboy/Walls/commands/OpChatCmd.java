@@ -15,12 +15,12 @@ import org.bukkit.entity.Player;
 
 
 public class OpChatCmd implements CommandExecutor{
-	
-	TheWalls myWalls;
-	
-	public OpChatCmd(TheWalls tw){
-		myWalls=tw;
-	}
+    
+    TheWalls myWalls;
+    
+    public OpChatCmd(TheWalls tw){
+        myWalls=tw;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
@@ -28,15 +28,15 @@ public class OpChatCmd implements CommandExecutor{
         final String messageToSend = StringUtils.join(args, " ");
 
         if (!sender.isOp()){
-        	return true;
+            return true;
         }
 
         myWalls.getLogger().log(Level.INFO, TheWalls.chatPrefix + "/OC: " + sender + ": " + messageToSend);
 
         for (Player p : Bukkit.getOnlinePlayers()) {
-        	if (p.isOp()) p.sendMessage(TheWalls.OPCHAT_PREFIX + ChatColor.GOLD + sender.getName() + ChatColor.WHITE + ": " + messageToSend);
+            if (p.isOp()) p.sendMessage(TheWalls.OPCHAT_PREFIX + ChatColor.GOLD + sender.getName() + ChatColor.WHITE + ": " + messageToSend);
         }
 
-    	return true;
+        return true;
     }
 }

@@ -87,7 +87,7 @@ public class Selection {
     }
     
     public boolean containsType(Player player, int type){
-        return this.containsType(player.getLocation().getBlockX(), player.getLocation().getBlockY(), player.getLocation().getBlockZ(), type);    	
+        return this.containsType(player.getLocation().getBlockX(), player.getLocation().getBlockY(), player.getLocation().getBlockZ(), type);        
     }
 
     public boolean contains(Player player) {

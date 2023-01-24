@@ -5,16 +5,10 @@ import me.glennEboy.Walls.TheWalls;
 import me.glennEboy.Walls.utils.GameNotifications;
 import me.glennEboy.Walls.utils.ItemStackTools;
 import me.glennEboy.Walls.utils.TitleManager;
-import me.glennEboy.Walls.utils.TitleManager.TitleColor;
-import net.minecraft.server.v1_7_R4.ChatSerializer;
-import net.minecraft.server.v1_7_R4.IChatBaseComponent;
-import net.minecraft.server.v1_7_R4.PacketPlayOutChat;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.DyeColor;
 import org.bukkit.Material;
-import org.bukkit.craftbukkit.v1_7_R4.entity.CraftPlayer;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -24,7 +18,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 
 public class SpecPlayerKit {
-	
+    
     private static BookMeta book;
     private static BookMeta vipbook;
     private final ItemMeta team1WoolMeta, team2WoolMeta, team3WoolMeta, team4WoolMeta;
@@ -34,8 +28,8 @@ public class SpecPlayerKit {
     private TheWalls myWalls;
     
     public SpecPlayerKit(TheWalls wallsPlugin){
-		
-    	myWalls = wallsPlugin;
+        
+        myWalls = wallsPlugin;
         SpecPlayerKit.book = (BookMeta) Bukkit.getServer().getItemFactory().getItemMeta(Material.WRITTEN_BOOK);
 
         
@@ -52,108 +46,97 @@ public class SpecPlayerKit {
         SpecPlayerKit.vipbook.setAuthor("My Walls");
         SpecPlayerKit.vipbook.setTitle("VIP");
 
-		this.team1WoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
-		this.team1WoolMeta.setDisplayName(TheWalls.teamsNames[1]);
-		this.team2WoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
-		this.team2WoolMeta.setDisplayName(TheWalls.teamsNames[2]);
-		this.team3WoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
-		this.team3WoolMeta.setDisplayName(TheWalls.teamsNames[3]);
-		this.team4WoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
-		this.team4WoolMeta.setDisplayName(TheWalls.teamsNames[4]);
-		
-		this.snowForce = Bukkit.getServer().getItemFactory().getItemMeta(Material.SNOW_BALL);
-		this.snowForce.setDisplayName(ChatColor.DARK_GREEN+"Hold THIS to fight! :)");
-		
-    	this.skull = Bukkit.getServer().getItemFactory().getItemMeta(Material.SKULL_ITEM);
-    	this.skull.setDisplayName("Click me to TP to players in game!");
-		
-	}
-	
+        this.team1WoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
+        this.team1WoolMeta.setDisplayName(TheWalls.teamsNames[1]);
+        this.team2WoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
+        this.team2WoolMeta.setDisplayName(TheWalls.teamsNames[2]);
+        this.team3WoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
+        this.team3WoolMeta.setDisplayName(TheWalls.teamsNames[3]);
+        this.team4WoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
+        this.team4WoolMeta.setDisplayName(TheWalls.teamsNames[4]);
+        
+        this.snowForce = Bukkit.getServer().getItemFactory().getItemMeta(Material.SNOW_BALL);
+        this.snowForce.setDisplayName(ChatColor.DARK_GREEN+"Hold THIS to fight! :)");
+        
+        this.skull = Bukkit.getServer().getItemFactory().getItemMeta(Material.SKULL_ITEM);
+        this.skull.setDisplayName("Click me to TP to players in game!");
+        
+    }
+    
 
-	
-	@SuppressWarnings("deprecation")
-	public void givePlayerKit(final Player p) {
+    
+    @SuppressWarnings("deprecation")
+    public void givePlayerKit(final Player p) {
 
 
-		p.closeInventory();
-		p.getInventory().clear();
-		p.setFallDistance(0f);
-		p.setFoodLevel(20);
-		p.teleport(TheWalls.gameSpawn);
-		
+        p.closeInventory();
+        p.getInventory().clear();
+        p.setFallDistance(0f);
+        p.setFoodLevel(20);
+        p.teleport(TheWalls.gameSpawn);
+        
         final ItemStack newbook = new ItemStack(Material.WRITTEN_BOOK, 1);
         newbook.setItemMeta(SpecPlayerKit.book);
         p.getInventory().setItem(0, newbook);
 
 
-		switch (myWalls.getGameState()){
-		case PREGAME:
-			
-	        final ItemStack snowBawz = new ItemStack(Material.SNOW_BALL, 1);
-	        snowBawz.setItemMeta(this.snowForce);
+        switch (myWalls.getGameState()){
+        case PREGAME:
+            
+            final ItemStack snowBawz = new ItemStack(Material.SNOW_BALL, 1);
+            snowBawz.setItemMeta(this.snowForce);
 
-	        p.getInventory().setItem(8, ItemStackTools.enchantItem(snowBawz,Enchantment.KNOCKBACK,1));
+            p.getInventory().setItem(8, ItemStackTools.enchantItem(snowBawz,Enchantment.KNOCKBACK,1));
 
-	        if (TheWalls.allowPickTeams){
-	        	
-	        	final ItemStack team1Wool = new ItemStack(Material.WOOL, 1, DyeColor.RED.getData());
-	        	team1Wool.setItemMeta(this.team1WoolMeta);
-	        	
-	        	p.getInventory().setItem(2, team1Wool);
-	        	
-	        	final ItemStack team2Wool = new ItemStack(Material.WOOL, 1, DyeColor.YELLOW.getData());
-	        	team2Wool.setItemMeta(this.team2WoolMeta);
-	        	
-	        	p.getInventory().setItem(3, team2Wool);
-	        	
-	        	final ItemStack team3Wool = new ItemStack(Material.WOOL, 1, DyeColor.GREEN.getData());
-	        	team3Wool.setItemMeta(this.team3WoolMeta);
-	        	
-	        	p.getInventory().setItem(4, team3Wool);
-	        	
-	        	final ItemStack team4Wool = new ItemStack(Material.WOOL, 1, DyeColor.BLUE.getData());
+            if (TheWalls.allowPickTeams){
+                
+                final ItemStack team1Wool = new ItemStack(Material.WOOL, 1, DyeColor.RED.getData());
+                team1Wool.setItemMeta(this.team1WoolMeta);
+                
+                p.getInventory().setItem(2, team1Wool);
+                
+                final ItemStack team2Wool = new ItemStack(Material.WOOL, 1, DyeColor.YELLOW.getData());
+                team2Wool.setItemMeta(this.team2WoolMeta);
+                
+                p.getInventory().setItem(3, team2Wool);
+                
+                final ItemStack team3Wool = new ItemStack(Material.WOOL, 1, DyeColor.GREEN.getData());
+                team3Wool.setItemMeta(this.team3WoolMeta);
+                
+                p.getInventory().setItem(4, team3Wool);
+                
+                final ItemStack team4Wool = new ItemStack(Material.WOOL, 1, DyeColor.BLUE.getData());
 	        	team4Wool.setItemMeta(this.team4WoolMeta);
 	        	
 	        	p.getInventory().setItem(5, team4Wool);
 	        }
 
 	        
-            myWalls.getServer().getScheduler().runTaskLater(myWalls, new Runnable() {
-                @Override
-                public void run() {
-                    if (p != null) {
-                    	
-                    	
-                    	if (TheWalls.fullDiamond && TheWalls.UHC){
-                    		
-                    		TitleManager.sendTitle(p, "My UHC Stacked Walls", TitleColor.BLUE);
-                    		TitleManager.sendSubTitle(p, "Regen only with gold apples..", TitleColor.YELLOW);
-                    		
-                    	}else if (TheWalls.diamondONLY && TheWalls.UHC){
-                    		
-                    		TitleManager.sendTitle(p, "My UHC Diamond Walls", TitleColor.AQUA);
-                    		TitleManager.sendSubTitle(p, "Regen only with gold apples..", TitleColor.YELLOW);
-                    		
-                    	}else if (TheWalls.diamondONLY){
-                    		
-                    		TitleManager.sendTitle(p, "My  Diamond Walls", TitleColor.AQUA);
-                    		
-                    	}else if (TheWalls.ironONLY){
-                    		
-                    		TitleManager.sendTitle(p, "My Speed Walls", TitleColor.AQUA);
+            myWalls.getServer().getScheduler().runTaskLater(myWalls, () -> {
+                if (TheWalls.fullDiamond && TheWalls.UHC) {
 
-                    	}else if (TheWalls.UHC){
-                    		
-                    		TitleManager.sendTitle(p, "My UHC Walls", TitleColor.RED);
-                    		TitleManager.sendSubTitle(p, "Regen only with gold apples..", TitleColor.YELLOW);
-                    		
-                    	}else{
-                    		
-                    		TitleManager.sendTitle(p, "My Walls", TitleColor.GOLD);
-//	            TitleManager.sendSubTitle(p, "Regen only with gold apples..", TitleColor.YELLOW);
-                    		
-                    	}
-                    }
+                    TitleManager.sendTitle(p, "§9My UHC Stacked Walls", "§eRegen only with gold apples..");
+
+                } else if (TheWalls.diamondONLY && TheWalls.UHC) {
+
+                    TitleManager.sendTitle(p, "§bMy UHC Diamond Walls", "§eRegen only with gold apples..");
+
+                } else if (TheWalls.diamondONLY) {
+
+                    TitleManager.sendTitle(p, "§bMy Diamond Walls", "");
+
+                } else if (TheWalls.ironONLY) {
+
+                    TitleManager.sendTitle(p, "§bMy Speed Walls", "");
+
+                } else if (TheWalls.UHC) {
+
+                    TitleManager.sendTitle(p, "§cMy UHC Walls", "§eRegen only with gold apples..");
+
+                } else {
+
+                    TitleManager.sendTitle(p, "§eMy Walls", "");
+
                 }
             }, 2 * 20);
 

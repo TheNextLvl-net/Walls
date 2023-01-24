@@ -9,28 +9,28 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 
 public class BasicPlayerKit {
-	
+    
     private final ItemMeta compass;
 
     
     public BasicPlayerKit(){
 
-    	this.compass = Bukkit.getServer().getItemFactory().getItemMeta(Material.COMPASS);
-    	this.compass.setDisplayName("Enemy Finder 3000");
-		
-	}
-	
+        this.compass = Bukkit.getServer().getItemFactory().getItemMeta(Material.COMPASS);
+        this.compass.setDisplayName("Enemy Finder 3000");
+        
+    }
+    
 
-	public void givePlayerKit(Player p) {
+    public void givePlayerKit(Player p) {
 
-		p.closeInventory();
-		p.getInventory().clear();
+        p.closeInventory();
+        p.getInventory().clear();
 
         final ItemStack compass = new ItemStack(Material.COMPASS, 1);
         compass.setItemMeta(this.compass);
         p.getInventory().addItem(compass);
 
-		
-	}
+        
+    }
 
 }

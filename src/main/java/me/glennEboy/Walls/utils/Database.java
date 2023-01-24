@@ -1,29 +1,20 @@
 package me.glennEboy.Walls.utils;
 
+import me.glennEboy.Walls.TheWalls;
+import me.glennEboy.Walls.TheWalls.WallsPlayer;
+import me.glennEboy.Walls.commands.ClanCmd;
+import org.bukkit.Bukkit;
+import org.bukkit.scheduler.BukkitRunnable;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
-import java.sql.Connection;
 import java.sql.Date;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.sql.*;
+import java.util.*;
 import java.util.logging.Level;
-
-import org.bukkit.Bukkit;
-import org.bukkit.scheduler.BukkitRunnable;
-
-import me.glennEboy.Walls.TheWalls;
-import me.glennEboy.Walls.TheWalls.WallsPlayer;
-import me.glennEboy.Walls.commands.ClanCmd;
 
 public class Database extends Thread{
 
@@ -48,7 +39,7 @@ public class Database extends Thread{
     private String user3  = "user2";
     private String password3  = "password2";
     
-	private final Map<UUID, String> playersToLogin = new HashMap<UUID, String>();
+    private final Map<UUID, String> playersToLogin = new HashMap<UUID, String>();
 
     private Connection wallsConnection;
     private Connection myConnection; 
@@ -89,7 +80,7 @@ public class Database extends Thread{
 
     @Override
     public void run() {
-    	int timer=100;
+        int timer=100;
         while (!Thread.interrupted()) {
             try {
                 Thread.sleep(timer);
@@ -99,32 +90,30 @@ public class Database extends Thread{
             
             switch (myWalls.getGameState()){
             case PREGAME:
-            	timer = 100;
+                timer = 100;
             case PEACETIME:
             case FIGHTING:
-            	timer = 600;
+                timer = 600;
 
-            	if (this.playersToLogin.size()>0){
-            		List<UUID> doneList = new ArrayList<UUID>();
-            		synchronized(playersToLogin){            			
-            			for (UUID playerUID : this.playersToLogin.keySet()){
-            				if (Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(playerUID))){					
-	            				loadStatsPlayer(this.playersToLogin.get(playerUID),playerUID);
-	            				loadStatsWalls(this.playersToLogin.get(playerUID),playerUID);
-	            				loadPaidKitsForUser(this.playersToLogin.get(playerUID), playerUID);
-	            				doneList.add(playerUID);
-            				}
-            			}
-            		}
-            		for (UUID a : doneList){
-        				this.playersToLogin.remove(a);
-            		}
-            	}
-            	break;
-            case FINISHED:
-            	break;
-            default:
-            	break;
+                if (this.playersToLogin.size()>0){
+                    List<UUID> doneList = new ArrayList<UUID>();
+                    synchronized(playersToLogin){                        
+                        for (UUID playerUID : this.playersToLogin.keySet()){
+                            if (Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(playerUID))){                    
+                                loadStatsPlayer(this.playersToLogin.get(playerUID),playerUID);
+                                loadStatsWalls(this.playersToLogin.get(playerUID),playerUID);
+                                loadPaidKitsForUser(this.playersToLogin.get(playerUID), playerUID);
+                                doneList.add(playerUID);
+                            }
+                        }
+                    }
+                    for (UUID a : doneList){
+                        this.playersToLogin.remove(a);
+                    }
+                }
+                break;
+                default:
+                break;
             }
             
         }
@@ -135,21 +124,21 @@ public class Database extends Thread{
     
 
     public void forceLoadPlayer(String playerName, UUID aUID){
-    	if (!myWalls.getAllPlayers().containsKey(aUID)){    		
-    		this.playersToLogin.put(aUID, playerName);
-    	}
+        if (!myWalls.getAllPlayers().containsKey(aUID)){            
+            this.playersToLogin.put(aUID, playerName);
+        }
     }
 
     public void loadPlayer(String playerName, UUID aUID){
-    	if (!myWalls.getAllPlayers().containsKey(aUID)){
-    		synchronized(playersToLogin){    			
-    			this.playersToLogin.put(aUID, playerName);
-    		}
-    	}
+        if (!myWalls.getAllPlayers().containsKey(aUID)){
+            synchronized(playersToLogin){                
+                this.playersToLogin.put(aUID, playerName);
+            }
+        }
     }
     
     public void loadPaidKitsForUser(String username, UUID playerUID) {
-    	WallsPlayer twp = myWalls.getWallsPlayer(playerUID);
+        WallsPlayer twp = myWalls.getWallsPlayer(playerUID);
 
         try (PreparedStatement statement = getWallsConnection().prepareStatement("SELECT `kitname` FROM `paidkits` WHERE `uuid` = ? AND `kitname`<> ?")) {
             statement.setString(1, playerUID.toString().replace("-", ""));
@@ -165,20 +154,20 @@ public class Database extends Thread{
     }
 
 
-	private void loadStatsPlayer(String playerName, UUID aUID) {
+    private void loadStatsPlayer(String playerName, UUID aUID) {
         
-		String uuid = aUID.toString().replace("-", ""); 
+        String uuid = aUID.toString().replace("-", ""); 
 
-    	WallsPlayer wallsPlayer = null;
-    	
-    	if (this.myWalls.getAllPlayers().containsKey(aUID)){
-    		wallsPlayer = this.myWalls.getWallsPlayer(aUID);
-    	}else{
-    		wallsPlayer = new WallsPlayer();
-    	}
-    	
+        WallsPlayer wallsPlayer = null;
+        
+        if (this.myWalls.getAllPlayers().containsKey(aUID)){
+            wallsPlayer = this.myWalls.getWallsPlayer(aUID);
+        }else{
+            wallsPlayer = new WallsPlayer();
+        }
+        
 
-    	try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `accounts` WHERE unique_id = UNHEX(?)")) {
+        try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `accounts` WHERE unique_id = UNHEX(?)")) {
 
             statement.setString(1, uuid);
             final ResultSet resultSet = statement.executeQuery();
@@ -188,25 +177,25 @@ public class Database extends Thread{
                     wallsPlayer.vip = true;
                 }
                 if (resultSet.getInt("gm") == 1) {
-                	wallsPlayer.gm = true;
+                    wallsPlayer.gm = true;
                 }
                 if (resultSet.getInt("mgm") == 1) {
-                	wallsPlayer.mgm = true;
+                    wallsPlayer.mgm = true;
                 }
                 if (resultSet.getInt("admin") == 1) {
                     wallsPlayer.admin = true;
                 }
                 if (resultSet.getInt("pro") == 1) {
-                	wallsPlayer.pro = true;
+                    wallsPlayer.pro = true;
                 }
                 if (resultSet.getInt("legendary") == 1) {
-                	wallsPlayer.legendary = true;
+                    wallsPlayer.legendary = true;
                 }
                 if (resultSet.getInt("owner") == 1) {
-                	wallsPlayer.owner = true;
+                    wallsPlayer.owner = true;
                 }
                 if (resultSet.getInt("youtuber") == 1) {
-                	wallsPlayer.youtuber = true;
+                    wallsPlayer.youtuber = true;
                 }
                 
                 wallsPlayer.clan = resultSet.getString("guild");
@@ -222,39 +211,39 @@ public class Database extends Thread{
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to load stats: " + e.getMessage());
         }
-    	
-    	wallsPlayer.clanLeader = isClanOwner(uuid);
-    	
+        
+        wallsPlayer.clanLeader = isClanOwner(uuid);
+        
         myWalls.getAllPlayers().put(aUID, wallsPlayer);
 
     }
 
     
-	private void loadStatsWalls(String playerName, UUID aUID) {
+    private void loadStatsWalls(String playerName, UUID aUID) {
         String tempUID = aUID.toString().replace("-", "");
 
-    	WallsPlayer wallsPlayer = null;
-    	
-    	if (this.myWalls.getAllPlayers().containsKey(aUID)){
-    		wallsPlayer = this.myWalls.getWallsPlayer(aUID);
-    	}else{
-    		wallsPlayer = new WallsPlayer();
-    	}
+        WallsPlayer wallsPlayer = null;
+        
+        if (this.myWalls.getAllPlayers().containsKey(aUID)){
+            wallsPlayer = this.myWalls.getWallsPlayer(aUID);
+        }else{
+            wallsPlayer = new WallsPlayer();
+        }
 
-    	wallsPlayer.username = playerName;
-    	wallsPlayer.uid = tempUID;
-    	
-    	try (PreparedStatement statement = getWallsConnection().prepareStatement("SELECT * FROM `accounts` WHERE uuid = ?")) {
+        wallsPlayer.username = playerName;
+        wallsPlayer.uid = tempUID;
+        
+        try (PreparedStatement statement = getWallsConnection().prepareStatement("SELECT * FROM `accounts` WHERE uuid = ?")) {
 
             statement.setString(1, tempUID);
             final ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.first()) {
                 if (resultSet.getInt("mvplevel") == 1 || resultSet.getInt("mvplevel") == 3) {
-                	wallsPlayer.nMVP = true;
+                    wallsPlayer.nMVP = true;
                 }
                 if (resultSet.getInt("mvplevel") == 2 || resultSet.getInt("mvplevel") == 3) {
-                	wallsPlayer.dMVP = true;
+                    wallsPlayer.dMVP = true;
                 }
                 wallsPlayer.statsKills = resultSet.getInt("kills"); 
                 wallsPlayer.statsDeaths = resultSet.getInt("deaths"); 
@@ -271,7 +260,7 @@ public class Database extends Thread{
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to load stats: " + e.getMessage());
         }
-    	
+        
         myWalls.getAllPlayers().put(aUID, wallsPlayer);
 
     }
@@ -290,7 +279,7 @@ public class Database extends Thread{
             @Override
             public void run() {
 
-            	
+                
                 try {
                     try (final PreparedStatement statement = getWallsConnection().prepareStatement("UPDATE `accounts` SET `kills` = `kills` + ?, `deaths` = `deaths` + ?, `playingtime` = `playingtime` + ?, `totalplays` = `totalplays` + ?, `wins` = wins + ? WHERE `uuid` = ?")) {
                         statement.setInt(1, wallsPlayer.kills);
@@ -319,7 +308,7 @@ public class Database extends Thread{
                         statement.setString(2, wallsPlayer.uid);
                         statement.executeUpdate();
                         if (TheWalls.debugMode){
-                        	System.out.println(TheWalls.chatPrefix+"Coins updated." + wallsPlayer.username);
+                            System.out.println(TheWalls.chatPrefix+"Coins updated." + wallsPlayer.username);
                         }
                         
                     }
@@ -333,7 +322,7 @@ public class Database extends Thread{
         }.runTaskAsynchronously(this.myWalls);
     }
 
-	
+    
     private Connection getWallsConnection() throws SQLException {
         if (this.wallsConnection != null) {
             try {
@@ -342,7 +331,7 @@ public class Database extends Thread{
                 }
             } catch (final SQLException e) {
                 // This only throws an SQLException if the number input is less than 0
-            	myWalls.getLogger().log(Level.WARNING, String.format("Unexpected SQLException when testing connection: %s", e.getMessage()));
+                myWalls.getLogger().log(Level.WARNING, String.format("Unexpected SQLException when testing connection: %s", e.getMessage()));
             }
         }
 
@@ -350,7 +339,7 @@ public class Database extends Thread{
             this.wallsConnection = DriverManager.getConnection(this.url + this.wallDB, this.user, this.password);
             return this.wallsConnection;
         } catch (final SQLException e) {
-        	myWalls.getLogger().log(Level.SEVERE, String.format("Error while connecting to the database: %s", e.getMessage()));
+            myWalls.getLogger().log(Level.SEVERE, String.format("Error while connecting to the database: %s", e.getMessage()));
             e.printStackTrace();
             throw e;
         }
@@ -388,7 +377,7 @@ public class Database extends Thread{
                 }
             } catch (final SQLException e) {
                 // This only throws an SQLException if the number input is less than 0
-            	myWalls.getLogger().log(Level.WARNING, String.format("Unexpected SQLException when testing connection: %s", e.getMessage()));
+                myWalls.getLogger().log(Level.WARNING, String.format("Unexpected SQLException when testing connection: %s", e.getMessage()));
             }
         }
 
@@ -396,7 +385,7 @@ public class Database extends Thread{
             this.wallsConnection2 = DriverManager.getConnection(this.url2 + this.wallDB2, this.user2, this.password2);
             return this.wallsConnection2;
         } catch (final SQLException e) {
-        	myWalls.getLogger().log(Level.SEVERE, String.format("Error while connecting to the database: %s", e.getMessage()));
+            myWalls.getLogger().log(Level.SEVERE, String.format("Error while connecting to the database: %s", e.getMessage()));
             e.printStackTrace();
             throw e;
         }
@@ -411,7 +400,7 @@ public class Database extends Thread{
                 }
             } catch (final SQLException e) {
                 // This only throws an SQLException if the number input is less than 0
-            	myWalls.getLogger().log(Level.WARNING, String.format("Unexpected SQLException when testing connection: %s", e.getMessage()));
+                myWalls.getLogger().log(Level.WARNING, String.format("Unexpected SQLException when testing connection: %s", e.getMessage()));
             }
         }
 
@@ -419,7 +408,7 @@ public class Database extends Thread{
             this.wallsConnection3 = DriverManager.getConnection(this.url3 + this.wallDB3, this.user3, this.password3);
             return this.wallsConnection3;
         } catch (final SQLException e) {
-        	myWalls.getLogger().log(Level.SEVERE, String.format("Error while connecting to the database: %s", e.getMessage()));
+            myWalls.getLogger().log(Level.SEVERE, String.format("Error while connecting to the database: %s", e.getMessage()));
             e.printStackTrace();
             throw e;
         }
@@ -427,7 +416,7 @@ public class Database extends Thread{
     }
     
     public boolean setUsersClan(final String playerUID, final String clan) {
-    	boolean result = false;
+        boolean result = false;
         PreparedStatement stmt = null;
         try {
             stmt = getMConnection().prepareStatement("SELECT * FROM `accounts` WHERE `uuid` = ?");
@@ -459,39 +448,39 @@ public class Database extends Thread{
 
     
     
-	public void getVIPs(String vipsURL) {
-		try {
+    public void getVIPs(String vipsURL) {
+        try {
 
-			URL versionDoc = new URL(vipsURL);
+            URL versionDoc = new URL(vipsURL);
 
-			URLConnection myConnection = versionDoc.openConnection();
+            URLConnection myConnection = versionDoc.openConnection();
 
-	        myConnection.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2");
+            myConnection.setRequestProperty("User-Agent", "Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.4; en-US; rv:1.9.2.2) Gecko/20100316 Firefox/3.6.2");
 
-			myConnection.setConnectTimeout(1000);
+            myConnection.setConnectTimeout(1000);
 
-			BufferedReader statsStreamIn = new BufferedReader(new InputStreamReader(myConnection.getInputStream()));
+            BufferedReader statsStreamIn = new BufferedReader(new InputStreamReader(myConnection.getInputStream()));
 
-			String throwAwayString = "";
-			while ((throwAwayString = statsStreamIn.readLine()) != null) {
-				VIPS.add(throwAwayString);
-			}
+            String throwAwayString = "";
+            while ((throwAwayString = statsStreamIn.readLine()) != null) {
+                VIPS.add(throwAwayString);
+            }
 
-			if (VIPS.size() > 0) {
-				this.myWalls.getLogger().log(Level.INFO, "Walls: got Users from dropbox {" + VIPS.size() + "}");
-				for (String s : VIPS){
-					this.myWalls.getLogger().log(Level.INFO, "Walls: got Users from dropbox { " + s + " }");
-				}
-			}
-			// close the connection
-			statsStreamIn.close();
+            if (VIPS.size() > 0) {
+                this.myWalls.getLogger().log(Level.INFO, "Walls: got Users from dropbox {" + VIPS.size() + "}");
+                for (String s : VIPS){
+                    this.myWalls.getLogger().log(Level.INFO, "Walls: got Users from dropbox { " + s + " }");
+                }
+            }
+            // close the connection
+            statsStreamIn.close();
 
-		} catch (IOException ioe) {
+        } catch (IOException ioe) {
 
-			System.err.println("Caught IOException: " + ioe.getMessage());
-		}
+            System.err.println("Caught IOException: " + ioe.getMessage());
+        }
 
-	}
+    }
 
     
     
@@ -711,12 +700,12 @@ public class Database extends Thread{
                     case PEACETIME:
                     case FIGHTING:
                         statement.setInt(1, 2);
-                    	break;
+                        break;
                     case FINISHED:
                         statement.setInt(1, 3);
-                    	break;
+                        break;
                     default:
-                    	break;
+                        break;
                     }
                     statement.setInt(2, Database.this.myWalls.getNumberOfPlayers());
                     statement.setString(3, "");
@@ -761,19 +750,19 @@ public class Database extends Thread{
     
     
     public boolean disbandClanByName(String clan){
-    	
-    	try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `plain` = ?")) {
+        
+        try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `plain` = ?")) {
 
             statement.setString(1, clan);
             final ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.first()) {
-            	
+                
                 String actualClanName = resultSet.getString("name");
 
 
                 try (PreparedStatement statement2 = getMConnection().prepareStatement("UPDATE `accounts` SET `guild` = ? WHERE `guild` = ?")) {
-                	
+                    
                     statement2.setString(1, null);
                     statement2.setString(2, actualClanName);
                     statement2.executeUpdate();
@@ -790,21 +779,21 @@ public class Database extends Thread{
                 return true;
                 
             }else{
-            	return false;
+                return false;
             }
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to disband clan by name : " + e.getMessage());
             return false;
         }
-    	
+        
     }
 
     
     public boolean disbandClan(String clan){
-    	
-    	try (PreparedStatement statement = getMConnection().prepareStatement("UPDATE `accounts` SET `guild` = ? WHERE `guild` = ?")) {
-			statement.setString(1, "");
-			statement.setString(2, clan);
+        
+        try (PreparedStatement statement = getMConnection().prepareStatement("UPDATE `accounts` SET `guild` = ? WHERE `guild` = ?")) {
+            statement.setString(1, "");
+            statement.setString(2, clan);
             
             Bukkit.getLogger().info(statement.toString());
             statement.executeUpdate();
@@ -822,14 +811,14 @@ public class Database extends Thread{
             this.myWalls.getLogger().warning("Failure to disband clan: " + e.getMessage());
             return false;
         }
-    	
-    	return true;
+        
+        return true;
     }
 
     
     public boolean kickClanMember(String personToKick, String clan){
-    	
-    	try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `accounts` WHERE `username` = ? AND `guild` = ?")) {
+        
+        try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `accounts` WHERE `username` = ? AND `guild` = ?")) {
 
             statement.setString(1, personToKick);
             statement.setString(2, clan);
@@ -838,7 +827,7 @@ public class Database extends Thread{
             if (resultSet.first()) {
 
                 try (PreparedStatement statement2 = getMConnection().prepareStatement("UPDATE `accounts` SET `guild` = ? WHERE `username` = ?")) {
-                	
+                    
                     statement2.setString(1, null);
                     statement2.setString(2, personToKick);
                     statement2.executeUpdate();
@@ -846,125 +835,125 @@ public class Database extends Thread{
                 return true;
                 
             }else{
-            	return false;
+                return false;
             }
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to kick clan member: " + e.getMessage());
         }
-    	
-    	return true;
+        
+        return true;
     }
  
 
     public boolean staffRenameClan(String oldClanName, String newClanName){
 
-    	
-    	try{
+        
+        try{
 
-    		String oldFancyName = null;
+            String oldFancyName = null;
 
-    		// makes sure the clan name is not already taken.
-    		PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `plain` = ?");
+            // makes sure the clan name is not already taken.
+            PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `plain` = ?");
             statement.setString(1, ClanCmd.stripAllClanCharacters(newClanName));
             final ResultSet resultSet = statement.executeQuery();
             if (resultSet.first() && !ClanCmd.stripAllClanCharacters(oldClanName).equalsIgnoreCase(newClanName)) {
-            	Bukkit.getLogger().info("StaffRenameClan: found same name clan - Cannot override.");
-        		return false;
+                Bukkit.getLogger().info("StaffRenameClan: found same name clan - Cannot override.");
+                return false;
             }
 
 
-    		// gets the fancy old name (in case its color enabled) so can change later in accounts table.
-    		PreparedStatement statementOld = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `plain` = ?");
-			statementOld.setString(1, ClanCmd.stripAllClanCharacters(oldClanName));
+            // gets the fancy old name (in case its color enabled) so can change later in accounts table.
+            PreparedStatement statementOld = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `plain` = ?");
+            statementOld.setString(1, ClanCmd.stripAllClanCharacters(oldClanName));
             final ResultSet resultSet2 = statementOld.executeQuery();
 
-            if (!resultSet2.first()) {            		
-            	Bukkit.getLogger().info("StaffRenameClan: could not find this clan in the guilds. ");
-            	return false;
+            if (!resultSet2.first()) {                    
+                Bukkit.getLogger().info("StaffRenameClan: could not find this clan in the guilds. ");
+                return false;
             }
             oldFancyName = resultSet2.getString("name");
-	            
-	    	PreparedStatement statement2 = getMConnection().prepareStatement("UPDATE `guilds` SET `name` = ?, `plain` = ? where `plain` = ?");
-	
+                
+            PreparedStatement statement2 = getMConnection().prepareStatement("UPDATE `guilds` SET `name` = ?, `plain` = ? where `plain` = ?");
+    
             statement2.setString(1, newClanName);
             statement2.setString(2, ClanCmd.stripAllClanCharacters(newClanName));
             statement2.setString(3, ClanCmd.stripAllClanCharacters(oldClanName));
             
             statement2.executeUpdate();
-	            
+                
             
             
-	
-	    	// change the name for all other players in the accounts table.
-	    	
-			if (TheWalls.debugMode){
-	    		Bukkit.getLogger().info("Staff Rename Clan - old Name - "+oldFancyName);
-	    	}
-	    	if (oldFancyName!=null){		    		
-	    		try (PreparedStatement statement3 = getMConnection().prepareStatement("UPDATE `accounts` SET  `guild` = ? where `guild` = ?")) {
-	    			
-	    			statement3.setString(1, newClanName);
-	    			statement3.setString(2, oldFancyName);
-	    			
-	    			statement3.executeUpdate();
-	    		}            
-	    	}
+    
+            // change the name for all other players in the accounts table.
+            
+            if (TheWalls.debugMode){
+                Bukkit.getLogger().info("Staff Rename Clan - old Name - "+oldFancyName);
+            }
+            if (oldFancyName!=null){                    
+                try (PreparedStatement statement3 = getMConnection().prepareStatement("UPDATE `accounts` SET  `guild` = ? where `guild` = ?")) {
+                    
+                    statement3.setString(1, newClanName);
+                    statement3.setString(2, oldFancyName);
+                    
+                    statement3.executeUpdate();
+                }            
+            }
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to change clan name by staff: " + e.getMessage());
             return false;
         }
-    	return true;
+        return true;
     }
 
     
     public boolean renameClan(String oldClanName, String newClanName, String newPlainClanName){
 
-    	
-    	try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `plain` = ?")) {
+        
+        try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `plain` = ?")) {
 
             statement.setString(1, newPlainClanName);
             final ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.first() && !ClanCmd.stripAllClanCharacters(oldClanName).equalsIgnoreCase(newPlainClanName)) {
-            	return false;
+                return false;
             }else{
 
-		    	try (PreparedStatement statement2 = getMConnection().prepareStatement("UPDATE `guilds` SET  `name` = ?, `plain` = ? where `name` = ?")) {
-		
-		            statement2.setString(1, newClanName);
-		            statement2.setString(2, newPlainClanName);
-		            statement2.setString(3, oldClanName);
-		            
-		            statement2.executeUpdate();
-		            
-		
-		        } catch (final SQLException e) {
-		            this.myWalls.getLogger().warning("Failure to change clan name: " + e.getMessage());
-		            return false;
-		        }
-		    	
-		    	try (PreparedStatement statement3 = getMConnection().prepareStatement("UPDATE `accounts` SET  `guild` = ? where `guild` = ?")) {
-		
-		            statement3.setString(1, newClanName);
-		            statement3.setString(2, oldClanName);
-		            
-		            statement3.executeUpdate();
-		    	}            
+                try (PreparedStatement statement2 = getMConnection().prepareStatement("UPDATE `guilds` SET  `name` = ?, `plain` = ? where `name` = ?")) {
+        
+                    statement2.setString(1, newClanName);
+                    statement2.setString(2, newPlainClanName);
+                    statement2.setString(3, oldClanName);
+                    
+                    statement2.executeUpdate();
+                    
+        
+                } catch (final SQLException e) {
+                    this.myWalls.getLogger().warning("Failure to change clan name: " + e.getMessage());
+                    return false;
+                }
+                
+                try (PreparedStatement statement3 = getMConnection().prepareStatement("UPDATE `accounts` SET  `guild` = ? where `guild` = ?")) {
+        
+                    statement3.setString(1, newClanName);
+                    statement3.setString(2, oldClanName);
+                    
+                    statement3.executeUpdate();
+                }            
             }
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to change clan name: " + e.getMessage());
             return false;
         }
-    	return true;
+        return true;
     }
 
     
     public boolean setNewClanLeader(UUID clanOwner, String newClanOwnerName, UUID newClanOwner){
-    	
-    	String oldOwnerUID = clanOwner.toString().replace("-", "");
-    	String newOwnerUID = newClanOwner.toString().replace("-", "");
+        
+        String oldOwnerUID = clanOwner.toString().replace("-", "");
+        String newOwnerUID = newClanOwner.toString().replace("-", "");
 
-    	try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `uuid` = ?")) {
+        try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `uuid` = ?")) {
 
             statement.setString(1, oldOwnerUID);
             final ResultSet resultSet = statement.executeQuery();
@@ -972,7 +961,7 @@ public class Database extends Thread{
             if (resultSet.first()) {
                 
                 try (PreparedStatement statement3 = getMConnection().prepareStatement("UPDATE `guilds` SET  `leader` = ?, `uuid` = ? where `uuid` = ?")) {
-                	
+                    
                     statement3.setString(1, newClanOwnerName);
                     statement3.setString(2, newOwnerUID);
                     statement3.setString(3, oldOwnerUID);
@@ -980,7 +969,7 @@ public class Database extends Thread{
                 }
                 
             }else{
-            	return false;
+                return false;
             }
             return true;
         } catch (final SQLException e) {
@@ -991,18 +980,18 @@ public class Database extends Thread{
 
     
     public boolean createClan(String clanName, String clanOwner, String clanOwnerUID, String plainClanName){
-    	
-    	try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `plain` = ?")) {
+        
+        try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `guilds` WHERE `plain` = ?")) {
 
             statement.setString(1, plainClanName);
             final ResultSet resultSet = statement.executeQuery();
 
             if (resultSet.first()) {
-            	return false;
+                return false;
             }else{
 
                 try (PreparedStatement statement2 = getMConnection().prepareStatement("INSERT INTO `guilds` (`name`, `leader`, `uuid`, `plain`) VALUES (?,?,?,?)")) {
-                	
+                    
                     statement2.setString(1, clanName);
                     statement2.setString(2, clanOwner);
                     statement2.setString(3, clanOwnerUID);
@@ -1011,7 +1000,7 @@ public class Database extends Thread{
                 }
                 
                 try (PreparedStatement statement3 = getMConnection().prepareStatement("UPDATE `accounts` SET  `guild` = ? where `uuid` = ?")) {
-                	
+                    
                     statement3.setString(1, clanName);
                     statement3.setString(2, clanOwnerUID);
                     statement3.executeUpdate();
@@ -1026,23 +1015,23 @@ public class Database extends Thread{
     }
 
     public List<String>  listClanMembers(String clanName){
-    	List<String> clanMembers = new ArrayList<String>();
+        List<String> clanMembers = new ArrayList<String>();
 
-    	try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `accounts` WHERE `guild` = ?")) {
+        try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `accounts` WHERE `guild` = ?")) {
 
             statement.setString(1, clanName);
             final ResultSet resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
 
-            	clanMembers.add(resultSet.getString("username"));
+                clanMembers.add(resultSet.getString("username"));
                 
             }
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to load clan memebers: " + e.getMessage());
         }
-    	
-    	return clanMembers;
+        
+        return clanMembers;
     }
 
     

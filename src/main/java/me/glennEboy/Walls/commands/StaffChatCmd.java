@@ -15,12 +15,12 @@ import org.bukkit.entity.Player;
 
 
 public class StaffChatCmd implements CommandExecutor{
-	
-	TheWalls myWalls;
-	
-	public StaffChatCmd(TheWalls tw){
-		myWalls=tw;
-	}
+    
+    TheWalls myWalls;
+    
+    public StaffChatCmd(TheWalls tw){
+        myWalls=tw;
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
@@ -29,21 +29,21 @@ public class StaffChatCmd implements CommandExecutor{
 
 
         if (!myWalls.isStaff(((Player)sender).getUniqueId())){
-        	return true;
+            return true;
         }
 
         myWalls.getLogger().log(Level.INFO, TheWalls.chatPrefix + "/SC: " + sender.getName() + ": " + messageToSend);
 
         for (UUID u : myWalls.getStaffList()) {
-        	if (Bukkit.getPlayer(u)!=null && !myWalls.noStaffChat.contains(u)){        		
-        		if (TheWalls.debugMode){
-        			myWalls.getLogger().info("/sc sent to : u whcih is username "+Bukkit.getPlayer(u).getName());
-        		}
-        		Bukkit.getPlayer(u).sendMessage(TheWalls.STAFFCHATT_PREFIX + ChatColor.AQUA + sender.getName() + ChatColor.WHITE + ": " + messageToSend);
-        	}
+            if (Bukkit.getPlayer(u)!=null && !myWalls.noStaffChat.contains(u)){                
+                if (TheWalls.debugMode){
+                    myWalls.getLogger().info("/sc sent to : u whcih is username "+Bukkit.getPlayer(u).getName());
+                }
+                Bukkit.getPlayer(u).sendMessage(TheWalls.STAFFCHATT_PREFIX + ChatColor.AQUA + sender.getName() + ChatColor.WHITE + ": " + messageToSend);
+            }
         }
 
-    	return true;
+        return true;
     }
     
 }

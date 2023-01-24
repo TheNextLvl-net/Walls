@@ -1,0 +1,7 @@
+name: "WallsPopulator"
+authors: ["NonSwag", "codename_B", "NeonMaster", "mbaxter", "kabbage"]
+version: "2.0"
+main: "de.bananaco.laggy.Walls"
+description: "An updated version of the original"
+website: "https://www.thenextlvl.net"
+load: "STARTUP"

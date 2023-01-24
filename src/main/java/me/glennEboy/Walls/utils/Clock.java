@@ -33,53 +33,51 @@ public class Clock extends Thread {
 //            PREGAME, PEACETIME, FIGHTING, FINISHED
             switch (plugin.getGameState()){
             case PREGAME:
-            	this.seconds--;
+                this.seconds--;
                 if ((this.seconds <= 0) && (this.runner != null)) {
                     this.plugin.getServer().getScheduler().runTask(this.plugin, this.runner);
                     this.abort();
                 }
                 this.plugin.playerScoreBoard.updateClock(seconds);
-            	break;
+                break;
             case PEACETIME:
                 this.seconds--;
-                if ((this.seconds % 5) == 0) {                	
-                	if ((this.seconds % 60) == 0) {
-                		final int min = this.seconds / 60;
-                		switch (min) {
-                		case 7:
-                		case 5:
-                		case 1:
-                			GameNotifications.broadcastMessage(ChatColor.GOLD + "" + min + " minute" + (min != 1 ? "s" : "") + " left until the wall drops!");
-                		}
-                	}
-                	if ((this.seconds <= 0) && (this.runner != null)) {
-                		this.plugin.getServer().getScheduler().runTask(this.plugin, this.runner);
-                		this.abort();
-                	}
-                	
-                	this.plugin.playerScoreBoard.updateClock(seconds);
+                if ((this.seconds % 5) == 0) {                    
+                    if ((this.seconds % 60) == 0) {
+                        final int min = this.seconds / 60;
+                        switch (min) {
+                        case 7:
+                        case 5:
+                        case 1:
+                            GameNotifications.broadcastMessage(ChatColor.GOLD + "" + min + " minute" + (min != 1 ? "s" : "") + " left until the wall drops!");
+                        }
+                    }
+                    if ((this.seconds <= 0) && (this.runner != null)) {
+                        this.plugin.getServer().getScheduler().runTask(this.plugin, this.runner);
+                        this.abort();
+                    }
+                    
+                    this.plugin.playerScoreBoard.updateClock(seconds);
                 }
 
 
-            	break;
+                break;
             case FIGHTING:
                 this.seconds++;
-                if ((this.seconds % 5) == 0) {                	                	
-                	final int s = seconds % 60;
-                	String ss = String.valueOf(s);
-                	if (ss.length() == 1) {
-                		ss = "0" + ss;
-                	}
-                	
-                	final int m = (seconds - s) / 60;
-//                	final String clockString = m + ":" + ss;
-                	this.plugin.playerScoreBoard.updateClock(seconds);
+                if ((this.seconds % 5) == 0) {                                        
+                    final int s = seconds % 60;
+                    String ss = String.valueOf(s);
+                    if (ss.length() == 1) {
+                        ss = "0" + ss;
+                    }
+                    
+                    final int m = (seconds - s) / 60;
+//                    final String clockString = m + ":" + ss;
+                    this.plugin.playerScoreBoard.updateClock(seconds);
                 }                
-            	break;
-            case FINISHED:
-            	break;
-            default:
-            	break;
+                break;
+                default:
+                break;
             }
             
         }

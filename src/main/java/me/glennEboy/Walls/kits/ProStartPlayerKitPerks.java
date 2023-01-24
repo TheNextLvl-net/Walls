@@ -12,8 +12,8 @@ import org.bukkit.inventory.ItemStack;
 
 
 public class ProStartPlayerKitPerks {
-	
-    private final List<ItemStack> items = new ArrayList<ItemStack>();
+    
+    private final List<ItemStack> items = new ArrayList<>();
 
     
     public ProStartPlayerKitPerks(){
@@ -36,11 +36,11 @@ public class ProStartPlayerKitPerks {
         this.items.add(new ItemStack(Material.MONSTER_EGG, 1, (short) 120));
         this.items.add(new ItemStack(Material.MONSTER_EGG, 1, (short) 90));
         this.items.add(new ItemStack(Material.EXP_BOTTLE, 1));
-		
-	}
-	
+        
+    }
+    
 
-	public void givePlayerKit(Player p) {
+    public void givePlayerKit(Player p) {
 
         p.setLevel(5);
         ItemStack item;
@@ -51,7 +51,7 @@ public class ProStartPlayerKitPerks {
         item = this.items.get(TheWalls.random.nextInt(this.items.size()));
         p.getInventory().addItem(item);
 
-		
-	}
+        
+    }
 
 }

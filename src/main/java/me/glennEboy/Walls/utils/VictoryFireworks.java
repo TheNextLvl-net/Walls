@@ -16,7 +16,7 @@ import org.bukkit.inventory.meta.FireworkMeta;
 
 public class VictoryFireworks {
 
-	public static void setOffVictorFireworks(final TheWalls plugin){
+    public static void setOffVictorFireworks(final TheWalls plugin){
         plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 
             @Override
@@ -50,5 +50,5 @@ public class VictoryFireworks {
             }
         }, 20L * 2);
 
-	}
+    }
 }

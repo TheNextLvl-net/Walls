@@ -27,11 +27,11 @@ import org.bukkit.potion.Potion;
 import org.bukkit.potion.PotionType;
 
 public class KitCmd implements CommandExecutor{
-	
+    
     public enum Type {
         FREE,
         PAID,
-        VOTE;
+        VOTE
     }
     public class Kit {
         private final List<ItemStack> items;
@@ -65,7 +65,7 @@ public class KitCmd implements CommandExecutor{
 //            public Item egg(EntityType type) {
 //          this.stack = new ItemStack(Material.MONSTER_EGG, this.stack.getAmount(), (short) 95);
           this.stack = new ItemStack(Material.MONSTER_EGG, this.stack.getAmount(), type);
-        	
+            
             return this;
         }
 
@@ -110,7 +110,7 @@ public class KitCmd implements CommandExecutor{
         }
     }
 
-	TheWalls myWalls;
+    TheWalls myWalls;
     private final Set<UUID> used = new HashSet<UUID>();
 //    private final Map<UUID, Map<UUID, List<ItemStack>>> users = new ConcurrentHashMap<UUID, Map<UUID, List<ItemStack>>>();
 
@@ -122,8 +122,8 @@ public class KitCmd implements CommandExecutor{
     public final Map<String, List<ItemStack>> paid = new ConcurrentHashMap<String, List<ItemStack>>();
 
     
-	public KitCmd(TheWalls tw){
-		myWalls=tw;
+    public KitCmd(TheWalls tw){
+        myWalls=tw;
         
         free.put("archer", new Kit(new Item(Material.BOW).name("archer-bow"), new Item(Material.ARROW, 32)).getItems());
         free.put("grandpa", new Kit(new Item(Material.STICK).name("grandpa-cane").lore(new String[] { ChatColor.RED + "get off my lawn" }).enchant(Enchantment.KNOCKBACK, 3)).getItems());
@@ -157,89 +157,89 @@ public class KitCmd implements CommandExecutor{
 
         vote.put("manager.voter", new Kit(new Item(Material.GOLD_AXE), new Item(Material.GOLDEN_APPLE)).getItems());
         this.kits.put(Type.VOTE, vote);
-		
-	}
+        
+    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         final Player player = (Player) sender;
 
         if (myWalls.isSpec(player.getUniqueId())){
-        	GameNotifications.sendPlayerCommandError(player, "Specs can fly! You dont need a kit :)");
+            GameNotifications.sendPlayerCommandError(player, "Specs can fly! You dont need a kit :)");
             return true;
         }
-    	switch (myWalls.getGameState()){
-    	case PREGAME:
-    		break;
-    	case PEACETIME:
-	        if (args.length == 0) {
-	        	GameNotifications.sendPlayerCommandError(player, "You need to say which kit :) /kit <kitname>");
-	            break;
-	        }
-	        final String choice = args[0].toLowerCase();
-	        this.playerChoice(player, choice);
-    		break;
-    	case FIGHTING:
-    	case FINISHED:
-    		GameNotifications.sendPlayerCommandError(player, "Kits only availble during Peace time :)"); 
-    		break;
-    	default:
-    		break;
-    	}
+        switch (myWalls.getGameState()){
+        case PREGAME:
+            break;
+        case PEACETIME:
+            if (args.length == 0) {
+                GameNotifications.sendPlayerCommandError(player, "You need to say which kit :) /kit <kitname>");
+                break;
+            }
+            final String choice = args[0].toLowerCase();
+            this.playerChoice(player, choice);
+            break;
+        case FIGHTING:
+        case FINISHED:
+            GameNotifications.sendPlayerCommandError(player, "Kits only availble during Peace time :)"); 
+            break;
+        default:
+            break;
+        }
 
-    	return true;
+        return true;
     }
     
     
     @SuppressWarnings("deprecation")
-	public void playerChoice(Player player, String choice) {
-    	
-    	
-    	
+    public void playerChoice(Player player, String choice) {
+        
+        
+        
         if (this.used.contains(player.getUniqueId()) && !player.isOp()) {
-        	
-        	GameNotifications.sendPlayerCommandError(player, "Seems like you already have a kit :)");
-        	
+            
+            GameNotifications.sendPlayerCommandError(player, "Seems like you already have a kit :)");
+            
 
-        	
+            
         } else {
-        	
+            
 
 
-        	if (this.free.containsKey(choice)){
-        		player.getInventory().addItem(this.free.get(choice).toArray((new ItemStack[this.free.get(choice).size()])));
-        		GameNotifications.sendPlayerCommandError(player, "Enjoy FREE kit " + choice);
-        		this.used.add(player.getUniqueId());
-        	}else if (this.paid.containsKey(choice)){
-        		
-        		if (myWalls.isPRO(player.getUniqueId())){        			
-        			if (choice.equalsIgnoreCase("thor")){
-        				myWalls.thorOwners.put(player.getUniqueId(), 3);
-        			}else if (choice.equalsIgnoreCase("leprechaun")){
-        				myWalls.leprechaunOwners.put(player.getUniqueId(), 3);
-        			}
-        			player.getInventory().addItem(this.paid.get(choice).toArray((new ItemStack[this.paid.get(choice).size()])));
-        			GameNotifications.sendPlayerCommandError(player, "Enjoy PRO kit " + choice);
-        			this.used.add(player.getUniqueId());
-        		}else if (myWalls.getWallsPlayer(player.getUniqueId()).paidKits!=null && myWalls.getWallsPlayer(player.getUniqueId()).paidKits.indexOf(choice)>-1){
-        			// they have paid for this kit
-        			if (choice.equalsIgnoreCase("thor")){
-        				myWalls.thorOwners.put(player.getUniqueId(), 3);
-        			}else if (choice.equalsIgnoreCase("leprechaun")){
-        				myWalls.leprechaunOwners.put(player.getUniqueId(), 3);
-        			}
-        			player.getInventory().addItem(this.paid.get(choice).toArray((new ItemStack[this.paid.get(choice).size()])));
-        			GameNotifications.sendPlayerCommandError(player, "Enjoy PRO kit " + choice);
-        			this.used.add(player.getUniqueId());
-        			
-        		}else{
-        			GameNotifications.sendPlayerCommandError(player, "This is a PRO kit - you need to upgrade to get this one :-/");
-        		}
-        	}else{
-        		GameNotifications.sendPlayerCommandError(player, "No luck - kit " + choice + " does not exist :(");
-        		
-        	}
-        	player.updateInventory();
+            if (this.free.containsKey(choice)){
+                player.getInventory().addItem(this.free.get(choice).toArray((new ItemStack[this.free.get(choice).size()])));
+                GameNotifications.sendPlayerCommandError(player, "Enjoy FREE kit " + choice);
+                this.used.add(player.getUniqueId());
+            }else if (this.paid.containsKey(choice)){
+                
+                if (myWalls.isPRO(player.getUniqueId())){                    
+                    if (choice.equalsIgnoreCase("thor")){
+                        myWalls.thorOwners.put(player.getUniqueId(), 3);
+                    }else if (choice.equalsIgnoreCase("leprechaun")){
+                        myWalls.leprechaunOwners.put(player.getUniqueId(), 3);
+                    }
+                    player.getInventory().addItem(this.paid.get(choice).toArray((new ItemStack[this.paid.get(choice).size()])));
+                    GameNotifications.sendPlayerCommandError(player, "Enjoy PRO kit " + choice);
+                    this.used.add(player.getUniqueId());
+                }else if (myWalls.getWallsPlayer(player.getUniqueId()).paidKits!=null && myWalls.getWallsPlayer(player.getUniqueId()).paidKits.indexOf(choice)>-1){
+                    // they have paid for this kit
+                    if (choice.equalsIgnoreCase("thor")){
+                        myWalls.thorOwners.put(player.getUniqueId(), 3);
+                    }else if (choice.equalsIgnoreCase("leprechaun")){
+                        myWalls.leprechaunOwners.put(player.getUniqueId(), 3);
+                    }
+                    player.getInventory().addItem(this.paid.get(choice).toArray((new ItemStack[this.paid.get(choice).size()])));
+                    GameNotifications.sendPlayerCommandError(player, "Enjoy PRO kit " + choice);
+                    this.used.add(player.getUniqueId());
+                    
+                }else{
+                    GameNotifications.sendPlayerCommandError(player, "This is a PRO kit - you need to upgrade to get this one :-/");
+                }
+            }else{
+                GameNotifications.sendPlayerCommandError(player, "No luck - kit " + choice + " does not exist :(");
+                
+            }
+            player.updateInventory();
             
         }
     }

@@ -14,23 +14,23 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 public class WhisperCmd implements CommandExecutor{
-	
-	TheWalls myWalls;
-	
-	public WhisperCmd(TheWalls tw){
-		myWalls=tw;
-	}
+    
+    TheWalls myWalls;
+    
+    public WhisperCmd(TheWalls tw){
+        myWalls=tw;
+    }
 
-	private String whisperFormat = ChatColor.GOLD+""+ChatColor.BOLD+"{"+ChatColor.RESET+"PM: "+ChatColor.GRAY+"<sender>"+ChatColor.RESET+""+ChatColor.GOLD+"}"+ChatColor.RESET+" <message>";
+    private String whisperFormat = ChatColor.GOLD+""+ChatColor.BOLD+"{"+ChatColor.RESET+"PM: "+ChatColor.GRAY+"<sender>"+ChatColor.RESET+""+ChatColor.GOLD+"}"+ChatColor.RESET+" <message>";
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
 
-    	
+        
 
-    	if (TheWalls.shhhhh && !sender.isOp()){
-    		return true;
-    	}
+        if (TheWalls.shhhhh && !sender.isOp()){
+            return true;
+        }
         if (args.length < 2) {
             return false;
         } else {
@@ -44,7 +44,7 @@ public class WhisperCmd implements CommandExecutor{
                 whisper.setLength(whisper.length() - 1);
                 
                 String messageToSend = this.whisperFormat.replace("<sender>", sender.getName()).replace("<message>", whisper); 
-        		
+                
                 p.sendMessage(messageToSend);
                 sender.sendMessage(" SENT to "+p.getName()+": "+ whisper);
                 myWalls.getLogger().log(Level.INFO, ChatColor.GRAY + sender.getName() + " whispers to " + p.getName() + " --> " + whisper);
