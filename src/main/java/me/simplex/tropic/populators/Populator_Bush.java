@@ -56,22 +56,12 @@ public class Populator_Bush extends BlockPopulator {
         }
     }
 
-    /**
-     * @param loc
-     * @param rnd
-     */
     private void createBush(Location loc, Random rnd) {
         Block toHandle = loc.getBlock();
-        toHandle = loc.getBlock();
         toHandle.setType(Material.LOG);
         createLeaves(toHandle, rnd);
     }
 
-    /**
-     * @param block
-     * @param rnd
-     * @param leaves
-     */
     private void createLeaves(Block block, Random rnd) {
         int radius = rnd.nextInt(3) + 2;
         int radius_squared = radius * radius;

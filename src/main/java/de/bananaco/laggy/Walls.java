@@ -51,7 +51,7 @@ public class Walls extends JavaPlugin implements Runnable {
         FileConfiguration config = Bukkit.getServer().getPluginManager().getPlugin("MCTheWalls").getConfig();
 
         try {
-            java.lang.Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("com.mysql.jdbc.Driver");
 
             handle = DriverManager.getConnection("jdbc:mysql://" + config.getString("host") + ":" + config.getString("port") + "/" + config.getString("database"), config.getString("username"), config.getString("password"));
 
