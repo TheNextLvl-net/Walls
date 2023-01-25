@@ -28,7 +28,7 @@ public class SchematicLoader {
         File f = new File(plugin.getDataFolder().getPath() + File.separator + "schematics" + File.separator);
         if (!f.exists()) f.mkdirs();
         File[] files = f.listFiles();
-        List<String> sfiles = new ArrayList<String>();
+        List<String> sfiles = new ArrayList<>();
         for (File fi : files) {
             if (fi.getName().endsWith(".schematic") && fi.getName().contains(key)) {
                 sfiles.add(fi.getName().replace(".schematic", ""));
@@ -38,25 +38,11 @@ public class SchematicLoader {
         return sfiles;
     }
 
-    public List<String> getSchematics() {
-        File f = new File(plugin.getDataFolder().getPath() + File.separator + "schematics" + File.separator);
-        File[] files = f.listFiles();
-        List<String> sfiles = new ArrayList<String>();
-        for (File fi : files) {
-            if (fi.getName().endsWith(".schematic")) {
-                sfiles.add(fi.getName().replace(".schematic", ""));
-            }
-        }
-        return sfiles;
-    }
-
     public void paste(String name, Location origin) {
         SchematicFormat format = SchematicFormat.MCEDIT;
         try {
             File f = new File(plugin.getDataFolder().getPath() + File.separator + "schematics" + File.separator);
-            if (!f.exists()) {
-                f.mkdirs();
-            }
+            if (!f.exists()) f.mkdirs();
             File file = new File(f, name + ".schematic");
             if (!file.exists()) {
                 throw new FileNotFoundException("Could not find " + file.getAbsolutePath());

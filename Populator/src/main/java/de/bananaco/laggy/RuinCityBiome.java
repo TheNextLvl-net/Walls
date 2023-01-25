@@ -113,12 +113,9 @@ public class RuinCityBiome extends WorldFiller {
     
     
     private void pickAndPasteRuin() {
-        
         SchematicLoader loader = new SchematicLoader((JavaPlugin) Bukkit.getServer().getPluginManager().getPlugin("WallsPopulator"));
-        // choose a random schematic
-        
         List<String> options = loader.getSchematics("_ruin_");
-        
+        if (options.isEmpty()) return;
         
         int xSize = this.maxX-this.minX;
         int zSize = this.maxZ-this.minZ;

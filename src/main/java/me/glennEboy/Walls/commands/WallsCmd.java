@@ -42,7 +42,7 @@ public class WallsCmd implements CommandExecutor{
                 GameNotifications.sendPlayerCommandError((Player) sender, "usage: /walls stats | chat | whois | nostaffchat | start | stop | dropwalls | vip | unvip | addplayer | pro | unpro |");
                 if (sender.isOp()){
                     GameNotifications.sendPlayerCommandError((Player) sender, "usage: dropwalls | players | vip | pro| prouid | gm| mgm | admin | updateplayer | autostartplayers | peacetimemins | clanbattle | captain");
-                    GameNotifications.sendPlayerCommandError((Player) sender, "usage: restricted | diamondonly | cya | inter | whitelist | migratevips | getvips | levels | info | test | fakemessage | fakeshout | lobbytrail");
+                    GameNotifications.sendPlayerCommandError((Player) sender, "usage: restricted | diamondonly | cya | whitelist | migratevips | getvips | levels | info | test | fakemessage | fakeshout | lobbytrail");
                 }
                 
             }else{
@@ -128,13 +128,6 @@ public class WallsCmd implements CommandExecutor{
             
             if (sender.isOp()) TheWalls.diamondONLY = !TheWalls.diamondONLY;
             sender.sendMessage("Set to ["+TheWalls.diamondONLY+"]");
-            
-        
-        }else if (args[0].equalsIgnoreCase("inter")){
-            interServer(sender, cmd, commandLabel, args);            
-
-        }else if (args[0].equalsIgnoreCase("whitelist")){
-            whitelistPlayers(sender, cmd, commandLabel, args);
 
         }else if (args[0].equalsIgnoreCase("levels")){
             this.addLevels(sender, cmd, commandLabel, args);
@@ -300,7 +293,6 @@ public class WallsCmd implements CommandExecutor{
                         && !myWalls.starting){
             
                 GameNotifications.broadcastMessage("Game starts in " + ChatColor.LIGHT_PURPLE + "30"+ChatColor.WHITE + " seconds!!");
-                InterWallsClient.sendMessage(ChatColor.LIGHT_PURPLE+"Game starting on "+ChatColor.WHITE+"w" +TheWalls.serverNumber+ChatColor.LIGHT_PURPLE+" in 30 seconds!!");
 
                 myWalls.clock.setClock(30, new Runnable() {
                     @Override
@@ -584,23 +576,6 @@ public class WallsCmd implements CommandExecutor{
             myWalls.dropWalls();
         }
     }
-    
-    private void interServer(CommandSender sender , Command cmd, String commandLabel, String[] args) {
-        if (sender.isOp()){            
-
-            final StringBuilder fakeMessage = new StringBuilder();
-            
-            for (int x = 1; x < args.length; x++) {
-                
-                fakeMessage.append(args[x]).append(" ");
-            }
-            
-            fakeMessage.setLength(fakeMessage.length() - 1);
-
-            InterWallsClient.sendMessage(fakeMessage.toString());
-        }
-        
-    }
 
     
     private void setPlayerJoinRestriction(CommandSender sender , Command cmd, String commandLabel, String[] args) {
@@ -805,17 +780,6 @@ public class WallsCmd implements CommandExecutor{
 
         }
     }
-
-        
-    private void whitelistPlayers(CommandSender sender , Command cmd, String commandLabel, String[] args) {
-        if (sender.isOp()){
-            myWalls.myDB.getVIPs("https://dl.dropboxusercontent.com/u/58929303/WallsMod/whitelist.txt");
-            for (String playerName: myWalls.myDB.VIPS){                
-                Bukkit.getServer().dispatchCommand(Bukkit.getServer().getConsoleSender(), "whitelist add " + playerName);
-            }
-        }
-    }
-
     
     private void cpsTrigger(CommandSender sender , Command cmd, String commandLabel, String[] args) {
         if (sender.isOp() && args.length==2) {

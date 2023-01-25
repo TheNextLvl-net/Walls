@@ -1,20 +1,15 @@
 package de.bananaco.laggy.populator;
 
-import java.util.List;
-import java.util.Random;
-
-import org.bukkit.Bukkit;
-import org.bukkit.Chunk;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.World;
+import de.bananaco.laggy.Utils;
+import de.bananaco.laggy.WorldFiller;
+import de.bananaco.laggy.schematic.SchematicLoader;
+import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import de.bananaco.laggy.Utils;
-import de.bananaco.laggy.WorldFiller;
-import de.bananaco.laggy.schematic.SchematicLoader;
+import java.util.List;
+import java.util.Random;
 
 public class TrapPopulator extends BlockPopulator {
 
@@ -59,6 +54,7 @@ public class TrapPopulator extends BlockPopulator {
         SchematicLoader loader = new SchematicLoader(plugin);
         // choose a random schematic
         List<String> options = loader.getSchematics("trap");
+        if (options.isEmpty()) return;
         String chosen = options.get(rand.nextInt(options.size()));
         loader.paste(chosen, loc);
     }
@@ -67,9 +63,7 @@ public class TrapPopulator extends BlockPopulator {
     public boolean contains(Chunk chunk) {
         if (filler.contains(chunk.getX() * 16, chunk.getZ() * 16)) {
             if (filler.contains(chunk.getX() * 16 + 32, chunk.getZ() * 16 + 32)) {
-                if (filler.contains(chunk.getX() * 16 - 32, chunk.getZ() * 16 - 32)) {
-                    return true;
-                }
+                return filler.contains(chunk.getX() * 16 - 32, chunk.getZ() * 16 - 32);
             }
         }
         return false;

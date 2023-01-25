@@ -262,6 +262,7 @@ public class Walls extends JavaPlugin implements Runnable {
         // choose a random schematic
         
         List<String> options = loader.getSchematics("_center_");
+        if (options.isEmpty()) return;
         
         String chosen = options.get(Walls.GLOBAL_RANDOM.nextInt(options.size()));
         loader.paste(chosen, new Location(Bukkit.getWorlds().get(0), -13, 40, 119));
