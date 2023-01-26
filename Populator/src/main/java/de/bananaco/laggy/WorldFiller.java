@@ -1,22 +1,16 @@
 package de.bananaco.laggy;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.Stack;
-
+import de.bananaco.laggy.populator.*;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.generator.BlockPopulator;
 
-import de.bananaco.laggy.populator.CavePopulator;
-import de.bananaco.laggy.populator.MineShaftPopulator;
-import de.bananaco.laggy.populator.MobPopulator;
-import de.bananaco.laggy.populator.OrePopulator;
-import de.bananaco.laggy.populator.TrapPopulator;
-import de.bananaco.laggy.populator.DungeonPopulator;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.Stack;
 
 public abstract class WorldFiller implements Container {
 
@@ -35,7 +29,7 @@ public abstract class WorldFiller implements Container {
     protected final Random rand;
 
     private List<BlockPopulator> populators = new ArrayList<BlockPopulator>();
-    
+
     protected MobPopulator mobs;
 
     //protected final EditSession session;
@@ -56,7 +50,7 @@ public abstract class WorldFiller implements Container {
         this.centerZ = (minZ + maxZ) / 2;
 
         this.rand = Walls.GLOBAL_RANDOM;
-        
+
         addPopulator(new OrePopulator(this));
         addPopulator(new CavePopulator(this));
         addPopulator(new MineShaftPopulator(this));
@@ -77,20 +71,18 @@ public abstract class WorldFiller implements Container {
     public void addPopulator(BlockPopulator pop) {
         addPopulator(pop, false);
     }
-    
-    public void removePopulator(Class<? extends BlockPopulator> populatorClass)
-    {
+
+    public void removePopulator(Class<? extends BlockPopulator> populatorClass) {
         Stack<BlockPopulator> toRemove = new Stack<BlockPopulator>();
-        for(BlockPopulator populator : populators)
-        {
-            if(populator.getClass().equals(populatorClass))
+        for (BlockPopulator populator : populators) {
+            if (populator.getClass().equals(populatorClass))
                 toRemove.push(populator);
         }
         populators.removeAll(toRemove);
     }
-    
+
     public void addPopulator(BlockPopulator pop, boolean front) {
-        if(front)
+        if (front)
             populators.add(0, pop);
         else
             populators.add(pop);
@@ -116,14 +108,10 @@ public abstract class WorldFiller implements Container {
 
     public void populate() {
         Chunk[] chunks = getChunks();
-        for(BlockPopulator pop : populators)
-        {
-            for(Chunk chunk : chunks)
-            {
-                for(int x = 0; x < 16; x++)
-                {
-                    for(int z = 0; z < 16; z++)
-                    {
+        for (BlockPopulator pop : populators) {
+            for (Chunk chunk : chunks) {
+                for (int x = 0; x < 16; x++) {
+                    for (int z = 0; z < 16; z++) {
                         world.setBiome(chunk.getX() * 16 + x, chunk.getZ() * 16 + z, biome);
                     }
                 }

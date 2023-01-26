@@ -3,6 +3,8 @@ package me.glennEboy.Walls.utils;
 import me.glennEboy.Walls.TheWalls;
 import me.glennEboy.Walls.TheWalls.WallsPlayer;
 import me.glennEboy.Walls.commands.ClanCmd;
+import net.nonswag.core.api.sql.Database;
+import net.nonswag.core.api.sql.SQLConnection;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -21,9 +23,6 @@ public class DatabaseUtil extends Thread {
     private final TheWalls myWalls;
 
     private final Map<UUID, String> playersToLogin = new HashMap<>();
-
-    private Connection wallsConnection;
-    private Connection myConnection;
 
     public DatabaseUtil(TheWalls plugin) {
         this.myWalls = plugin;
@@ -86,10 +85,8 @@ public class DatabaseUtil extends Thread {
 
     public void loadPaidKitsForUser(String username, UUID playerUID) {
         WallsPlayer twp = myWalls.getWallsPlayer(playerUID);
-        try (PreparedStatement statement = getWallsConnection().prepareStatement("SELECT `kitname` FROM `paidkits` WHERE `uuid` = ? AND `kitname`<> ?")) {
-            statement.setString(1, playerUID.toString().replace("-", ""));
-            statement.setString(2, "pro");
-            ResultSet result = statement.executeQuery();
+        try (ResultSet result = Database.getConnection().executeQuery("SELECT `kitname` FROM `paidkits` WHERE `uuid` = ? AND `kitname`<> ?", playerUID.toString().replace("-", ""), "pro")) {
+            if (result == null) return;
             while (result.next()) {
                 twp.paidKits = twp.paidKits + "," + result.getString("kitname");
             }
@@ -102,9 +99,8 @@ public class DatabaseUtil extends Thread {
     private void loadStatsPlayer(String playerName, UUID aUID) {
         String uuid = aUID.toString().replace("-", "");
         WallsPlayer wallsPlayer = this.myWalls.getAllPlayers().getOrDefault(aUID, new WallsPlayer());
-        try (PreparedStatement statement = getMConnection().prepareStatement("SELECT * FROM `accounts` WHERE unique_id = UNHEX(?)")) {
-            statement.setString(1, uuid);
-            final ResultSet resultSet = statement.executeQuery();
+        try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE unique_id = UNHEX(?)", uuid.toString())) {
+            if (resultSet == null) return;
             if (resultSet.first()) {
                 if (resultSet.getInt("vip") == 1) {
                     wallsPlayer.vip = true;
@@ -133,10 +129,7 @@ public class DatabaseUtil extends Thread {
                 wallsPlayer.clan = resultSet.getString("guild");
                 wallsPlayer.coins = resultSet.getInt("butter_coins");
             } else {
-                try (PreparedStatement statement2 = getMConnection().prepareStatement("INSERT INTO `accounts` (`username`) VALUES (?)")) {
-                    statement2.setString(1, playerName);
-                    statement2.executeUpdate();
-                }
+                Database.getConnection().executeUpdate("INSERT INTO `accounts` (`username`) VALUES (?)", playerName);
             }
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to load stats: " + e.getMessage());
@@ -150,9 +143,8 @@ public class DatabaseUtil extends Thread {
         WallsPlayer wallsPlayer = this.myWalls.getAllPlayers().getOrDefault(aUID, new WallsPlayer());
         wallsPlayer.username = playerName;
         wallsPlayer.uid = tempUID;
-        try (PreparedStatement statement = getWallsConnection().prepareStatement("SELECT * FROM `accounts` WHERE uuid = ?")) {
-            statement.setString(1, tempUID);
-            final ResultSet resultSet = statement.executeQuery();
+        try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE uuid = ?", tempUID)) {
+            if (resultSet == null) return;
             if (resultSet.first()) {
                 if (resultSet.getInt("mvplevel") == 1 || resultSet.getInt("mvplevel") == 3) {
                     wallsPlayer.nMVP = true;
@@ -164,11 +156,7 @@ public class DatabaseUtil extends Thread {
                 wallsPlayer.statsDeaths = resultSet.getInt("deaths");
                 wallsPlayer.statsWins = resultSet.getInt("wins");
             } else {
-                try (PreparedStatement statement2 = getWallsConnection().prepareStatement("INSERT INTO `accounts` (`username`, `uuid`) VALUES (?,?)")) {
-                    statement2.setString(1, playerName);
-                    statement2.setString(2, tempUID);
-                    statement2.executeUpdate();
-                }
+                Database.getConnection().executeUpdate("INSERT INTO `accounts` (`username`, `uuid`) VALUES (?,?)", playerName, tempUID);
             }
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to load stats: " + e.getMessage());
@@ -187,31 +175,13 @@ public class DatabaseUtil extends Thread {
             @Override
             public void run() {
                 try {
-                    try (final PreparedStatement statement = getWallsConnection().prepareStatement("UPDATE `accounts` SET `kills` = `kills` + ?, `deaths` = `deaths` + ?, `playingtime` = `playingtime` + ?, `totalplays` = `totalplays` + ?, `wins` = wins + ? WHERE `uuid` = ?")) {
-                        statement.setInt(1, wallsPlayer.kills);
-                        statement.setInt(2, wallsPlayer.deaths);
-                        statement.setInt(3, wallsPlayer.minutes);
-                        statement.setInt(4, 1);
-                        statement.setInt(5, wallsPlayer.wins);
-                        statement.setString(6, wallsPlayer.uid);
-                        statement.executeUpdate();
-                    }
-                    try (final PreparedStatement statement = getWallsConnection().prepareStatement("INSERT INTO `player_stats` (`kills`,`deaths`,`playingtime`, `win`, `uuid`, `username`) VALUES (?,?,?,?,?,?)")) {
-                        statement.setInt(1, wallsPlayer.kills);
-                        statement.setInt(2, wallsPlayer.deaths);
-                        statement.setInt(3, wallsPlayer.minutes);
-                        statement.setInt(4, wallsPlayer.wins);
-                        statement.setString(5, wallsPlayer.uid);
-                        statement.setString(6, wallsPlayer.username);
-                        statement.executeUpdate();
-                    }
-                    try (final PreparedStatement statement = getMConnection().prepareStatement("UPDATE `accounts` SET `butter_coins` = ? WHERE `uuid` = ?")) {
-                        statement.setInt(1, wallsPlayer.coins);
-                        statement.setString(2, wallsPlayer.uid);
-                        statement.executeUpdate();
-                        if (TheWalls.debugMode) {
-                            System.out.println(TheWalls.chatPrefix + "Coins updated." + wallsPlayer.username);
-                        }
+                    Database.getConnection().executeUpdate("UPDATE `accounts` SET `kills` = `kills` + ?, `deaths` = `deaths` + ?, `playingtime` = `playingtime` + ?, `totalplays` = `totalplays` + ?, `wins` = wins + ? WHERE `uuid` = ?",
+                            wallsPlayer.kills, wallsPlayer.deaths, wallsPlayer.minutes, 1, wallsPlayer.wins, wallsPlayer.uid);
+                    Database.getConnection().executeUpdate("INSERT INTO `player_stats` (`kills`,`deaths`,`playingtime`, `win`, `uuid`, `username`) VALUES (?,?,?,?,?,?)",
+                            wallsPlayer.kills, wallsPlayer.deaths, wallsPlayer.minutes, wallsPlayer.wins, wallsPlayer.uid, wallsPlayer.username);
+                    Database.getConnection().executeUpdate("UPDATE `accounts` SET `butter_coins` = ? WHERE `uuid` = ?", wallsPlayer.coins, wallsPlayer.uid);
+                    if (TheWalls.debugMode) {
+                        System.out.println(TheWalls.chatPrefix + "Coins updated." + wallsPlayer.username);
                     }
                 } catch (final SQLException e) {
                     DatabaseUtil.this.myWalls.getLogger().warning("Failure to save stats: " + e.getMessage());
@@ -220,59 +190,13 @@ public class DatabaseUtil extends Thread {
         }.runTaskAsynchronously(this.myWalls);
     }
 
-    private Connection getWallsConnection() throws SQLException {
-        if (this.wallsConnection != null) {
-            try {
-                if (this.wallsConnection.isValid(1)) {
-                    return this.wallsConnection;
-                }
-            } catch (final SQLException e) {
-                myWalls.getLogger().log(Level.WARNING, String.format("Unexpected SQLException when testing connection: %s", e.getMessage()));
-            }
-        }
-        try {
-            this.wallsConnection = DriverManager.getConnection(this.url + this.wallDB, this.user, this.password);
-            return this.wallsConnection;
-        } catch (final SQLException e) {
-            myWalls.getLogger().log(Level.SEVERE, String.format("Error while connecting to the database: %s", e.getMessage()));
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    private Connection getMConnection() {
-        if (this.myConnection != null) {
-            try {
-                if (this.myConnection.isValid(1)) {
-                    return this.myConnection;
-                }
-            } catch (final SQLException e) {
-                myWalls.getLogger().log(Level.WARNING, String.format("Unexpected SQLException when testing connection: %s", e.getMessage()));
-            }
-        }
-        try {
-            this.myConnection = DriverManager.getConnection(this.url + this.myDB, this.mUser, this.mPassword);
-            return this.myConnection;
-        } catch (final SQLException e) {
-            myWalls.getLogger().log(Level.SEVERE, String.format("Error while connecting to the database: %s", e.getMessage()));
-            e.printStackTrace();
-            return null;
-        }
-    }
-
     public boolean setUsersClan(final String playerUID, final String clan) {
         boolean result = false;
         PreparedStatement stmt = null;
-        try {
-            stmt = getMConnection().prepareStatement("SELECT * FROM `accounts` WHERE `uuid` = ?");
-            stmt.setString(1, playerUID);
-            ResultSet set = stmt.executeQuery();
+        try (ResultSet set = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE `uuid` = ?", playerUID)) {
+            if (set == null) return false;
             if (set.next()) {
-                PreparedStatement stmt2 = getMConnection().prepareStatement("UPDATE `accounts` SET `guild` = ? WHERE `uuid` = ?");
-                stmt2.setString(1, clan);
-                stmt2.setString(2, playerUID);
-                stmt2.executeUpdate();
-                stmt2.close();
+                Database.getConnection().executeUpdate("UPDATE `accounts` SET `guild` = ? WHERE `uuid` = ?", clan, playerUID);
                 result = true;
                 this.myWalls.getLogger().log(Level.INFO, "WALLS: user Clan set ! { " + playerUID + " }" + " to " + clan);
             }

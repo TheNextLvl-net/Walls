@@ -29,8 +29,8 @@ public class Walls extends JavaPlugin implements Runnable {
 
     private static void ProcessUpdateStatement(int state, int players, String motd) throws Exception {
         Connection handle = null;
-        int ServerNumber = Bukkit.getPluginManager().getPlugin("MCTheWalls").getConfig().getInt("ServerNumber");
-        FileConfiguration config = Bukkit.getServer().getPluginManager().getPlugin("MCTheWalls").getConfig();
+        int ServerNumber = Bukkit.getPluginManager().getPlugin("TheWalls").getConfig().getInt("ServerNumber");
+        FileConfiguration config = Bukkit.getServer().getPluginManager().getPlugin("TheWalls").getConfig();
 
         try {
             Class.forName("com.mysql.jdbc.Driver");
@@ -224,8 +224,8 @@ public class Walls extends JavaPlugin implements Runnable {
         }
         this.getLogger().info("Areas populated!");
 
-//        pickAndPasteCenter();
-//        getLogger().info("Center Picked and Pasted!");
+        // pickAndPasteCenter();
+        // getLogger().info("Center Picked and Pasted!");
 
         this.getLogger().info("Filling chests...");
         world.loadChunk((new Location(world, -145, 66, -12)).getChunk());
@@ -259,7 +259,6 @@ public class Walls extends JavaPlugin implements Runnable {
 
     private void pickAndPasteCenter() {
         SchematicLoader loader = new SchematicLoader(this);
-        // choose a random schematic
         
         List<String> options = loader.getSchematics("_center_");
         if (options.isEmpty()) return;

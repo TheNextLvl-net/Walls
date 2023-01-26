@@ -37,7 +37,7 @@ public class SpecPlayerKit {
                 "The last team standing wins! Keep an eye out for cool hidden treasures or watch out for harmful traps that can kill you! Have fun! Make sure to visit our website to see joinable servers and stats/forums:\n-\n" + ChatColor.BLUE + "mysite.COM", ChatColor.DARK_PURPLE + "RULES" + ChatColor.BLACK
                         + "\n--------------\n1- No swearing, flaming, ads, offensive skins\n2- No unapproved mods\n3- No exploiting\n4- Respect staff & each other\n5- No cheating\n6- Don't play against your team\n7- Have Fun!", ChatColor.DARK_GREEN + "Walls VIP Status" + ChatColor.BLACK
                         + "\n--------------\n- Spectating games with flight\n- Joining full servers.\n- Join full teams\n- /surface command\n-Teleport during peace time\n-Get random items and 5 levels of XP on start\n- Chat Prefix\n-Can /shout (3 times)\n-Cool forum tag/color, access to VIP forums.\n Buy it at\n" + ChatColor.BLUE + "mysite.COM");
-        SpecPlayerKit.book.setAuthor("MCTheWalls");
+        SpecPlayerKit.book.setAuthor("TheWalls");
         SpecPlayerKit.book.setTitle("Instructions");
 
         SpecPlayerKit.vipbook = (BookMeta) Bukkit.getServer().getItemFactory().getItemMeta(Material.WRITTEN_BOOK);

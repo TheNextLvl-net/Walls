@@ -1,8 +1,10 @@
 package de.bananaco.laggy;
 
-import java.util.Random;
-
-
+import de.bananaco.laggy.populator.LapisRing;
+import de.bananaco.laggy.populator.NetherHutPopulator;
+import de.bananaco.laggy.populator.NetherPopulator;
+import de.bananaco.laggy.populator.NetherTreePopulator;
+import de.bananaco.laggy.populator.NetherTreePopulator.Type;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
@@ -12,20 +14,10 @@ import org.bukkit.util.Vector;
 import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
 
-import de.bananaco.laggy.populator.LapisRing;
-import de.bananaco.laggy.populator.NetherHutPopulator;
-import de.bananaco.laggy.populator.NetherPopulator;
-import de.bananaco.laggy.populator.NetherTreePopulator;
-import de.bananaco.laggy.populator.NetherTreePopulator.Type;
+import java.util.Random;
 
 public class NetherBiome extends WorldFiller {
 
-    byte bedrock = (byte) Material.BEDROCK.getId();
-    byte stone = (byte) Material.STONE.getId();
-    byte dirt = (byte) Material.DIRT.getId();
-    byte netherBrick = (byte) Material.NETHERRACK.getId();
-    byte lava = (byte) Material.STATIONARY_LAVA.getId();
-    byte soulSand = (byte) Material.SOUL_SAND.getId();
     Block highest = null;
 
     Random random = new Random();
@@ -51,8 +43,7 @@ public class NetherBiome extends WorldFiller {
         for (int x = minX; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 for (int y = groundLevel - 15; y <= groundLevel; y++) {
-                    int id = world.getBlockTypeIdAt(x, y, z);//world.getBlockAt(x, y, z);
-                    if (id == 0 && random.nextInt(10) > 7) {
+                    if (world.getBlockAt(x, y, z).getType() == Material.AIR && random.nextInt(10) > 7) {
                         world.getBlockAt(x, y, z).setType(Material.STATIONARY_LAVA);
                     }else{
                         world.getBlockAt(x, y, z).setType(Material.NETHERRACK);
@@ -109,7 +100,7 @@ public class NetherBiome extends WorldFiller {
         for (int x = minX; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 // current distance between the two
-                double abs = 15.0 + (Math.abs(centerX - x) + Math.abs(centerZ - z)) / 2;
+                double abs = 15.0 + (Math.abs(centerX - x) + Math.abs(centerZ - z)) / 2d;
                 if (abs < 30.0) {
                     abs = 15.0;
                 } else {
@@ -128,12 +119,12 @@ public class NetherBiome extends WorldFiller {
                 //System.out.println(abs);
                 //all other land
                 for (int y = startY; y < highest - 3; y++) {
-                    world.getBlockAt(x, y, z).setTypeId(stone);
+                    world.getBlockAt(x, y, z).setType(Material.STONE);
                 }
                 for (int y = highest - 3; y < highest; y++) {
-                    world.getBlockAt(x, y, z).setTypeId(dirt);
+                    world.getBlockAt(x, y, z).setType(Material.DIRT);
                 }
-                world.getBlockAt(x, highest, z).setTypeId(netherBrick);
+                world.getBlockAt(x, highest, z).setType(Material.NETHER_BRICK);
                 if (this.highest == null || highest > this.highest.getY()) {
                     this.highest = world.getBlockAt(x, highest, z);
                 }
