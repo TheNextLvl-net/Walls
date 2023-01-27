@@ -1,13 +1,8 @@
 package me.glennEboy.Walls.commands;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-
 import me.glennEboy.Walls.TheWalls;
 import me.glennEboy.Walls.TheWalls.WallsPlayer;
 import me.glennEboy.Walls.utils.GameNotifications;
-
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -15,6 +10,10 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class ShoutCmd implements CommandExecutor{
     
@@ -101,7 +100,7 @@ public class ShoutCmd implements CommandExecutor{
 
         String the_message = gm + mvp + dmvp + clan + "" + TheWalls.teamChatColors[twp.playerState.ordinal()]+ ((Player)sender).getDisplayName() + ChatColor.GOLD + " YELLS out " + ChatColor.WHITE + message;
 
-        Bukkit.broadcastMessage(the_message);
+        Bukkit.getOnlinePlayers().forEach(all -> all.sendMessage(the_message));
         return true;
     }
 
@@ -130,7 +129,7 @@ public class ShoutCmd implements CommandExecutor{
 
         String the_message = gm + mvp + dmvp + clan + "" + TheWalls.teamChatColors[twp.playerState.ordinal()]+ twp.username + ChatColor.GOLD + " YELLS out " + ChatColor.WHITE + message;
 
-        Bukkit.broadcastMessage(the_message);
+        Bukkit.getOnlinePlayers().forEach(all -> all.sendMessage(the_message));
 
     }
 }

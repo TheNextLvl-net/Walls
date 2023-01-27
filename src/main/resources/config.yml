@@ -11,12 +11,6 @@ preGameAutoStartPlayers: 11
 preGameAutoStartSeconds: 120
 wallsAdvert: 
 # --------------------------------------
-# cpsTrigger is the milliseconds between each hit before it will trigger a monitor (60 = 17 clicks per second, smaller number = higher CPS)
-cpsTrigger: 70
-# if the cpsTrigger is triggered, it will look at how long since the last one.. if less than cpsRepeatCancelTrigger (milliseconds)  it'll cancel the hit. (includes right clicks - for breezily bridging) 
-cpsRepeatCancelTrigger: 500
-# --------------------------------------
-
 # tournamentMode true will prevent "autostart happening" requires an op / admin to start the game.
 tournamentMode: false
 # --------------------------------------

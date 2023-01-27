@@ -26,82 +26,79 @@ public class GameStarter {
             numberAddedToTeam[i] = 0;
         }
 
-        Map<UUID, PlayerState> assignedPlayers = new HashMap<UUID, PlayerState>();
+        Map<UUID, PlayerState> assignedPlayers = new HashMap<>();
 
         BasicPlayerKit basicKit = new BasicPlayerKit();
         VipStartPlayerKitPerks vipPerks = new VipStartPlayerKitPerks();
         ProStartPlayerKitPerks proPerks = new ProStartPlayerKitPerks();
 
 
-        synchronized (players) {
-            for (UUID pUID : players.keySet()) {
+        for (UUID pUID : players.keySet()) {
 
-                Player p = Bukkit.getPlayer(pUID);
-                if (p != null) {
+            Player p = Bukkit.getPlayer(pUID);
+            if (p != null) {
 
-                    p.closeInventory();
-                    p.getInventory().clear();
+                p.closeInventory();
+                p.getInventory().clear();
 
-                    basicKit.givePlayerKit(p);
+                basicKit.givePlayerKit(p);
 
-                    p.setFallDistance(0f);
+                p.setFallDistance(0f);
 
-                    WallsPlayer tempWallsPlayer = players.get(pUID);
+                WallsPlayer tempWallsPlayer = players.get(pUID);
 
-                    switch (tempWallsPlayer.playerState) {
-                        case SPEC:
-                            int rand = GameStarter.getSmallestTeam(myWalls);
-                            if (TheWalls.debugMode) myWalls.getLogger().info("creating random for team " + rand);
-                            assignedPlayers.put(pUID, PlayerState.values()[rand]);
-                            p.teleport(TheWalls.spawns.get(rand));
-                            p.sendMessage(TheWalls.chatPrefix + "you have been assigned to " + TheWalls.teamsNames[rand]);
-                            break;
-                        case TEAM1:
-                            p.teleport(TheWalls.team1Spawn);
-                            myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.TEAM1);
+                switch (tempWallsPlayer.playerState) {
+                    case SPECTATORS:
+                        int rand = GameStarter.getSmallestTeam(myWalls);
+                        if (TheWalls.debugMode) myWalls.getLogger().info("creating random for team " + rand);
+                        assignedPlayers.put(pUID, PlayerState.values()[rand]);
+                        p.teleport(TheWalls.spawns.get(rand));
+                        p.sendMessage(TheWalls.chatPrefix + "you have been assigned to " + TheWalls.teamsNames[rand]);
+                        break;
+                    case RED:
+                        p.teleport(TheWalls.team1Spawn);
+                        myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.RED);
 
-                            break;
-                        case TEAM2:
-                            p.teleport(TheWalls.team2Spawn);
-                            myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.TEAM2);
+                        break;
+                    case YELLOW:
+                        p.teleport(TheWalls.team2Spawn);
+                        myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.YELLOW);
 
-                            break;
-                        case TEAM3:
-                            p.teleport(TheWalls.team3Spawn);
-                            myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.TEAM3);
+                        break;
+                    case GREEN:
+                        p.teleport(TheWalls.team3Spawn);
+                        myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.GREEN);
 
-                            break;
-                        case TEAM4:
-                            p.teleport(TheWalls.team4Spawn);
-                            myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.TEAM4);
+                        break;
+                    case BLUE:
+                        p.teleport(TheWalls.team4Spawn);
+                        myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.BLUE);
 
-                            break;
+                        break;
 
-                        default:
-                            break;
+                    default:
+                        break;
 
-                    }
-
-                    if (myWalls.isPRO(pUID)) {
-                        proPerks.givePlayerKit(p);
-                        if (TheWalls.debugMode)
-                            myWalls.getLogger().info("Gave PRO + stuff to player " + pUID.toString());
-                    } else if (myWalls.isVIP(pUID)) {
-                        vipPerks.givePlayerKit(p);
-                        if (TheWalls.debugMode)
-                            myWalls.getLogger().info("Gave VIP + stuff to player " + pUID.toString());
-                    }
-
-                    myWalls.playerScoreBoard.setScoreBoard(pUID);
                 }
 
+                if (myWalls.isPRO(pUID)) {
+                    proPerks.givePlayerKit(p);
+                    if (TheWalls.debugMode)
+                        myWalls.getLogger().info("Gave PRO + stuff to player " + pUID.toString());
+                } else if (myWalls.isVIP(pUID)) {
+                    vipPerks.givePlayerKit(p);
+                    if (TheWalls.debugMode)
+                        myWalls.getLogger().info("Gave VIP + stuff to player " + pUID.toString());
+                }
+
+                myWalls.playerScoreBoard.setScoreBoard(pUID);
             }
 
-            for (UUID pUID : assignedPlayers.keySet()) {
-                WallsPlayer twp = players.get(pUID);
-                twp.playerState = assignedPlayers.get(pUID);
-                players.put(pUID, twp);
-                myWalls.playerScoreBoard.addPlayerToTeam(pUID, twp.playerState);
+            for (UUID uuid : assignedPlayers.keySet()) {
+                WallsPlayer twp = players.get(uuid);
+                twp.playerState = assignedPlayers.get(uuid);
+                players.put(uuid, twp);
+                myWalls.playerScoreBoard.addPlayerToTeam(uuid, twp.playerState);
             }
         }
 
@@ -109,11 +106,7 @@ public class GameStarter {
         GameNotifications.broadcastMessage(TheWalls.peaceTimeMins + " minutes until the wall drops! " + ChatColor.BOLD + "GOOD LUCK EVERYONE!");
 
         myWalls.kickOffCompassThread();
-        GameNotifications.broadcastMessage("Enemy Finder 3000 Compass now activated.");
-
-        myWalls.getLogger().info("++==============================================++");
-        myWalls.getLogger().info(TheWalls.chatPrefix + " GAME STARTING - PEACE TIME !");
-        myWalls.getLogger().info("++==============================================++");
+        GameNotifications.broadcastMessage("Enemy Finder Compass now activated.");
 
 
         if (TheWalls.diamondONLY) {

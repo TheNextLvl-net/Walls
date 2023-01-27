@@ -13,17 +13,20 @@ import java.util.UUID;
 public class PlayerScoreBoard {
 
 
-    private TheWalls myWalls;
+    private final TheWalls myWalls;
 
-    private ScoreboardManager manager;
-    private Scoreboard board;
-    private Team team1, team2, team3, team4, teamSpecs;
-    private Objective teamNumbersObjective, killsObjective, healthObjective;
+    private final Scoreboard board;
+    private final Team team1;
+    private final Team team2;
+    private final Team team3;
+    private final Team team4;
+    private final Team teamSpecs;
+    private final Objective teamNumbersObjective;
 
     public PlayerScoreBoard(TheWalls aWalls) {
         myWalls = aWalls;
 
-        manager = Bukkit.getScoreboardManager();
+        ScoreboardManager manager = Bukkit.getScoreboardManager();
         board = manager.getNewScoreboard();
 
         teamSpecs = board.registerNewTeam("Specs");
@@ -44,10 +47,10 @@ public class PlayerScoreBoard {
         teamNumbersObjective = board.registerNewObjective("The Walls", "dummy");
         teamNumbersObjective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
-        killsObjective = board.registerNewObjective(ChatColor.BOLD + "Kills", "playerKillCount");
+        Objective killsObjective = board.registerNewObjective(ChatColor.BOLD + "Kills", "playerKillCount");
         killsObjective.setDisplaySlot(DisplaySlot.PLAYER_LIST);
 
-        healthObjective = board.registerNewObjective("showhealth", "health");
+        Objective healthObjective = board.registerNewObjective("showhealth", "health");
         healthObjective.setDisplaySlot(DisplaySlot.BELOW_NAME);
         healthObjective.setDisplayName("/ 20");
 
@@ -97,33 +100,29 @@ public class PlayerScoreBoard {
 
     }
 
-    @SuppressWarnings("deprecation")
     public void updateScoreboardScores() {
-
-        teamNumbersObjective.getScore(Bukkit.getOfflinePlayer(TheWalls.teamsNames[1])).setScore(this.team1.getSize());
-        teamNumbersObjective.getScore(Bukkit.getOfflinePlayer(TheWalls.teamsNames[2])).setScore(this.team2.getSize());
-        teamNumbersObjective.getScore(Bukkit.getOfflinePlayer(TheWalls.teamsNames[3])).setScore(this.team3.getSize());
-        teamNumbersObjective.getScore(Bukkit.getOfflinePlayer(TheWalls.teamsNames[4])).setScore(this.team4.getSize());
-
+        teamNumbersObjective.getScore(TheWalls.teamsNames[1]).setScore(this.team1.getSize());
+        teamNumbersObjective.getScore(TheWalls.teamsNames[2]).setScore(this.team2.getSize());
+        teamNumbersObjective.getScore(TheWalls.teamsNames[3]).setScore(this.team3.getSize());
+        teamNumbersObjective.getScore(TheWalls.teamsNames[4]).setScore(this.team4.getSize());
     }
 
     public void addPlayerToTeam(UUID pUID, PlayerState ps) {
-
         switch (ps) {
-            case SPEC:
-                this.teamSpecs.addPlayer(Bukkit.getOfflinePlayer(pUID));
+            case SPECTATORS:
+                this.teamSpecs.addEntry(Bukkit.getOfflinePlayer(pUID).getName());
                 break;
-            case TEAM1:
-                this.team1.addPlayer(Bukkit.getOfflinePlayer(pUID));
+            case RED:
+                this.team1.addEntry(Bukkit.getOfflinePlayer(pUID).getName());
                 break;
-            case TEAM2:
-                this.team2.addPlayer(Bukkit.getOfflinePlayer(pUID));
+            case YELLOW:
+                this.team2.addEntry(Bukkit.getOfflinePlayer(pUID).getName());
                 break;
-            case TEAM3:
-                this.team3.addPlayer(Bukkit.getOfflinePlayer(pUID));
+            case GREEN:
+                this.team3.addEntry(Bukkit.getOfflinePlayer(pUID).getName());
                 break;
-            case TEAM4:
-                this.team4.addPlayer(Bukkit.getOfflinePlayer(pUID));
+            case BLUE:
+                this.team4.addEntry(Bukkit.getOfflinePlayer(pUID).getName());
                 break;
         }
         updateScoreboardScores();
@@ -135,8 +134,7 @@ public class PlayerScoreBoard {
     }
 
     public void removePlayerFromTeam(UUID pUID) {
-        if (board.getPlayerTeam(Bukkit.getOfflinePlayer(pUID)) != null) {
-            board.getPlayerTeam(Bukkit.getOfflinePlayer(pUID)).removePlayer(Bukkit.getOfflinePlayer(pUID));
-        }
+        Team team = board.getTeam(Bukkit.getOfflinePlayer(pUID).getName());
+        if (team != null) team.removeEntry(Bukkit.getOfflinePlayer(pUID).getName());
     }
 }

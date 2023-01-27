@@ -25,7 +25,7 @@ public class SpecPlayerKit {
     private final ItemMeta snowForce;
     private final ItemMeta skull;
 
-    private TheWalls myWalls;
+    private final TheWalls myWalls;
     
     public SpecPlayerKit(TheWalls wallsPlugin){
         

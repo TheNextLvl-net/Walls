@@ -38,19 +38,19 @@ public class SpawnCmd implements CommandExecutor{
         WallsPlayer twp = myWalls.getWallsPlayer(player.getUniqueId());
 
         switch (twp.playerState){
-        case TEAM1:
+        case RED:
             player.teleport(TheWalls.team1Spawn);
             break;
-        case TEAM2:
+        case YELLOW:
             player.teleport(TheWalls.team2Spawn);
             break;
-        case TEAM3:
+        case GREEN:
             player.teleport(TheWalls.team3Spawn);
             break;
-        case TEAM4:
+        case BLUE:
             player.teleport(TheWalls.team4Spawn);            
             break;
-        case SPEC:
+        case SPECTATORS:
             return true;
         }
         

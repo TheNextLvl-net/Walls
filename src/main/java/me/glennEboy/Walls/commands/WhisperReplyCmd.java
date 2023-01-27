@@ -1,18 +1,15 @@
 package me.glennEboy.Walls.commands;
 
-import java.util.logging.Level;
-
 import me.glennEboy.Walls.TheWalls;
-import me.glennEboy.Walls.TheWalls.WallsPlayer;
 import me.glennEboy.Walls.utils.GameNotifications;
-
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+
+import java.util.logging.Level;
 
 public class WhisperReplyCmd implements CommandExecutor{
     
@@ -22,7 +19,7 @@ public class WhisperReplyCmd implements CommandExecutor{
         myWalls=tw;
     }
 
-    private String whisperFormat = ChatColor.GOLD+""+ChatColor.BOLD+"{"+ChatColor.RESET+"PM: "+ChatColor.GRAY+"<sender>"+ChatColor.RESET+""+ChatColor.GOLD+"}"+ChatColor.RESET+" <message>";
+    private final String whisperFormat = ChatColor.GOLD+""+ChatColor.BOLD+"{"+ChatColor.RESET+"PM: "+ChatColor.GRAY+"<sender>"+ChatColor.RESET+""+ChatColor.GOLD+"}"+ChatColor.RESET+" <message>";
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
@@ -47,8 +44,8 @@ public class WhisperReplyCmd implements CommandExecutor{
 
             if (p != null) {
                 final StringBuilder whisper = new StringBuilder();
-                for (int x = 0; x < args.length; x++) {
-                    whisper.append(args[x]).append(" ");
+                for (String arg : args) {
+                    whisper.append(arg).append(" ");
                 }
                 whisper.setLength(whisper.length() - 1);
                 

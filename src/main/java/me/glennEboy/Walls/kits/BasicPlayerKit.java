@@ -16,7 +16,7 @@ public class BasicPlayerKit {
     public BasicPlayerKit(){
 
         this.compass = Bukkit.getServer().getItemFactory().getItemMeta(Material.COMPASS);
-        this.compass.setDisplayName("Enemy Finder 3000");
+        this.compass.setDisplayName("Enemy Finder");
         
     }
     
