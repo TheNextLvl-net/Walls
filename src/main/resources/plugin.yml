@@ -2,7 +2,7 @@ name: "TheWalls"
 authors: ["NonSwag", "glennEboy"]
 version: "2.0"
 description: "An updated version of the original"
-main: "me.glennEboy.Walls.TheWalls"
+main: "net.nonswag.fvr.walls.Walls"
 website: "https://www.thenextlvl.net"
 commands:
   clan:
@@ -44,12 +44,6 @@ commands:
   surface:
     description: tp to the surface
     usage: /surface
-  team:
-    description: Select a team from 1-4
-    usage: /team [1-4]
-  teamlist:
-    description: Show team list from 1-4
-    usage: /teamlist [1-4]
   tell:
     description: Tell command
     usage: /tell message
