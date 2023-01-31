@@ -36,8 +36,8 @@ public class CornerCmd implements CommandExecutor {
         Location corner;
         corner = Walls.corners.get(twp.playerState.ordinal());
         final Location loc = new Location(
-                Bukkit.getServer().getWorld("world"), corner.getBlockX(),
-                Bukkit.getServer().getWorld("world").getHighestBlockYAt(corner.getBlockX(), corner.getBlockZ()),
+                Bukkit.getServer().getWorld(Walls.levelName), corner.getBlockX(),
+                Bukkit.getServer().getWorld(Walls.levelName).getHighestBlockYAt(corner.getBlockX(), corner.getBlockZ()),
                 corner.getBlockZ());
         if (loc.getY() > Walls.buildHeight) {
             player.sendMessage(ChatColor.RED + "Surface is too high! Can't teleport here :(");

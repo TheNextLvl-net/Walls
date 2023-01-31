@@ -44,7 +44,7 @@ public class ShoutCmd implements CommandExecutor{
         if (!this.yells.containsKey(commandPlayer.getUniqueId()) && myWalls.isVIP(commandPlayer.getUniqueId())) {
             this.yells.put(commandPlayer.getUniqueId(), 0);
         } else {
-            if (!myWalls.isStaff(commandPlayer.getUniqueId()) && !sender.isOp() && !twp.legendary && !twp.youtuber) {
+            if (!myWalls.isStaff(commandPlayer.getUniqueId()) && !sender.isOp() && !twp.legendary) {
                 if (twp.pro) {
                     int num = this.yells.get(commandPlayer.getUniqueId());
                     num = num + 1;

@@ -233,7 +233,7 @@ public class WallsCmd implements CommandExecutor {
     private void setPlayerJoinRestriction(CommandSender sender, String[] args) {
         if (sender.isOp()) {
             if (args.length < 2) {
-                sender.sendMessage("/walls restricted ANYONE, VIP, PRO, LEGENDARY, STAFF, YOUTUBER ");
+                sender.sendMessage("/walls restricted ANYONE, VIP, PRO, LEGENDARY, STAFF");
                 return;
             }
             try {

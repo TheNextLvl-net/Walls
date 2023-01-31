@@ -113,9 +113,6 @@ public class DatabaseUtil extends Thread {
                 if (resultSet.getInt("owner") == 1) {
                     wallsPlayer.owner = true;
                 }
-                if (resultSet.getInt("youtuber") == 1) {
-                    wallsPlayer.youtuber = true;
-                }
                 wallsPlayer.clan = resultSet.getString("guild");
                 wallsPlayer.coins = resultSet.getInt("butter_coins");
             } else {

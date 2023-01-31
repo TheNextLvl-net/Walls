@@ -25,8 +25,6 @@ public class PlayerChatHandler {
             rank = "§0[§cOWNER§0]";
         } else if (twp.admin) {
             rank = "§c[ADMIN]";
-        } else if (twp.youtuber) {
-            rank = "§8[§7You§cTube§8]";
         } else if (twp.mgm) {
             rank = "§6[MGM]";
         } else if (twp.gm) {

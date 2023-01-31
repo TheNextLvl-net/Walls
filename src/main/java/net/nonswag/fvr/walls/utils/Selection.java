@@ -1,5 +1,6 @@
 package net.nonswag.fvr.walls.utils;
 
+import net.nonswag.fvr.walls.Walls;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -105,7 +106,7 @@ public class Selection {
         max.put("z", String.valueOf(this.maxZ));
         dataJSON.put("min", min);
         dataJSON.put("max", max);
-        dataJSON.put("world", this.world);
+        dataJSON.put(Walls.levelName, this.world);
         return dataJSON;
     }
 

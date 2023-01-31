@@ -1,20 +1,15 @@
 # TheWalls
-ServerNumber: 1
-host: 127.0.0.1
-port: 3306
-username: username
-password: password
-database: wallsTable
 Language: en
 peaceTimeMins: 15
-preGameAutoStartPlayers: 11
+preGameAutoStartPlayers: 4
 preGameAutoStartSeconds: 120
+reloadTime: 90
 wallsAdvert: 
 # --------------------------------------
 # tournamentMode true will prevent "autostart happening" requires an op / admin to start the game.
 tournamentMode: false
 # --------------------------------------
-# 0-ANYONE, 1-VIP, 2-PRO, 3-LEGENDARY, 4-STAFF, 5-YOUTUBER 
+# 0-ANYONE, 1-VIP, 2-PRO, 3-LEGENDARY, 4-STAFF
 playerJoinRestriction: ANYONE
 allowPickTeams: true
 # --------------------------------------

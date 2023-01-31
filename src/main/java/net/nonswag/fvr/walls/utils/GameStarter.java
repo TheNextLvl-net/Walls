@@ -103,6 +103,7 @@ public class GameStarter {
         }
 
         myWalls.setGameState(GameState.PEACETIME);
+        Bukkit.getWorlds().forEach(world -> world.setGameRuleValue("doDaylightCycle", "true"));
         Notifier.broadcast(Walls.peaceTimeMins + " minutes until the wall drops! " + ChatColor.BOLD + "GOOD LUCK EVERYONE!");
 
         myWalls.kickOffCompassThread();

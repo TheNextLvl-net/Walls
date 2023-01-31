@@ -2,6 +2,8 @@ package net.nonswag.fvr.walls;
 
 import me.filoghost.holographicdisplays.api.HolographicDisplaysAPI;
 import me.filoghost.holographicdisplays.api.hologram.Hologram;
+import net.nonswag.core.api.file.formats.PropertiesFile;
+import net.nonswag.core.api.math.MathUtil;
 import net.nonswag.fvr.walls.commands.*;
 import net.nonswag.fvr.walls.kits.SpecPlayerKit;
 import net.nonswag.fvr.walls.utils.*;
@@ -33,9 +35,12 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
-import java.lang.Math;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
-
 
 public class Walls extends JavaPlugin implements Listener {
 
@@ -53,7 +58,6 @@ public class Walls extends JavaPlugin implements Listener {
         public boolean legendary = false;
         public boolean admin = false;
         public boolean owner = false;
-        public boolean youtuber = false;
         public boolean clanLeader = false;
         public boolean compassPointsToEnemy = true;
         public int statsKills = 0;
@@ -70,7 +74,7 @@ public class Walls extends JavaPlugin implements Listener {
     public static final String STAFFCHATT_PREFIX = ChatColor.RED + "[" + ChatColor.AQUA + "StaffChat" + ChatColor.RED + "] ";
     public static final String CLANCHAT_PREFIX = ChatColor.RED + "[" + ChatColor.DARK_AQUA + "??" + ChatColor.RED + "] ";
     public static final String OPCHAT_PREFIX = ChatColor.RED + "[" + ChatColor.RED + "OPCHAT" + ChatColor.RED + "] ";
-    public static String[] teamsNames = {ChatColor.LIGHT_PURPLE + "Spectators", ChatColor.RED + "Red", ChatColor.YELLOW + "Yellow", ChatColor.GREEN + "Green", ChatColor.BLUE + "Blue"};
+    public static String[] teamsNames = {ChatColor.LIGHT_PURPLE + "Specs", ChatColor.RED + "Team 1", ChatColor.YELLOW + "Team 2", ChatColor.GREEN + "Team 3", ChatColor.BLUE + "Team 4"};
     public static ChatColor[] teamChatColors = {ChatColor.LIGHT_PURPLE, ChatColor.RED, ChatColor.YELLOW, ChatColor.GREEN, ChatColor.BLUE};
 
     private final Map<UUID, Integer> mutedPlayers = new HashMap<>();
@@ -87,6 +91,12 @@ public class Walls extends JavaPlugin implements Listener {
     public static final List<String> teamCaptains = new ArrayList<>();
 
     public static String logPlayer = null;
+    public static final String levelName;
+
+    static {
+        PropertiesFile properties = new PropertiesFile("server.properties");
+        levelName = properties.getRoot().getString("level-name");
+    }
 
 
     public static Location gameSpawn;
@@ -109,7 +119,7 @@ public class Walls extends JavaPlugin implements Listener {
 
     public enum PlayerState {SPECTATORS, RED, YELLOW, GREEN, BLUE}
 
-    public enum PlayerJoinType {ANYONE, VIP, PRO, LEGENDARY, STAFF, YOUTUBER}
+    public enum PlayerJoinType {ANYONE, VIP, PRO, LEGENDARY, STAFF}
 
     private final List<Material> allowedFoods = new ArrayList<>();
     private final List<EntityType> allowedMobs = new ArrayList<>();
@@ -122,8 +132,8 @@ public class Walls extends JavaPlugin implements Listener {
     public static boolean debugMode = false;
     public static boolean UHC = false;
     public static int peaceTimeMins = 15;
-    public static int preGameAutoStartPlayers = 11;
-    public static int preGameAutoStartSeconds = 120;
+    public static int preGameAutoStartPlayers = 4;
+    public static int preGameAutoStartSeconds = 30;
     public static PlayerJoinType playerJoinRestriction = PlayerJoinType.ANYONE;
     public static boolean fullDiamond = false;
     public static boolean diamondONLY = false;
@@ -135,7 +145,6 @@ public class Walls extends JavaPlugin implements Listener {
     public static boolean shhhhh = false;
     public static String advert = null;
     public static String clans = "";
-    public static int MaxAllowedCPS = 25;
     public static int combatLogTimeInSeconds = 7;
     private final int restartTimer = 15;
     public boolean starting = false;
@@ -165,6 +174,12 @@ public class Walls extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
 
+        Bukkit.getWorlds().forEach(world -> {
+            world.setGameRuleValue("doFireTick", "false");
+            world.setGameRuleValue("doDaylightCycle", "false");
+            world.setTime(1000);
+        });
+
         Walls.debugMode = this.getConfig().getBoolean("debugMode");
         Walls.UHC = this.getConfig().getBoolean("UHCMode");
         Walls.peaceTimeMins = this.getConfig().getInt("peaceTimeMins");
@@ -179,7 +194,6 @@ public class Walls extends JavaPlugin implements Listener {
         Walls.tournamentMode = this.getConfig().getBoolean("tournamentMode");
         Walls.playerJoinRestriction = PlayerJoinType.valueOf(this.getConfig().getString("playerJoinRestriction"));
         Walls.allowPickTeams = this.getConfig().getBoolean("allowPickTeams");
-        Walls.MaxAllowedCPS = this.getConfig().getInt("MaxAllowedCPS");
         Walls.combatLogTimeInSeconds = this.getConfig().getInt("combatLogTimeInSeconds");
 
 
@@ -283,11 +297,38 @@ public class Walls extends JavaPlugin implements Listener {
         if (Walls.advert != null && !Walls.advert.equals("")) {
             this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> Bukkit.getServer().getLogger().info(advert), 20L * 40, 20L * 240);
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
     @Override
     public void onDisable() {
         this.clock.interrupt();
+        shutdown();
+    }
+
+    private void shutdown() {
+        try {
+            File worlds = Bukkit.getWorldContainer();
+            File[] files = new File(worlds, "Templates").listFiles();
+            if (files == null) throw new FileNotFoundException("Found no worlds to pick from");
+            File file = files[MathUtil.randomInteger(0, files.length - 1)];
+            File current = new File(worlds, levelName);
+            delete(current);
+            Files.copy(file.toPath(), current.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("Selected a new map: " + file.getName());
+        } catch (IOException e) {
+            System.err.println("Failed to select a random map, You have to do it manually");
+            e.printStackTrace();
+        }
+    }
+
+    private void delete(File file) throws IOException {
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            if (files != null) for (File all : files) delete(all);
+        }
+        Files.deleteIfExists(file.toPath());
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -449,11 +490,6 @@ public class Walls extends JavaPlugin implements Listener {
                         break;
                     case STAFF:
                         if (!this.isStaff(event.getPlayer().getUniqueId())) {
-                            kick = true;
-                        }
-                        break;
-                    case YOUTUBER:
-                        if (tWP != null && !tWP.youtuber && !event.getPlayer().isOp()) {
                             kick = true;
                         }
                         break;
@@ -648,14 +684,14 @@ public class Walls extends JavaPlugin implements Listener {
 
                 if (!this.isSpec(event.getPlayer().getUniqueId())) {
 
-                    if (!Walls.tournamentMode && this.inCombat.containsKey(event.getPlayer().getUniqueId())) {
+                    if (this.inCombat.containsKey(event.getPlayer().getUniqueId())) {
                         Notifier.broadcast(event.getPlayer().getDisplayName() + " just left while in combat. (Grab their stuff! x:"
                                 + event.getPlayer().getLocation().getBlockX()
                                 + " y:" + event.getPlayer().getLocation().getBlockY()
                                 + " z:" + event.getPlayer().getLocation().getBlockZ() + ")");
                         for (final ItemStack item : event.getPlayer().getInventory()) {
                             if (item != null) {
-                                Walls.this.getServer().getWorld("world").dropItemNaturally(event.getPlayer().getLocation(), item);
+                                Walls.this.getServer().getWorld(Walls.levelName).dropItemNaturally(event.getPlayer().getLocation(), item);
                             }
                         }
 
@@ -731,7 +767,7 @@ public class Walls extends JavaPlugin implements Listener {
                                     if (!Walls.this.getServer().getOfflinePlayer(event.getPlayer().getUniqueId()).isOnline()) {
                                         for (final ItemStack item : Walls.this.inventory.get(event.getPlayer().getUniqueId())) {
                                             if (item != null) {
-                                                Walls.this.getServer().getWorld("world").dropItemNaturally(event.getPlayer().getLocation(), item);
+                                                Walls.this.getServer().getWorld(Walls.levelName).dropItemNaturally(event.getPlayer().getLocation(), item);
                                             }
                                         }
                                         Notifier.broadcast("Yup " + event.getPlayer().getDisplayName()
@@ -945,9 +981,7 @@ public class Walls extends JavaPlugin implements Listener {
                 if (entityDamager instanceof Player) {
                     Player damager = (Player) entityDamager;
                     if (damager.getInventory().getItemInHand().getType() == Material.SNOW_BALL) {
-
                         damager.setHealth(20);
-                        event.getEntity().getWorld().playEffect(event.getEntity().getLocation(), Effect.STEP_SOUND, Material.REDSTONE_BLOCK);
                     } else {
                         event.setCancelled(true);
                     }
@@ -1836,7 +1870,7 @@ public class Walls extends JavaPlugin implements Listener {
 
 
     public void dropWalls() {
-
+        Bukkit.getWorlds().forEach(world -> world.setGameRuleValue("doFireTick", "true"));
         Notifier.broadcast("Get ready to kill your enemy!");
         this.gameState = GameState.FIGHTING;
 
@@ -1844,7 +1878,7 @@ public class Walls extends JavaPlugin implements Listener {
         final List<Selection> toRemove = new ArrayList<>();
         for (final Selection s : this.selections) {
             if (s.getType() == 1) {
-                s.remove(this.getServer().getWorld("world"));
+                s.remove(this.getServer().getWorld(Walls.levelName));
                 toRemove.add(s);
             }
         }
@@ -1860,7 +1894,6 @@ public class Walls extends JavaPlugin implements Listener {
                 Walls.this.leprechaunOwners.clear();
                 Notifier.broadcast("Leprechaun kit just lost power :(");
             }
-
         }, 1800 * 20);
     }
 
@@ -2036,94 +2069,94 @@ public class Walls extends JavaPlugin implements Listener {
     public final void defineArena() {
 
         Selection c;
-        c = new Selection(this.getServer().getWorld("world").getName());
+        c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         c.setPointA(-160, 0, -29);
         c.setPointB(-15, 0, 117);
         this.cuboids.add(c);
 
-        c = new Selection(this.getServer().getWorld("world").getName());
+        c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         c.setPointA(-160, 0, 285);
         c.setPointB(-15, 0, 142);
         this.cuboids.add(c);
 
-        c = new Selection(this.getServer().getWorld("world").getName());
+        c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         c.setPointA(155, 0, 287);
         c.setPointB(10, 0, 142);
         this.cuboids.add(c);
 
-        c = new Selection(this.getServer().getWorld("world").getName());
+        c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         c.setPointA(159, 0, -31);
         c.setPointB(10, 0, 117);
         this.cuboids.add(c);
 
 //        // Ice center
-//        this.center = new Selection(this.getServer().getWorld("world").getName());
+//        this.center = new Selection(this.getServer().getWorld(Walls.levelName).getName());
 //        this.center.setPointA(0, 65, 127);
 //        this.center.setPointB(-5, 82, 132);
 //
 //        // Arena
-//        this.arena = new Selection(this.getServer().getWorld("world").getName());
+//        this.arena = new Selection(this.getServer().getWorld(Walls.levelName).getName());
 //        this.arena.setPointA(-141, 0, -9);// lower left corner
 //        this.arena.setPointB(136, buildHeight, 268);// upper right corner
 
         Selection s;
 
         // Lobby
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(-20, 198, 112);// lower left corner
         s.setPointB(15, 204, 147);// upper right corner
         this.selections.add(s);
 
         // Logo
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(42, 186, 130);// lower left corner
         s.setPointB(-52, 168, 129);// upper right corner
         this.selections.add(s);
 
         // walls
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(-14, 129, -10);// lower left corner
         s.setPointB(-14, 62, 118);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(9, 129, -10);// lower left corner
         s.setPointB(9, 62, 118);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(10, 129, 118);// lower left corner
         s.setPointB(137, 62, 118);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(10, 129, 141);// lower left corner
         s.setPointB(137, 62, 141);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(9, 129, 141);// lower left corner
         s.setPointB(9, 62, 269);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(-14, 129, 141);// lower left corner
         s.setPointB(-14, 62, 269);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(-15, 129, 141);// lower left corner
         s.setPointB(-142, 62, 141);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(-15, 129, 118);// lower left corner
         s.setPointB(-142, 62, 118);// upper right corner
         s.setType(1);
@@ -2131,22 +2164,22 @@ public class Walls extends JavaPlugin implements Listener {
 
         // Starting pads
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(-156, 77, -26);// lower left corner
         s.setPointB(-135, 62, -3);// upper right corner
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(150, 85, -23);// lower left corner
         s.setPointB(131, 62, -4);// upper right corner
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(152, 77, 284);// lower left corner
         s.setPointB(131, 62, 263);// upper right corner
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld("world").getName());
+        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         s.setPointA(-155, 77, 283);// lower left corner
         s.setPointB(-135, 62, 263);// upper right corner
         this.selections.add(s);
@@ -2300,7 +2333,6 @@ public class Walls extends JavaPlugin implements Listener {
 
                             }
                         }
-
                     }
                 }
             }
