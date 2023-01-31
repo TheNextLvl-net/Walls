@@ -39,7 +39,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class Walls extends JavaPlugin implements Listener {
@@ -298,29 +297,53 @@ public class Walls extends JavaPlugin implements Listener {
             this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> Bukkit.getServer().getLogger().info(advert), 20L * 40, 20L * 240);
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+        Runtime.getRuntime().addShutdownHook(new Thread(this::freeSpace));
     }
 
     @Override
     public void onDisable() {
         this.clock.interrupt();
-        shutdown();
+        selectMap();
     }
 
-    private void shutdown() {
+    private void selectMap() {
         try {
             File worlds = Bukkit.getWorldContainer();
             File[] files = new File(worlds, "Templates").listFiles();
             if (files == null) throw new FileNotFoundException("Found no worlds to pick from");
-            File file = files[MathUtil.randomInteger(0, files.length - 1)];
-            File current = new File(worlds, levelName);
-            delete(current);
-            Files.copy(file.toPath(), current.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            File file = randomFile(files);
+            changeLevelName(file.getName());
+            Files.copy(file.toPath(), worlds.toPath().resolve(file.getName()));
             System.out.println("Selected a new map: " + file.getName());
         } catch (IOException e) {
             System.err.println("Failed to select a random map, You have to do it manually");
             e.printStackTrace();
         }
+    }
+
+    private void freeSpace() {
+        try {
+            delete(new File(Bukkit.getWorldContainer(), levelName));
+            System.out.println("Freed up space used by: " + levelName);
+        } catch (IOException e) {
+            System.err.println("Failed to delete the old map, You have to do it manually");
+            e.printStackTrace();
+        }
+    }
+
+    private File randomFile(File[] files) {
+        File file;
+        int cap = 0;
+        do {
+            file = files[MathUtil.randomInteger(0, files.length - 1)];
+        } while (levelName.equals(file.getName()) && cap++ < 5);
+        return file;
+    }
+
+    private void changeLevelName(String name) {
+        PropertiesFile properties = new PropertiesFile("server.properties");
+        properties.getRoot().set("level-name", name);
+        properties.save();
     }
 
     private void delete(File file) throws IOException {
