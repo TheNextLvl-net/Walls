@@ -91,6 +91,8 @@ public class Walls extends JavaPlugin implements Listener {
 
     public static String logPlayer = null;
     public static final String levelName;
+    private static String nextMap;
+    public static final String DISCORD = "https://discord.gg/vpAgZxQ";
 
     static {
         PropertiesFile properties = new PropertiesFile("server.properties");
@@ -296,35 +298,45 @@ public class Walls extends JavaPlugin implements Listener {
         if (Walls.advert != null && !Walls.advert.equals("")) {
             this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> Bukkit.getServer().getLogger().info(advert), 20L * 40, 20L * 240);
         }
-
-        Runtime.getRuntime().addShutdownHook(new Thread(this::freeSpace));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            changeLevelName(nextMap);
+            freeUpSpace();
+        }));
+        nextMap = selectNextMap();
     }
 
     @Override
     public void onDisable() {
         this.clock.interrupt();
-        selectMap();
     }
 
-    private void selectMap() {
+    private String selectNextMap() {
         try {
             File worlds = Bukkit.getWorldContainer();
             File[] files = new File(worlds, "Templates").listFiles();
             if (files == null) throw new FileNotFoundException("Found no worlds to pick from");
             File file = randomFile(files);
-            changeLevelName(file.getName());
-            Files.copy(file.toPath(), worlds.toPath().resolve(file.getName()));
-            System.out.println("Selected a new map: " + file.getName());
+            copy(file, new File(worlds, file.getName()));
+            return file.getName();
         } catch (IOException e) {
             System.err.println("Failed to select a random map, You have to do it manually");
             e.printStackTrace();
+            return null;
         }
     }
 
-    private void freeSpace() {
+    private void copy(File source, File destination) throws IOException {
+        if (source.isDirectory()) {
+            if (!destination.mkdirs()) return;
+            File[] files = source.listFiles();
+            if (files == null) return;
+            for (File file : files) copy(file, new File(destination, file.getName()));
+        } else Files.copy(source.toPath(), destination.toPath());
+    }
+
+    private void freeUpSpace() {
         try {
             delete(new File(Bukkit.getWorldContainer(), levelName));
-            System.out.println("Freed up space used by: " + levelName);
         } catch (IOException e) {
             System.err.println("Failed to delete the old map, You have to do it manually");
             e.printStackTrace();
@@ -393,7 +405,7 @@ public class Walls extends JavaPlugin implements Listener {
         } else {
             final Player p = event.getPlayer();
 
-            Notifier.notify(p, "You Died :( RIP. Want to fly spectate /surface /spawn ? Get Walls " + ChatColor.GREEN + "VIP" + ChatColor.WHITE + " at MySite.COM");
+            Notifier.notify(p, "You Died :( RIP. Want to fly spectate /surface /spawn ? Get Walls " + ChatColor.GREEN + "VIP" + ChatColor.WHITE + " at " + Walls.DISCORD);
 
         }
     }
@@ -527,7 +539,7 @@ public class Walls extends JavaPlugin implements Listener {
 
             if (this.gameState != GameState.PREGAME) {
                 if (isSpec(event.getPlayer().getUniqueId()) && !this.isVIP(event.getPlayer().getUniqueId())) {
-                    Notifier.error(event.getPlayer(), "Sorry, the game is already in progress, you need VIP and up to spectate - www.Mysite.com/shop !");
+                    Notifier.error(event.getPlayer(), "Sorry, the game is already in progress, you need VIP and up to spectate - " + Walls.DISCORD + " !");
                     return;
                 }
             }
@@ -1780,7 +1792,7 @@ public class Walls extends JavaPlugin implements Listener {
                 Notifier.error(event.getPlayer(), ChatColor.RED + "You have reached your protection limit!");
                 Notifier.error(event.getPlayer(), ChatColor.RED + "Unprotect other owned containers");
                 if (!this.isVIP(event.getPlayer().getUniqueId())) {
-                    Notifier.notify(event.getPlayer(), ChatColor.AQUA + "VIP & PRO get more protected containers! http://www.Mysite.COM/");
+                    Notifier.notify(event.getPlayer(), ChatColor.AQUA + "VIP & PRO get more protected containers! " + Walls.DISCORD);
                 }
             }
         }

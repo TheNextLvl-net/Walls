@@ -27,7 +27,7 @@ public class SpawnCmd implements CommandExecutor {
         }
         final Player player = (Player) sender;
         if (!walls.isVIP(player.getUniqueId()) && !walls.isStaff(player.getUniqueId()) && !sender.isOp()) {
-            Notifier.error(player, "You need a rank to be able to /spawn! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at Mysite.com");
+            Notifier.error(player, "You need a rank to be able to /spawn! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " +  Walls.DISCORD);
             return true;
         }
         WallsPlayer twp = walls.getWallsPlayer(player.getUniqueId());

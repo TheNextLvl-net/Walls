@@ -33,15 +33,15 @@ public class SpecPlayerKit {
 
 
         SpecPlayerKit.book.setPages(ChatColor.DARK_PURPLE + "Welcome to The Walls" + ChatColor.BLACK + "\n------------------\nThis is a PvP Game that consists of players having 15 minutes of peaceful mode where they should get resources and forge weapons. After those 15 minutes end, The Walls will drop and the battle begins!",
-                "The last team standing wins! Keep an eye out for cool hidden treasures or watch out for harmful traps that can kill you! Have fun! Make sure to visit our website to see joinable servers and stats/forums:\n-\n" + ChatColor.BLUE + "mysite.COM", ChatColor.DARK_PURPLE + "RULES" + ChatColor.BLACK
+                "The last team standing wins! Keep an eye out for cool hidden treasures or watch out for harmful traps that can kill you! Have fun! Make sure to visit our website to see joinable servers and stats/forums:\n-\n" + ChatColor.BLUE + Walls.DISCORD, ChatColor.DARK_PURPLE + "RULES" + ChatColor.BLACK
                         + "\n--------------\n1- No swearing, flaming, ads, offensive skins\n2- No unapproved mods\n3- No exploiting\n4- Respect staff & each other\n5- No cheating\n6- Don't play against your team\n7- Have Fun!", ChatColor.DARK_GREEN + "Walls VIP Status" + ChatColor.BLACK
-                        + "\n--------------\n- Spectating games with flight\n- Joining full servers.\n- Join full teams\n- /surface command\n-Teleport during peace time\n-Get random items and 5 levels of XP on start\n- Chat Prefix\n-Can /shout (3 times)\n-Cool forum tag/color, access to VIP forums.\n Buy it at\n" + ChatColor.BLUE + "mysite.COM");
+                        + "\n--------------\n- Spectating games with flight\n- Joining full servers.\n- Join full teams\n- /surface command\n-Teleport during peace time\n-Get random items and 5 levels of XP on start\n- Chat Prefix\n-Can /shout (3 times)\n-Cool forum tag/color, access to VIP forums.\n Buy it at\n" + ChatColor.BLUE + Walls.DISCORD);
         SpecPlayerKit.book.setAuthor("TheWalls");
         SpecPlayerKit.book.setTitle("Instructions");
 
         SpecPlayerKit.vipbook = (BookMeta) Bukkit.getServer().getItemFactory().getItemMeta(Material.WRITTEN_BOOK);
         SpecPlayerKit.vipbook.setPages(ChatColor.DARK_GREEN + "Walls VIP Status" + ChatColor.BLACK + "\n---------------\n- Spectating games with flight\n- Joining full servers.\n- Join full teams\n- /surface command\n-Teleport during peace time\n-Get random items and 5 levels of XP at start\n- Chat Prefix\n-Can /shout (3 times)\n-Cool forum tag/color, access to VIP forums. Buy it at\n" + ChatColor.BLUE
-                + "mysite.COM");
+                + Walls.DISCORD);
         SpecPlayerKit.vipbook.setAuthor("My Walls");
         SpecPlayerKit.vipbook.setTitle("VIP");
 
@@ -102,10 +102,10 @@ public class SpecPlayerKit {
                     } else if (Walls.UHC) {
                         TitleManager.sendTitle(player, "§cMy UHC Walls", "§eRegen only with gold apples..");
                     } else {
-                        TitleManager.sendTitle(player, "§aMy Walls", "§eThe original");
+                        TitleManager.sendTitle(player, "§aMy Walls", "§e" + Walls.levelName);
                     }
                 }, 20);
-                Notifier.success(player, "Want to fly spectate /surface /spawn ? Get Walls " + ChatColor.GREEN + "VIP" + ChatColor.WHITE + " at Mysite.COM");
+                Notifier.success(player, "Want to fly spectate /surface /spawn ? Get Walls " + ChatColor.GREEN + "VIP" + ChatColor.WHITE + " at " + Walls.DISCORD);
                 break;
             case PEACETIME:
             case FIGHTING:

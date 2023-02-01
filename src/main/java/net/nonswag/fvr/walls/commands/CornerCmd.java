@@ -29,7 +29,7 @@ public class CornerCmd implements CommandExecutor {
         }
         Player player = (Player) sender;
         if (!myWalls.isVIP(player.getUniqueId()) && !myWalls.isStaff(player.getUniqueId()) && !sender.isOp()) {
-            Notifier.error(player, "You need a rank to be able to /corner! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at mySite.com");
+            Notifier.error(player, "You need a rank to be able to /corner! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " + Walls.DISCORD);
             return true;
         }
         WallsPlayer twp = myWalls.getWallsPlayer(player.getUniqueId());

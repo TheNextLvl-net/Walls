@@ -63,7 +63,7 @@ public class ShoutCmd implements CommandExecutor{
                         return true;
                     }
                 } else {
-                    Notifier.error(commandPlayer, "You need a rank to be able to shout! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at mySite.com");
+                    Notifier.error(commandPlayer, "You need a rank to be able to shout! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " + Walls.DISCORD);
                     return true;
                 }
             }
