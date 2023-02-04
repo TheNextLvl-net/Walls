@@ -4,6 +4,7 @@ import me.filoghost.holographicdisplays.api.HolographicDisplaysAPI;
 import me.filoghost.holographicdisplays.api.hologram.Hologram;
 import net.nonswag.core.api.file.formats.PropertiesFile;
 import net.nonswag.core.api.math.MathUtil;
+import net.nonswag.core.api.sql.Database;
 import net.nonswag.fvr.walls.commands.*;
 import net.nonswag.fvr.walls.kits.SpecPlayerKit;
 import net.nonswag.fvr.walls.utils.*;
@@ -39,6 +40,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.sql.SQLException;
 import java.util.*;
 
 public class Walls extends JavaPlugin implements Listener {
@@ -66,7 +68,6 @@ public class Walls extends JavaPlugin implements Listener {
         public int deaths = 0;
         public int minutes = 0;
         public int wins = 0;
-        public int coins = 0;
         public PlayerState playerState = PlayerState.SPECTATORS;
     }
 
@@ -164,7 +165,6 @@ public class Walls extends JavaPlugin implements Listener {
     public static final int buildHeight = 180;
     public static final int liquidBuildHeight = 170;
     public static final int coinsKillReward = 5;
-    public static final int coinsWinReward = 25;
     private static final int proCoinMultiplier = 3;
     private static final int vipCoinMultiplier = 2;
 
@@ -267,6 +267,7 @@ public class Walls extends JavaPlugin implements Listener {
 
         this.getServer().getPluginManager().registerEvents(this, this);
 
+        getCommand("ping").setExecutor(new PingCommand());
         getCommand("shout").setExecutor(new ShoutCmd(this));
         getCommand("tp").setExecutor(new TPCmd(this));
         getCommand("walls").setExecutor(new WallsCmd(this));
@@ -299,6 +300,7 @@ public class Walls extends JavaPlugin implements Listener {
             this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> Bukkit.getServer().getLogger().info(advert), 20L * 40, 20L * 240);
         }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (WallsCmd.FIX_DB) fixDatabase();
             changeLevelName(nextMap);
             freeUpSpace();
         }));
@@ -339,6 +341,17 @@ public class Walls extends JavaPlugin implements Listener {
             delete(new File(Bukkit.getWorldContainer(), levelName));
         } catch (IOException e) {
             System.err.println("Failed to delete the old map, You have to do it manually");
+            e.printStackTrace();
+        }
+    }
+
+    private void fixDatabase() {
+        try {
+            Database.getConnection().executeUpdate("DROP TABLE `paidkits`");
+            Database.getConnection().executeUpdate("DROP TABLE `accounts`");
+            Database.getConnection().executeUpdate("DROP TABLE `guilds`");
+            Database.getConnection().executeUpdate("DROP TABLE `player_stats`");
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
@@ -571,7 +584,7 @@ public class Walls extends JavaPlugin implements Listener {
 
                 if (!starting) {
 
-                    if (this.players.size() > Walls.preGameAutoStartPlayers && !Walls.clanBattle && !Walls.tournamentMode) {
+                    if (this.players.size() >= Walls.preGameAutoStartPlayers && !Walls.clanBattle && !Walls.tournamentMode) {
                         Notifier.broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + preGameAutoStartSeconds + ChatColor.WHITE + " seconds!!");
 
                         this.clock.setClock(preGameAutoStartSeconds, () -> GameStarter.startGame(Walls.this.players, Walls.this));
@@ -704,6 +717,7 @@ public class Walls extends JavaPlugin implements Listener {
     public void onPlayerQuit(final PlayerQuitEvent event) {
 
         final Player player = event.getPlayer();
+        WallsCmd.VOTES.remove(player.getUniqueId());
         final WallsPlayer twp = this.getWallsPlayer(player.getUniqueId());
 
         switch (this.gameState) {
@@ -2081,7 +2095,6 @@ public class Walls extends JavaPlugin implements Listener {
                     WallsPlayer wallsWinner = this.getWallsPlayer(winner);
                     wallsWinner.wins = 1;
                     wallsWinner.minutes = (this.clock.getSecondsRemaining() / 60);
-                    wallsWinner.coins = wallsWinner.coins + Walls.coinsWinReward;
                 }
                 this.myDB.saveAllData();
             }

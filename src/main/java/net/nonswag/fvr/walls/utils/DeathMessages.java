@@ -172,9 +172,7 @@ public class DeathMessages {
         if (wallsKiller != null) {
             int coinsEarned = (Walls.coinsKillReward * (myWalls.getCoinKillMultiplier(event.getEntity().getKiller().getUniqueId())));
             Notifier.success(killer, String.format("You killed %s and gained " + coinsEarned + " coin!", player.getName()));
-
             wallsKiller.kills = wallsKiller.kills + 1;
-            wallsKiller.coins = wallsKiller.coins + coinsEarned;
             myWalls.getAllPlayers().put(killer.getUniqueId(), wallsKiller);
         }
     }

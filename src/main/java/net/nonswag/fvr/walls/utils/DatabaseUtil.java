@@ -1,8 +1,8 @@
 package net.nonswag.fvr.walls.utils;
 
+import net.nonswag.core.api.sql.Database;
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.commands.ClanCmd;
-import net.nonswag.core.api.sql.Database;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -23,38 +23,34 @@ public class DatabaseUtil extends Thread {
     }
 
     @Override
-    @SuppressWarnings({"BusyWait", "UnusedAssignment"})
+    @SuppressWarnings("BusyWait")
     public void run() {
-        int timer = 100;
-        while (!Thread.interrupted()) {
-            try {
-                Thread.sleep(timer);
-            } catch (final InterruptedException e) {
-                break;
-            }
-
-            switch (myWalls.getGameState()) {
-                case PREGAME:
-                    timer = 100;
-                case PEACETIME:
-                case FIGHTING:
-                    timer = 600;
-                    List<UUID> doneList = new ArrayList<>();
-                    synchronized (playersToLogin) {
-                        for (UUID playerUID : this.playersToLogin.keySet()) {
-                            if (Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(playerUID))) {
-                                loadStatsPlayer(this.playersToLogin.get(playerUID), playerUID);
-                                loadStatsWalls(this.playersToLogin.get(playerUID), playerUID);
-                                loadPaidKitsForUser(playerUID);
-                                doneList.add(playerUID);
-                            }
+        try {
+            Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `paidkits` (uuid varchar(255), kitname varchar(255))");
+            Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `accounts` (username varchar(255), uuid varchar(255), pro int, vip int, gm int, mgm int, admin int, legendary int, owner int, mvplevel int, kills int, deaths int, wins int, guild varchar(255))");
+            Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `guilds` (plain varchar(255), name varchar(255), uuid varchar(255))");
+            Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `player_stats` (kills int, deaths int, win varchar(255), uuid varchar(255), username varchar(255))");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        try {
+            while (!Thread.interrupted()) {
+                Thread.sleep(600);
+                if (myWalls.getGameState().equals(Walls.GameState.FINISHED)) return;
+                synchronized (playersToLogin) {
+                    for (UUID playerUID : this.playersToLogin.keySet()) {
+                        if (Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(playerUID))) {
+                            loadStatsPlayer(this.playersToLogin.get(playerUID), playerUID);
+                            loadStatsWalls(this.playersToLogin.get(playerUID), playerUID);
+                            loadPaidKitsForUser(playerUID);
+                            playersToLogin.remove(playerUID);
                         }
                     }
-                    for (UUID a : doneList) this.playersToLogin.remove(a);
-                    break;
-                default:
-                    break;
+                }
             }
+        } catch (InterruptedException ignored) {
+            Database.disconnect();
+            System.out.println("Database was disconnected");
         }
     }
 
@@ -75,21 +71,22 @@ public class DatabaseUtil extends Thread {
     @SuppressWarnings("StringConcatenationInLoop")
     public void loadPaidKitsForUser(UUID playerUID) {
         Walls.WallsPlayer twp = myWalls.getWallsPlayer(playerUID);
-        try (ResultSet result = Database.getConnection().executeQuery("SELECT `kitname` FROM `paidkits` WHERE `uuid` = ? AND `kitname`<> ?", playerUID.toString().replace("-", ""), "pro")) {
+        try (ResultSet result = Database.getConnection().executeQuery("SELECT `kitname` FROM `paidkits` WHERE `uuid` = ? AND `kitname`<> ?", playerUID.toString(), "pro")) {
             if (result == null) return;
             while (result.next()) {
                 twp.paidKits += "," + result.getString("kitname");
             }
         } catch (final SQLException e) {
             myWalls.getLogger().warning("Failure to load paid kits: " + e.getMessage());
+            e.printStackTrace();
         }
         myWalls.getAllPlayers().put(playerUID, twp);
     }
 
     private void loadStatsPlayer(String playerName, UUID aUID) {
-        String uuid = aUID.toString().replace("-", "");
+        String uuid = aUID.toString();
         Walls.WallsPlayer wallsPlayer = this.myWalls.getAllPlayers().getOrDefault(aUID, new Walls.WallsPlayer());
-        try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE unique_id = UNHEX(?)", uuid)) {
+        try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE uuid = ?", uuid)) {
             if (resultSet == null) return;
             if (resultSet.first()) {
                 if (resultSet.getInt("vip") == 1) {
@@ -114,29 +111,30 @@ public class DatabaseUtil extends Thread {
                     wallsPlayer.owner = true;
                 }
                 wallsPlayer.clan = resultSet.getString("guild");
-                wallsPlayer.coins = resultSet.getInt("butter_coins");
             } else {
                 Database.getConnection().executeUpdate("INSERT INTO `accounts` (`username`) VALUES (?)", playerName);
             }
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to load stats: " + e.getMessage());
+            e.printStackTrace();
         }
         wallsPlayer.clanLeader = isClanOwner(uuid);
         myWalls.getAllPlayers().put(aUID, wallsPlayer);
     }
 
     private void loadStatsWalls(String playerName, UUID aUID) {
-        String tempUID = aUID.toString().replace("-", "");
+        String tempUID = aUID.toString();
         Walls.WallsPlayer wallsPlayer = this.myWalls.getAllPlayers().getOrDefault(aUID, new Walls.WallsPlayer());
         wallsPlayer.username = playerName;
         wallsPlayer.uid = tempUID;
         try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE uuid = ?", tempUID)) {
             if (resultSet == null) return;
             if (resultSet.first()) {
-                if (resultSet.getInt("mvplevel") == 1 || resultSet.getInt("mvplevel") == 3) {
+                int mvplevel = resultSet.getInt("mvplevel");
+                if (mvplevel == 1 || mvplevel == 3) {
                     wallsPlayer.nMVP = true;
                 }
-                if (resultSet.getInt("mvplevel") == 2 || resultSet.getInt("mvplevel") == 3) {
+                if (mvplevel == 2 || mvplevel == 3) {
                     wallsPlayer.dMVP = true;
                 }
                 wallsPlayer.statsKills = resultSet.getInt("kills");
@@ -147,6 +145,7 @@ public class DatabaseUtil extends Thread {
             }
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to load stats: " + e.getMessage());
+            e.printStackTrace();
         }
         myWalls.getAllPlayers().put(aUID, wallsPlayer);
     }
@@ -162,13 +161,13 @@ public class DatabaseUtil extends Thread {
             @Override
             public void run() {
                 try {
-                    Database.getConnection().executeUpdate("UPDATE `accounts` SET `kills` = `kills` + ?, `deaths` = `deaths` + ?, `playingtime` = `playingtime` + ?, `totalplays` = `totalplays` + ?, `wins` = wins + ? WHERE `uuid` = ?",
-                            wallsPlayer.kills, wallsPlayer.deaths, wallsPlayer.minutes, 1, wallsPlayer.wins, wallsPlayer.uid);
-                    Database.getConnection().executeUpdate("INSERT INTO `player_stats` (`kills`,`deaths`,`playingtime`, `win`, `uuid`, `username`) VALUES (?,?,?,?,?,?)",
-                            wallsPlayer.kills, wallsPlayer.deaths, wallsPlayer.minutes, wallsPlayer.wins, wallsPlayer.uid, wallsPlayer.username);
-                    Database.getConnection().executeUpdate("UPDATE `accounts` SET `butter_coins` = ? WHERE `uuid` = ?", wallsPlayer.coins, wallsPlayer.uid);
+                    Database.getConnection().executeUpdate("UPDATE `accounts` SET `kills` = `kills` + ?, `deaths` = `deaths` + ?, `wins` = wins + ? WHERE `uuid` = ?",
+                            wallsPlayer.kills, wallsPlayer.deaths, wallsPlayer.wins, wallsPlayer.uid);
+                    Database.getConnection().executeUpdate("INSERT INTO `player_stats` (`kills`,`deaths`, `win`, `uuid`, `username`) VALUES (?,?,?,?,?)",
+                            wallsPlayer.kills, wallsPlayer.deaths, wallsPlayer.wins, wallsPlayer.uid, wallsPlayer.username);
                 } catch (final SQLException e) {
                     DatabaseUtil.this.myWalls.getLogger().warning("Failure to save stats: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
         }.runTaskAsynchronously(this.myWalls);
@@ -211,6 +210,7 @@ public class DatabaseUtil extends Thread {
             return true;
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to disband clan by name : " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -222,6 +222,7 @@ public class DatabaseUtil extends Thread {
             return true;
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to disband clan: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -233,6 +234,7 @@ public class DatabaseUtil extends Thread {
             return true;
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to kick clan member: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -260,6 +262,7 @@ public class DatabaseUtil extends Thread {
             }
         } catch (final SQLException e) {
             this.myWalls.getLogger().warning("Failure to change clan name by staff: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -275,31 +278,33 @@ public class DatabaseUtil extends Thread {
             }
         } catch (SQLException e) {
             this.myWalls.getLogger().warning("Failure to change clan name: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
 
     public boolean setNewClanLeader(UUID clanOwner, String newClanOwnerName, UUID newClanOwner) {
-        String oldOwnerUID = clanOwner.toString().replace("-", "");
-        String newOwnerUID = newClanOwner.toString().replace("-", "");
-        try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `guilds` WHERE `uuid` = ?", oldOwnerUID)) {
-            if (resultSet == null || !resultSet.first()) return false;
+        String oldOwnerUID = clanOwner.toString();
+        String newOwnerUID = newClanOwner.toString();
+        try {
             Database.getConnection().executeUpdate("UPDATE `guilds` SET  `leader` = ?, `uuid` = ? where `uuid` = ?", newClanOwnerName, newOwnerUID, oldOwnerUID);
             return true;
         } catch (SQLException e) {
             this.myWalls.getLogger().info("Failure to set new Clan leader: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
 
     public boolean createClan(String clanName, String clanOwner, String clanOwnerUID, String plainClanName) {
         try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `guilds` WHERE `plain` = ?", plainClanName)) {
-            if (resultSet == null || !resultSet.first()) return false;
+            if (resultSet == null || !resultSet.first()) return true;
             Database.getConnection().executeUpdate("INSERT INTO `guilds` (`name`, `leader`, `uuid`, `plain`) VALUES (?,?,?,?)", clanName, clanOwner, clanOwnerUID, plainClanName);
             Database.getConnection().executeUpdate("UPDATE `accounts` SET  `guild` = ? where `uuid` = ?", clanName, clanOwnerUID);
             return this.setUsersClan(clanOwnerUID, clanName);
         } catch (SQLException e) {
             this.myWalls.getLogger().warning("Failure to create new clan: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
@@ -312,6 +317,7 @@ public class DatabaseUtil extends Thread {
             }
         } catch (SQLException e) {
             this.myWalls.getLogger().warning("Failure to load clan members: " + e.getMessage());
+            e.printStackTrace();
         }
         return clanMembers;
     }
@@ -321,6 +327,7 @@ public class DatabaseUtil extends Thread {
             return resultSet != null && resultSet.next();
         } catch (final SQLException e) {
             myWalls.getLogger().warning("Failure to find player in guilds table: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }

@@ -12,8 +12,11 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class WallsCmd implements CommandExecutor {
@@ -27,15 +30,17 @@ public class WallsCmd implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (args.length < 1) {
             if (sender instanceof Player) {
-                Notifier.error(sender, "usage: /walls stats | chat | nostaffchat | start | stop | dropwalls | vip | addplayer | pro");
-                if (sender.isOp()) {
-                    Notifier.error(sender, "usage: dropwalls | players | vip | pro | gm| mgm | admin | update | autostartplayers | peacetimemins | clanbattle | captain | restricted | diamondonly | lobbytrail");
-                }
+                Notifier.error(sender, "usage: /walls votestart | stats | chat | nostaffchat | start | stop | dropwalls | vip | addplayer | pro");
             } else sender.sendMessage("usage: /walls start | stop | dropwalls | vip | addplayer | pro");
+            if (sender.isOp()) {
+                Notifier.error(sender, "dropwalls | players | vip | pro | gm| mgm | admin | update | autostartplayers | peacetimemins | clanrename | clanbattle | captain | restricted | diamondonly | lobbytrail | fixdb");
+            }
         } else if (args[0].equalsIgnoreCase("diamondonly")) {
             if (sender.isOp()) sender.sendMessage("Set to [" + (Walls.diamondONLY = !Walls.diamondONLY) + "]");
             else Notifier.error(sender, "You have no rights to do this");
         } else if (args[0].equalsIgnoreCase("stop")) stop(sender);
+        else if (args[0].equalsIgnoreCase("fixdb")) fixdb(sender);
+        else if (args[0].equalsIgnoreCase("votestart")) votestart(sender);
         else if (args[0].equalsIgnoreCase("stats")) myStats(sender);
         else if (args[0].equalsIgnoreCase("chat")) chatListener(sender);
         else if (args[0].equalsIgnoreCase("nostaffchat")) noStaffChat(sender);
@@ -43,7 +48,7 @@ public class WallsCmd implements CommandExecutor {
         else if (args[0].equalsIgnoreCase("addplayer")) addPlayer(sender, args);
         else if (args[0].equalsIgnoreCase("silence")) silenceComand(sender);
         else if (args[0].equalsIgnoreCase("debug")) switchDebug(sender);
-        else if (args[0].equalsIgnoreCase("clan")) setClanName(sender, args);
+        else if (args[0].equalsIgnoreCase("clanrename")) setClanName(sender, args);
         else if (args[0].equalsIgnoreCase("dropwalls")) dropWalls(sender);
         else if (args[0].equalsIgnoreCase("players")) showPlayers(sender);
         else if (args[0].equalsIgnoreCase("vip")) toggleVIPStatus(sender, args);
@@ -63,6 +68,39 @@ public class WallsCmd implements CommandExecutor {
         return true;
     }
 
+    public static boolean FIX_DB = false;
+
+    private void fixdb(CommandSender sender) {
+        if (sender instanceof ConsoleCommandSender) {
+            if (FIX_DB = !FIX_DB) {
+                Notifier.error(sender, "The database structure will be recreated");
+                Notifier.error(sender, "To apply the changes you have to §4restart the server");
+                Notifier.error(sender, "Every data on the database will be §4gone forever");
+                Notifier.error(sender, "If you don't want this to happen §4execute this command again");
+            } else Notifier.success(sender, "The database will §6not§a be deleted");
+        } else Notifier.error(sender, "For security measure this can only be executed by the console");
+    }
+
+    public static final List<UUID> VOTES = new ArrayList<>();
+
+    private void votestart(CommandSender sender) {
+        if (sender instanceof Player) {
+            Player player = (Player) sender;
+            if (walls.starting) Notifier.error(player, "The game is already starting");
+            else if (!walls.getGameState().equals(Walls.GameState.PREGAME)) {
+                Notifier.error(player, "This is only possible during the lobby phase");
+            } else if (!VOTES.contains(player.getUniqueId())) {
+                Notifier.success(player, "You voted for a faster start");
+                VOTES.add(player.getUniqueId());
+                autostart();
+            } else Notifier.error(player, "You already voted for a faster start");
+        } else Notifier.notify(sender, "This is a player command");
+    }
+
+    private void autostart() {
+
+    }
+
     private void stop(CommandSender sender) {
         if (sender.isOp() || (sender instanceof Player && (walls.isMGM(((Player) sender).getUniqueId())))) {
             if (walls.getGameState() != Walls.GameState.PREGAME && walls.getGameState() != Walls.GameState.FINISHED) {
@@ -79,7 +117,6 @@ public class WallsCmd implements CommandExecutor {
         Notifier.success(sender, "Deaths: " + twp.statsDeaths);
         Notifier.success(sender, "KD: " + (float) twp.statsKills / (float) twp.statsDeaths);
         Notifier.success(sender, "Wins: " + twp.statsWins);
-        Notifier.success(sender, "Coins: " + twp.coins);
     }
 
     private void chatListener(CommandSender sender) {
@@ -156,39 +193,27 @@ public class WallsCmd implements CommandExecutor {
 
     private void setClanName(CommandSender sender, String[] args) {
         if (sender.isOp()) {
-            try {
-                @SuppressWarnings("deprecation")
-                String uidOfPlayer = Bukkit.getOfflinePlayer(args[1]).getUniqueId().toString();
-                if (args.length == 3) {
-                    if (walls.myDB.setUsersClan(uidOfPlayer, args[2])) {
-                        Player player = Bukkit.getPlayerExact(args[1]);
-                        if (player != null) {
-                            UUID pUID = player.getUniqueId();
-                            WallsPlayer twp = walls.getWallsPlayer(pUID);
-                            twp.clan = ChatColor.translateAlternateColorCodes('&', args[2]);
-                        }
-                        sender.sendMessage(ChatColor.GREEN + args[1] + " is now part of [" + ChatColor.translateAlternateColorCodes('&', args[2]) + "] clan!");
-                    } else {
-                        Notifier.success(sender, "Nope. Something went wrong there :(");
-                    }
-                } else if (args.length == 2) {
-                    if (walls.myDB.setUsersClan(args[1], null)) {
-                        Player player = Bukkit.getPlayerExact(args[1]);
-                        if (player != null) {
-                            UUID pUID = player.getUniqueId();
-                            WallsPlayer twp = walls.getWallsPlayer(pUID);
-                            twp.clan = null;
-                        }
-                        sender.sendMessage(ChatColor.GREEN + args[1] + " had their clan removed!");
-                    } else {
-                        Notifier.success(sender, "Nope. Something went wrong there :(");
-                    }
-                } else {
-                    sender.sendMessage(ChatColor.RED + "clan <ign> <clanName>");
-                }
-            } catch (Exception e) {
-                sender.sendMessage(ChatColor.RED + "Nope. That didn't work: and threw an exception :(");
-                e.printStackTrace(System.out);
+            if (args.length <= 1) {
+                Notifier.error(sender, "/walls clanrename <player> <clan name>");
+                return;
+            }
+            Player player = Bukkit.getPlayerExact(args[1]);
+            if (args.length >= 3 && player != null) {
+                if (walls.myDB.setUsersClan(player.getUniqueId().toString(), args[2])) {
+                    UUID pUID = player.getUniqueId();
+                    WallsPlayer twp = walls.getWallsPlayer(pUID);
+                    twp.clan = ChatColor.translateAlternateColorCodes('&', args[2]);
+                    sender.sendMessage(ChatColor.GREEN + args[1] + " is now part of [" + ChatColor.translateAlternateColorCodes('&', args[2]) + "] clan!");
+                } else Notifier.error(sender, "Database error");
+            } else if (args.length == 2 && player != null) {
+                if (walls.myDB.setUsersClan(args[1], null)) {
+                    UUID pUID = player.getUniqueId();
+                    WallsPlayer twp = walls.getWallsPlayer(pUID);
+                    twp.clan = null;
+                    sender.sendMessage(ChatColor.GREEN + args[1] + " had their clan removed!");
+                } else Notifier.error(sender, "Database error");
+            } else {
+                Notifier.error(sender, "/walls clanrename <player> <clan name>");
             }
         } else Notifier.error(sender, "You have no rights to do this");
     }

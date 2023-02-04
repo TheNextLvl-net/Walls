@@ -62,7 +62,7 @@ public class PlayerScoreBoard {
 
     public void updateNumberOfPlayers() {
         if (myWalls.getGameState() == GameState.PREGAME && !myWalls.starting) {
-            teamNumbersObjective.setDisplayName(((Walls.preGameAutoStartPlayers + 1) - myWalls.getNumberOfPlayers()) + " more players");
+            teamNumbersObjective.setDisplayName((Walls.preGameAutoStartPlayers - myWalls.getNumberOfPlayers()) + " more players");
         }
     }
 
@@ -81,7 +81,7 @@ public class PlayerScoreBoard {
                 } else if (time == 0) {
                     teamNumbersObjective.setDisplayName("Peace: " + Walls.peaceTimeMins + ":00");
                 } else {
-                    teamNumbersObjective.setDisplayName(((Walls.preGameAutoStartPlayers + 1) - myWalls.getNumberOfPlayers()) + " more players");
+                    teamNumbersObjective.setDisplayName((Walls.preGameAutoStartPlayers - myWalls.getNumberOfPlayers()) + " more players");
                 }
                 break;
             case PEACETIME:

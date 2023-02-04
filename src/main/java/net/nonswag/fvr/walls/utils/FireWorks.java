@@ -9,6 +9,7 @@ import org.bukkit.FireworkEffect.Type;
 import org.bukkit.Location;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.meta.FireworkMeta;
 
 import java.util.List;
@@ -27,9 +28,11 @@ public class FireWorks {
 
             for (UUID pUID : winningTeam) {
 
-                Firework fw = (Firework) Bukkit.getPlayer(pUID).getWorld().spawnEntity(new Location(Bukkit.getPlayer(pUID).getWorld(),
-                        Bukkit.getPlayer(pUID).getLocation().getBlockX(), Bukkit.getPlayer(pUID).getLocation().getBlockY(),
-                        Bukkit.getPlayer(pUID).getLocation().getBlockZ()), EntityType.FIREWORK);
+                Player player = Bukkit.getPlayer(pUID);
+                if (player == null) continue;
+                Firework fw = (Firework) player.getWorld().spawnEntity(new Location(player.getWorld(),
+                        player.getLocation().getBlockX(), player.getLocation().getBlockY(),
+                        player.getLocation().getBlockZ()), EntityType.FIREWORK);
                 FireworkMeta fwm = fw.getFireworkMeta();
 
                 Random r = new Random();

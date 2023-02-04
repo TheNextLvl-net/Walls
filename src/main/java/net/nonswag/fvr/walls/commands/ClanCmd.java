@@ -251,7 +251,7 @@ public class ClanCmd implements CommandExecutor {
                         myWalls.getWallsPlayer(player.getUniqueId()).clanLeader = false;
                         myWalls.getWallsPlayer(newLeader.getUniqueId()).clanLeader = true;
                     } else {
-                        Notifier.error(sender, "Nope. Couldn't find clan leader O_o. Let staff now pls :)");
+                        Notifier.error(sender, "Nope. Couldn't find clan leader O_o. Let staff know pls :)");
                     }
                 } else {
                     Notifier.error(sender, "Nope. Try /clan leader <IGN of NewLeader>  (New leader must be online)");
@@ -289,7 +289,7 @@ public class ClanCmd implements CommandExecutor {
                 String newName = stripSpecialClanCharacters(args[1]);
 
 
-                if (myWalls.myDB.createClan(newName, args[2], newLeader.getUniqueId().toString().replace("-", ""), ClanCmd.stripAllClanCharacters(newName))) {
+                if (myWalls.myDB.createClan(newName, args[2], newLeader.getUniqueId().toString(), ClanCmd.stripAllClanCharacters(newName))) {
                     Notifier.success(sender, args[2] + " is now leader of " + newName);
                     Notifier.success(newLeader, "You are now leader of " + newName);
                     this.setClanName(newLeader.getUniqueId(), newName);
@@ -314,7 +314,7 @@ public class ClanCmd implements CommandExecutor {
             } else {
                 String newName = stripSpecialClanCharacters(args[1]);
 
-                if (myWalls.myDB.createClan(newName, newLeader.getName(), newLeader.getUniqueId().toString().replace("-", ""), ClanCmd.stripAllClanCharacters(newName))) {
+                if (myWalls.myDB.createClan(newName, newLeader.getName(), newLeader.getUniqueId().toString(), ClanCmd.stripAllClanCharacters(newName))) {
                     Notifier.staff(this.myWalls, newLeader.getName() + " is now leader of " + newName);
                     Notifier.success(newLeader, "You are now leader of " + newName);
                     this.setClanName(newLeader.getUniqueId(), newName);
@@ -330,7 +330,7 @@ public class ClanCmd implements CommandExecutor {
     }
 
     private void setClanName(UUID uidOfPlayer, String clanName) {
-        String playerUID = uidOfPlayer.toString().replace("-", "");
+        String playerUID = uidOfPlayer.toString();
         Player player = Bukkit.getPlayer(uidOfPlayer);
         if (myWalls.myDB.setUsersClan(playerUID, clanName)) {
             if (player != null) {

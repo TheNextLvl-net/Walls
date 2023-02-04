@@ -5,6 +5,8 @@ description: "An updated version of the original"
 main: "net.nonswag.fvr.walls.Walls"
 website: "https://www.thenextlvl.net"
 commands:
+  ping:
+    usage: /ping <player>
   clan:
     description: clan management :)
     usage: /clan invite | accept | kick | leave
