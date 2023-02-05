@@ -20,10 +20,10 @@ import java.util.List;
 import java.util.UUID;
 
 public class WallsCmd implements CommandExecutor {
-    Walls walls;
+    private final Walls walls;
 
-    public WallsCmd(Walls tw) {
-        walls = tw;
+    public WallsCmd(Walls walls) {
+        this.walls = walls;
     }
 
     @Override
@@ -92,13 +92,20 @@ public class WallsCmd implements CommandExecutor {
             } else if (!VOTES.contains(player.getUniqueId())) {
                 Notifier.success(player, "You voted for a faster start");
                 VOTES.add(player.getUniqueId());
-                autostart();
+                autoStart();
             } else Notifier.error(player, "You already voted for a faster start");
         } else Notifier.notify(sender, "This is a player command");
     }
 
-    private void autostart() {
-
+    private void autoStart() {
+        if (walls.players.size() >= Walls.preGameAutoStartPlayers / 2) {
+            Notifier.broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + "30" + ChatColor.WHITE + " seconds!");
+            walls.clock.setClock(30, () -> GameStarter.startGame(walls.getAllPlayers(), walls));
+            walls.starting = true;
+        } else {
+            int players = Walls.preGameAutoStartPlayers / 2 - walls.players.size();
+            Notifier.broadcast(players + " more vote" + (players != 1 ? "s are" : " is") + " needed §8(§7/walls votestart§8)");
+        }
     }
 
     private void stop(CommandSender sender) {
@@ -115,7 +122,7 @@ public class WallsCmd implements CommandExecutor {
         WallsPlayer twp = walls.getWallsPlayer(((Player) sender).getUniqueId());
         Notifier.success(sender, "Kills: " + twp.statsKills);
         Notifier.success(sender, "Deaths: " + twp.statsDeaths);
-        Notifier.success(sender, "KD: " + (float) twp.statsKills / (float) twp.statsDeaths);
+        Notifier.success(sender, "KD: " + twp.statsKills / twp.statsDeaths);
         Notifier.success(sender, "Wins: " + twp.statsWins);
     }
 

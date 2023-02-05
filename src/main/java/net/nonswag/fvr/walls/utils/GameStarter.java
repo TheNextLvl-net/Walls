@@ -21,7 +21,6 @@ public class GameStarter {
     private static final int[] numberAddedToTeam = new int[5];
 
     public static void startGame(Map<UUID, WallsPlayer> players, final Walls myWalls) {
-
         for (int i = 0; i < 5; i++) {
             numberAddedToTeam[i] = 0;
         }

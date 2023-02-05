@@ -4,6 +4,7 @@ version: "2.0"
 description: "An updated version of the original"
 main: "net.nonswag.fvr.walls.Walls"
 website: "https://www.thenextlvl.net"
+softdepend: ["WorldEdit", "WallsPopulator"]
 commands:
   ping:
     usage: /ping <player>

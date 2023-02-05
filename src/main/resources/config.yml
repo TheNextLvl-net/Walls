@@ -30,9 +30,9 @@ ironONLY: false
 lobbyTrail: 
 # --------------------------------------
 # --------------------------------------
-# clanBattle allows clan1 naming - which affects team names. restricts to only those with the clan names to join and play.
+# clanBattle allows clan naming - which affects team names. restricts to only those with the clan names to join and play.
 clanBattle: false
-clan1: t1
-clan2: t2
-clan3: t3
-clan4: t4
+clan-1: clan 1
+clan-2: clan 2
+clan-3: clan 3
+clan-4: clan 4

@@ -1,5 +1,6 @@
 package net.nonswag.fvr.walls;
 
+import com.sk89q.worldedit.WorldEdit;
 import me.filoghost.holographicdisplays.api.HolographicDisplaysAPI;
 import me.filoghost.holographicdisplays.api.hologram.Hologram;
 import net.nonswag.core.api.file.formats.PropertiesFile;
@@ -78,7 +79,7 @@ public class Walls extends JavaPlugin implements Listener {
     public static ChatColor[] teamChatColors = {ChatColor.LIGHT_PURPLE, ChatColor.RED, ChatColor.YELLOW, ChatColor.GREEN, ChatColor.BLUE};
 
     private final Map<UUID, Integer> mutedPlayers = new HashMap<>();
-    private final Map<UUID, WallsPlayer> players = new HashMap<>();
+    public final Map<UUID, WallsPlayer> players = new HashMap<>();
 
     private final Map<UUID, Long> inCombat = new HashMap<>();
 
@@ -146,7 +147,7 @@ public class Walls extends JavaPlugin implements Listener {
     public static boolean allowPickTeams = false;
     public static boolean shhhhh = false;
     public static String advert = null;
-    public static String clans = "";
+    public static List<String> clans = new ArrayList<>();
     public static int combatLogTimeInSeconds = 7;
     private final int restartTimer = 15;
     public boolean starting = false;
@@ -164,20 +165,23 @@ public class Walls extends JavaPlugin implements Listener {
     private int foodTime = 0;
     public static final int buildHeight = 180;
     public static final int liquidBuildHeight = 170;
-    public static final int coinsKillReward = 5;
-    private static final int proCoinMultiplier = 3;
-    private static final int vipCoinMultiplier = 2;
 
     public HashMap<UUID, ArrayList<Entity>> droppedItems = new HashMap<>();
     public ArrayList<Entity> allitems = new ArrayList<>();
 
-
     @Override
     public void onEnable() {
-
+        try {
+            WorldEdit.getInstance().getConfiguration().navigationWand = -1;
+            this.getConfig().save(new File(getDataFolder(), "config.yml"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         Bukkit.getWorlds().forEach(world -> {
             world.setGameRuleValue("doFireTick", "false");
             world.setGameRuleValue("doDaylightCycle", "false");
+            world.setThundering(false);
+            world.setStorm(false);
             world.setTime(1000);
         });
 
@@ -197,27 +201,20 @@ public class Walls extends JavaPlugin implements Listener {
         Walls.allowPickTeams = this.getConfig().getBoolean("allowPickTeams");
         Walls.combatLogTimeInSeconds = this.getConfig().getInt("combatLogTimeInSeconds");
 
-
         Walls.advert = this.getConfig().getString("wallsAdvert");
 
         if (Walls.clanBattle || Walls.tournamentMode) {
-
-            if (!this.getConfig().getString("clan1").equals("NN")) {
-                Walls.teamsNames[1] = Walls.teamChatColors[1] + this.getConfig().getString("clan1");
+            Walls.teamsNames[1] = Walls.teamChatColors[1] + this.getConfig().getString("clan-1");
+            Walls.teamsNames[2] = Walls.teamChatColors[2] + this.getConfig().getString("clan-2");
+            Walls.teamsNames[3] = Walls.teamChatColors[3] + this.getConfig().getString("clan-3");
+            Walls.teamsNames[4] = Walls.teamChatColors[4] + this.getConfig().getString("clan-4");
+            List<String> clans = new ArrayList<>();
+            for (int i = 1; i <= 4; i++) {
+                String string = this.getConfig().getString("clan-" + i);
+                Walls.teamsNames[i] = Walls.teamChatColors[i] + string;
+                clans.add(string);
             }
-            if (!this.getConfig().getString("clan2").equals("NN")) {
-                Walls.teamsNames[2] = Walls.teamChatColors[2] + this.getConfig().getString("clan2");
-            }
-            if (!this.getConfig().getString("clan3").equals("NN")) {
-                Walls.teamsNames[3] = Walls.teamChatColors[3] + this.getConfig().getString("clan3");
-            }
-            if (!this.getConfig().getString("clan4").equals("NN")) {
-                Walls.teamsNames[4] = Walls.teamChatColors[4] + this.getConfig().getString("clan4");
-            }
-
-
-            Walls.clans = this.getConfig().getString("clan1") + this.getConfig().getString("clan2") + this.getConfig().getString("clan3") + this.getConfig().getString("clan4");
-
+            Walls.clans = clans;
         }
 
         World world = this.getServer().getWorlds().get(0);
@@ -310,6 +307,7 @@ public class Walls extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         this.clock.interrupt();
+        Database.disconnect();
     }
 
     private String selectNextMap() {
@@ -503,14 +501,13 @@ public class Walls extends JavaPlugin implements Listener {
             WallsPlayer tWP = this.getWallsPlayer(event.getPlayer().getUniqueId());
             this.getAllPlayers().put(event.getPlayer().getUniqueId(), tWP);
         } else {
-            WallsPlayer tWP = this.getWallsPlayer(event.getPlayer().getUniqueId());
-
+            WallsPlayer player = this.getWallsPlayer(event.getPlayer().getUniqueId());
             if (Walls.clanBattle) {
-                if (tWP != null && tWP.clan == null) {
+                if (player != null && player.clan == null) {
                     Notifier.error(event.getPlayer(), "Sorry, this game is a Clan Battle!!");
                     return;
                 }
-                if (tWP != null && !Walls.clans.contains(tWP.clan)) {
+                if (player != null && !Walls.clans.contains(player.clan)) {
                     Notifier.error(event.getPlayer(), "Sorry, this game is a Clan Battle!!");
                     return;
                 }
@@ -532,7 +529,7 @@ public class Walls extends JavaPlugin implements Listener {
                         }
                         break;
                     case LEGENDARY:
-                        if (tWP != null && !tWP.legendary && !event.getPlayer().isOp() && !this.isStaff(event.getPlayer().getUniqueId())) {
+                        if (player != null && !player.legendary && !event.getPlayer().isOp() && !this.isStaff(event.getPlayer().getUniqueId())) {
                             kick = true;
                         }
                         break;
@@ -582,14 +579,12 @@ public class Walls extends JavaPlugin implements Listener {
                 playerScoreBoard.setScoreBoard(event.getPlayer().getUniqueId());
                 playerScoreBoard.updateScoreboardScores();
 
-                if (!starting) {
+                if (!starting && this.players.size() >= Walls.preGameAutoStartPlayers && !Walls.clanBattle && !Walls.tournamentMode) {
 
-                    if (this.players.size() >= Walls.preGameAutoStartPlayers && !Walls.clanBattle && !Walls.tournamentMode) {
-                        Notifier.broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + preGameAutoStartSeconds + ChatColor.WHITE + " seconds!!");
+                    Notifier.broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + preGameAutoStartSeconds + ChatColor.WHITE + " seconds!!");
 
-                        this.clock.setClock(preGameAutoStartSeconds, () -> GameStarter.startGame(Walls.this.players, Walls.this));
-                        this.starting = true;
-                    }
+                    this.clock.setClock(preGameAutoStartSeconds, () -> GameStarter.startGame(Walls.this.players, Walls.this));
+                    this.starting = true;
                 }
                 break;
             case PEACETIME:
@@ -1997,8 +1992,7 @@ public class Walls extends JavaPlugin implements Listener {
     }
 
     public boolean isSpec(UUID a) {
-        if (players.containsKey(a)) return (players.get(a).playerState.compareTo(PlayerState.SPECTATORS) == 0);
-        return false;
+        return players.containsKey(a) && players.get(a).playerState.equals(PlayerState.SPECTATORS);
     }
 
     public boolean isStaff(UUID a) {
@@ -2278,15 +2272,6 @@ public class Walls extends JavaPlugin implements Listener {
 
 //        Team 4 blue (-142, 61, 259) (-164,61,291)
         return (loc.getBlockX() < -141 && loc.getBlockX() > -163) && (loc.getBlockZ() > 258 && loc.getBlockZ() < 292);
-    }
-
-    public int getCoinKillMultiplier(UUID pUID) {
-        if (this.players.get(pUID).pro) {
-            return proCoinMultiplier;
-        } else if (this.players.get(pUID).vip) {
-            return vipCoinMultiplier;
-        }
-        return 1; // standard multiplier is just 1
     }
 
     private boolean loreMatch(ItemStack item, String line) {
