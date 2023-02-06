@@ -15,7 +15,7 @@ import java.util.UUID;
 
 public class StaffChatCmd implements CommandExecutor {
 
-    Walls walls;
+    private final Walls walls;
 
     public StaffChatCmd(Walls walls) {
         this.walls = walls;
@@ -24,7 +24,7 @@ public class StaffChatCmd implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         final String messageToSend = StringUtils.join(args, " ");
-        if (!(sender instanceof Player) || !walls.isStaff(((Player) sender).getUniqueId())) {
+        if (!(sender instanceof Player) || !walls.players.get(((Player) sender).getUniqueId()).rank.staff()) {
             Notifier.error(sender, "You can't use this command");
             return true;
         }

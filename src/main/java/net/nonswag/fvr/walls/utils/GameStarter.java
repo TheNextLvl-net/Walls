@@ -20,7 +20,7 @@ public class GameStarter {
 
     private static final int[] numberAddedToTeam = new int[5];
 
-    public static void startGame(Map<UUID, WallsPlayer> players, final Walls myWalls) {
+    public static void startGame(Map<UUID, WallsPlayer> players, final Walls walls) {
         for (int i = 0; i < 5; i++) {
             numberAddedToTeam[i] = 0;
         }
@@ -32,9 +32,9 @@ public class GameStarter {
         ProStartPlayerKitPerks proPerks = new ProStartPlayerKitPerks();
 
 
-        for (UUID pUID : players.keySet()) {
+        for (UUID all : players.keySet()) {
 
-            Player p = Bukkit.getPlayer(pUID);
+            Player p = Bukkit.getPlayer(all);
             if (p != null) {
 
                 p.closeInventory();
@@ -44,34 +44,34 @@ public class GameStarter {
 
                 p.setFallDistance(0f);
 
-                WallsPlayer tempWallsPlayer = players.get(pUID);
+                WallsPlayer tempWallsPlayer = players.get(all);
 
                 switch (tempWallsPlayer.playerState) {
                     case SPECTATORS:
-                        int rand = GameStarter.getSmallestTeam(myWalls);
-                        if (Walls.debugMode) myWalls.getLogger().info("creating random for team " + rand);
-                        assignedPlayers.put(pUID, PlayerState.values()[rand]);
+                        int rand = GameStarter.getSmallestTeam(walls);
+                        if (Walls.debugMode) walls.getLogger().info("creating random for team " + rand);
+                        assignedPlayers.put(all, PlayerState.values()[rand]);
                         p.teleport(Walls.spawns.get(rand));
                         Notifier.notify(p, "You have been assigned to " + Walls.teamsNames[rand]);
                         break;
                     case RED:
                         p.teleport(Walls.team1Spawn);
-                        myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.RED);
+                        walls.playerScoreBoard.addPlayerToTeam(all, PlayerState.RED);
 
                         break;
                     case YELLOW:
                         p.teleport(Walls.team2Spawn);
-                        myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.YELLOW);
+                        walls.playerScoreBoard.addPlayerToTeam(all, PlayerState.YELLOW);
 
                         break;
                     case GREEN:
                         p.teleport(Walls.team3Spawn);
-                        myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.GREEN);
+                        walls.playerScoreBoard.addPlayerToTeam(all, PlayerState.GREEN);
 
                         break;
                     case BLUE:
                         p.teleport(Walls.team4Spawn);
-                        myWalls.playerScoreBoard.addPlayerToTeam(pUID, PlayerState.BLUE);
+                        walls.playerScoreBoard.addPlayerToTeam(all, PlayerState.BLUE);
 
                         break;
 
@@ -80,60 +80,57 @@ public class GameStarter {
 
                 }
 
-                if (myWalls.isPRO(pUID)) {
+                if (walls.players.get(all).rank.pro()) {
                     proPerks.givePlayerKit(p);
                     if (Walls.debugMode)
-                        myWalls.getLogger().info("Gave PRO + stuff to player " + pUID.toString());
-                } else if (myWalls.isVIP(pUID)) {
+                        walls.getLogger().info("Gave PRO + stuff to player " + all.toString());
+                } else if (walls.players.get(all).rank.vip()) {
                     vipPerks.givePlayerKit(p);
                     if (Walls.debugMode)
-                        myWalls.getLogger().info("Gave VIP + stuff to player " + pUID.toString());
+                        walls.getLogger().info("Gave VIP + stuff to player " + all.toString());
                 }
 
-                myWalls.playerScoreBoard.setScoreBoard(pUID);
+                walls.playerScoreBoard.setScoreBoard(all);
             }
 
             for (UUID uuid : assignedPlayers.keySet()) {
                 WallsPlayer twp = players.get(uuid);
                 twp.playerState = assignedPlayers.get(uuid);
                 players.put(uuid, twp);
-                myWalls.playerScoreBoard.addPlayerToTeam(uuid, twp.playerState);
+                walls.playerScoreBoard.addPlayerToTeam(uuid, twp.playerState);
             }
         }
 
-        myWalls.setGameState(GameState.PEACETIME);
+        walls.setGameState(GameState.PEACETIME);
         Bukkit.getWorlds().forEach(world -> world.setGameRuleValue("doDaylightCycle", "true"));
         Notifier.broadcast(Walls.peaceTimeMins + " minutes until the wall drops! " + ChatColor.BOLD + "GOOD LUCK EVERYONE!");
 
-        myWalls.kickOffCompassThread();
+        walls.kickOffCompassThread();
         Notifier.broadcast("Enemy Finder Compass now activated.");
 
 
         if (Walls.diamondONLY) {
-            FullDiamondCmd.fullDiamond(myWalls);
+            FullDiamondCmd.fullDiamond(walls);
 
         } else if (Walls.ironONLY) {
 
-            FullDiamondCmd.fullIron(myWalls);
+            FullDiamondCmd.fullIron(walls);
 
         } else if (Walls.fullDiamond) {
             int whichGame = Walls.random.nextInt(4);
             switch (whichGame) {
-                case 0:
-                    FullDiamondCmd.fullChain(myWalls);
-                    break;
                 case 1:
-                    FullDiamondCmd.fullIron(myWalls);
+                    FullDiamondCmd.fullIron(walls);
                     break;
                 case 2:
                 case 3:
-                    FullDiamondCmd.fullDiamond(myWalls);
+                    FullDiamondCmd.fullDiamond(walls);
                     break;
 
             }
         }
-        myWalls.clock.setClock(Walls.peaceTimeMins * 60, myWalls::dropWalls);
-        myWalls.playerScoreBoard.updateScoreboardScores();
+        walls.clock.setClock(Walls.peaceTimeMins * 60, walls::dropWalls);
+        walls.playerScoreBoard.updateScoreboardScores();
     }
 
 

@@ -30,13 +30,16 @@ public class WallsCmd implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (args.length < 1) {
             if (sender instanceof Player) {
-                Notifier.error(sender, "usage: /walls votestart | stats | chat | nostaffchat | start | stop | dropwalls | vip | addplayer | pro");
-            } else sender.sendMessage("usage: /walls start | stop | dropwalls | vip | addplayer | pro");
+                Notifier.error(sender, "usage: /walls votestart | stats | players");
+            }
             if (sender.isOp()) {
-                Notifier.error(sender, "dropwalls | players | vip | pro | gm| mgm | admin | update | autostartplayers | peacetimemins | clanrename | clanbattle | captain | restricted | diamondonly | lobbytrail | fixdb");
+                Notifier.error(sender, "usage: /walls dropwalls | rank | autostartplayers | peacetimemins | clanrename | clanbattle | captain | restricted | diamondonly | irononly | lobbytrail | fixdb");
             }
         } else if (args[0].equalsIgnoreCase("diamondonly")) {
-            if (sender.isOp()) sender.sendMessage("Set to [" + (Walls.diamondONLY = !Walls.diamondONLY) + "]");
+            if (sender.isOp()) Notifier.broadcast("Set diamond only to " + (Walls.diamondONLY = !Walls.diamondONLY));
+            else Notifier.error(sender, "You have no rights to do this");
+        } else if (args[0].equalsIgnoreCase("irononly")) {
+            if (sender.isOp()) Notifier.broadcast("Set iron only to " + (Walls.ironONLY = !Walls.ironONLY));
             else Notifier.error(sender, "You have no rights to do this");
         } else if (args[0].equalsIgnoreCase("stop")) stop(sender);
         else if (args[0].equalsIgnoreCase("fixdb")) fixdb(sender);
@@ -51,12 +54,7 @@ public class WallsCmd implements CommandExecutor {
         else if (args[0].equalsIgnoreCase("clanrename")) setClanName(sender, args);
         else if (args[0].equalsIgnoreCase("dropwalls")) dropWalls(sender);
         else if (args[0].equalsIgnoreCase("players")) showPlayers(sender);
-        else if (args[0].equalsIgnoreCase("vip")) toggleVIPStatus(sender, args);
-        else if (args[0].equalsIgnoreCase("pro")) togglePROStatus(sender, args);
-        else if (args[0].equalsIgnoreCase("gm")) toggleGMStatus(sender, args);
-        else if (args[0].equalsIgnoreCase("mgm")) toggleMGMStatus(sender, args);
-        else if (args[0].equalsIgnoreCase("admin")) toggleAdminStatus(sender, args);
-        else if (args[0].equalsIgnoreCase("update")) forceTagUpdate(sender, args);
+        else if (args[0].equalsIgnoreCase("rank")) setRank(sender, args);
         else if (args[0].equalsIgnoreCase("autostartplayers")) setAutoStartPlayers(sender, args);
         else if (args[0].equalsIgnoreCase("peacetimemins")) setPeaceTimeMins(sender, args);
         else if (args[0].equalsIgnoreCase("clanbattle")) toggleClanBattle(sender);
@@ -98,18 +96,18 @@ public class WallsCmd implements CommandExecutor {
     }
 
     private void autoStart() {
-        if (walls.players.size() >= Walls.preGameAutoStartPlayers / 2) {
+        if (VOTES.size() > Walls.preGameAutoStartPlayers / 2) {
             Notifier.broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + "30" + ChatColor.WHITE + " seconds!");
             walls.clock.setClock(30, () -> GameStarter.startGame(walls.getAllPlayers(), walls));
             walls.starting = true;
         } else {
-            int players = Walls.preGameAutoStartPlayers / 2 - walls.players.size();
+            int players = Walls.preGameAutoStartPlayers / 2 - VOTES.size();
             Notifier.broadcast(players + " more vote" + (players != 1 ? "s are" : " is") + " needed §8(§7/walls votestart§8)");
         }
     }
 
     private void stop(CommandSender sender) {
-        if (sender.isOp() || (sender instanceof Player && (walls.isMGM(((Player) sender).getUniqueId())))) {
+        if (sender.isOp() || (sender instanceof Player && (walls.players.get(((Player) sender).getUniqueId()).rank.staff()))) {
             if (walls.getGameState() != Walls.GameState.PREGAME && walls.getGameState() != Walls.GameState.FINISHED) {
                 walls.setGameState(Walls.GameState.FINISHED);
                 Notifier.broadcast("§cThe game was force closed");
@@ -127,31 +125,35 @@ public class WallsCmd implements CommandExecutor {
     }
 
     private void chatListener(CommandSender sender) {
-        if (walls.isStaff(((Player) sender).getUniqueId()) || sender.isOp()) {
-            if (walls.staffListSnooper.contains(((Player) sender).getUniqueId())) {
-                walls.staffListSnooper.remove((((Player) sender).getUniqueId()));
-                Notifier.success(sender, "You are no longer listening to all-chat.");
-            } else {
-                walls.staffListSnooper.add(((Player) sender).getUniqueId());
-                Notifier.success(sender, "You are now listening to all-chat.");
-            }
-        } else Notifier.error(sender, "You have no rights to do this");
+        if (sender instanceof Player) {
+            if (walls.players.get(((Player) sender).getUniqueId()).rank.staff() || sender.isOp()) {
+                if (walls.staffListSnooper.contains(((Player) sender).getUniqueId())) {
+                    walls.staffListSnooper.remove((((Player) sender).getUniqueId()));
+                    Notifier.success(sender, "You are no longer listening to all-chat.");
+                } else {
+                    walls.staffListSnooper.add(((Player) sender).getUniqueId());
+                    Notifier.success(sender, "You are now listening to all-chat.");
+                }
+            } else Notifier.error(sender, "You have no rights to do this");
+        } else Notifier.notify(sender, "This is a player command");
     }
 
     private void noStaffChat(CommandSender sender) {
-        if (walls.isStaff(((Player) sender).getUniqueId()) || sender.isOp()) {
-            if (walls.noStaffChat.contains(((Player) sender).getUniqueId())) {
-                walls.noStaffChat.remove(((Player) sender).getUniqueId());
-                Notifier.notify(sender, "You are now receiving staff chat messages again!");
-            } else {
-                Notifier.notify(sender, "You will no longer receive staff chat messages.");
-                walls.noStaffChat.add(((Player) sender).getUniqueId());
-            }
-        } else Notifier.error(sender, "You have no rights to do this");
+        if (sender instanceof Player) {
+            if (walls.players.get(((Player) sender).getUniqueId()).rank.staff() || sender.isOp()) {
+                if (walls.noStaffChat.contains(((Player) sender).getUniqueId())) {
+                    walls.noStaffChat.remove(((Player) sender).getUniqueId());
+                    Notifier.notify(sender, "You are now receiving staff chat messages again!");
+                } else {
+                    Notifier.notify(sender, "You will no longer receive staff chat messages.");
+                    walls.noStaffChat.add(((Player) sender).getUniqueId());
+                }
+            } else Notifier.error(sender, "You have no rights to do this");
+        } else Notifier.notify(sender, "This is a player command");
     }
 
     private void startWalls(CommandSender sender) {
-        if (sender.isOp() || (sender instanceof Player && (walls.isMGM(((Player) sender).getUniqueId())))) {
+        if (sender.isOp() || (sender instanceof Player && (walls.players.get(((Player) sender).getUniqueId())).rank.mgm())) {
             if (!walls.starting) {
                 Notifier.broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + "30" + ChatColor.WHITE + " seconds!");
                 walls.clock.setClock(30, () -> GameStarter.startGame(walls.getAllPlayers(), walls));
@@ -161,8 +163,7 @@ public class WallsCmd implements CommandExecutor {
     }
 
     private void addPlayer(CommandSender sender, String[] args) {
-        if (sender.isOp()
-                || (sender instanceof Player && walls.isMGM(((Player) sender).getUniqueId()))) {
+        if (sender.isOp() || (sender instanceof Player && walls.players.get(((Player) sender).getUniqueId()).rank.mgm())) {
             if (args.length < 3) {
                 Notifier.error(sender, "Command is /walls addplayer <IGN> <teamNumber>");
                 return;
@@ -226,7 +227,7 @@ public class WallsCmd implements CommandExecutor {
     }
 
     private void silenceComand(CommandSender sender) {
-        if (sender.isOp() || (sender instanceof Player && walls.isMGM(((Player) sender).getUniqueId()))) {
+        if (sender.isOp() || (sender instanceof Player && walls.players.get(((Player) sender).getUniqueId()).rank.mgm())) {
             if (Walls.shhhhh = !Walls.shhhhh) Notifier.broadcast("§cEVERYONE JUST GOT SHHHHH'D!!");
             else Notifier.broadcast("§aYou are Free. To speak. (ish)");
         } else Notifier.error(sender, "You have no rights to do this");
@@ -265,7 +266,7 @@ public class WallsCmd implements CommandExecutor {
     private void setPlayerJoinRestriction(CommandSender sender, String[] args) {
         if (sender.isOp()) {
             if (args.length < 2) {
-                sender.sendMessage("/walls restricted ANYONE, VIP, PRO, LEGENDARY, STAFF");
+                sender.sendMessage("/walls restricted ANYONE, VIP, PRO, STAFF");
                 return;
             }
             try {
@@ -293,65 +294,17 @@ public class WallsCmd implements CommandExecutor {
         } else Notifier.error(sender, "There are no players");
     }
 
-    private void toggleVIPStatus(CommandSender sender, String[] args) {
+    private void setRank(CommandSender sender, String[] args) {
         if (sender.isOp()) {
             Player player;
+            Walls.Rank rank;
             if (args.length > 1 && (player = Bukkit.getPlayer(args[1])) != null) {
-                WallsPlayer twp = walls.getWallsPlayer(player.getUniqueId());
-                twp.vip = !twp.vip;
-                walls.getAllPlayers().put(player.getUniqueId(), twp);
-                Notifier.success(sender, "Success. " + player.getName() + "'s vip status changed to " + twp.vip);
-            } else Notifier.error(sender, "/walls vip <player>");
-        } else Notifier.error(sender, "You have no rights to do this");
-    }
-
-    private void togglePROStatus(CommandSender sender, String[] args) {
-        if (sender.isOp()) {
-            Player player;
-            if (args.length > 1 && (player = Bukkit.getPlayer(args[1])) != null) {
-                UUID pUID = Bukkit.getPlayer(args[1]).getUniqueId();
-                WallsPlayer twp = walls.getWallsPlayer(pUID);
-                twp.pro = !twp.pro;
-                walls.myDB.setPro(args[1], (twp.pro) ? 1 : 0);
-                walls.getAllPlayers().put(pUID, twp);
-                Notifier.success(sender, "Success. " + player.getName() + "'s §9PRO§f status changed to " + twp.pro);
-            } else Notifier.error(sender, "/walls pro <player>");
-        } else Notifier.error(sender, "You have no rights to do this");
-    }
-
-    private void toggleGMStatus(CommandSender sender, String[] args) {
-        if (sender.isOp()) {
-            Player player;
-            if (args.length > 1 && (player = Bukkit.getPlayer(args[1])) != null) {
-                WallsPlayer twp = walls.getWallsPlayer(player.getUniqueId());
-                twp.gm = !twp.gm;
-                walls.getAllPlayers().put(player.getUniqueId(), twp);
-                Notifier.success(sender, "Success. " + player.getName() + "'s GM status changed to " + twp.gm);
-            } else Notifier.error(sender, "/walls gm <player>");
-        } else Notifier.error(sender, "You have no rights to do this");
-    }
-
-    private void toggleMGMStatus(CommandSender sender, String[] args) {
-        if (sender.isOp()) {
-            Player player;
-            if (args.length > 1 && (player = Bukkit.getPlayer(args[1])) != null) {
-                WallsPlayer twp = walls.getWallsPlayer(player.getUniqueId());
-                twp.mgm = !twp.mgm;
-                walls.getAllPlayers().put(player.getUniqueId(), twp);
-                Notifier.success(sender, "Success. " + args[1] + "'s MGM status changed to " + twp.mgm);
-            } else Notifier.error(sender, "/walls mgm <player>");
-        } else Notifier.error(sender, "You have no rights to do this");
-    }
-
-    private void toggleAdminStatus(CommandSender sender, String[] args) {
-        if (sender.isOp()) {
-            Player player;
-            if (args.length > 1 && (player = Bukkit.getPlayer(args[1])) != null) {
-                WallsPlayer twp = walls.getWallsPlayer(player.getUniqueId());
-                twp.admin = !twp.admin;
-                walls.getAllPlayers().put(player.getUniqueId(), twp);
-                Notifier.success(sender, "Success. " + args[1] + "'s ADMIN status changed to " + twp.admin);
-            } else Notifier.error(sender, "/walls admin <player>");
+                if (args.length > 2 && (rank = Walls.Rank.parse(args[2])) != null) {
+                    walls.players.get(player.getUniqueId()).rank = rank;
+                    walls.myDB.setRank(args[1], rank.ordinal());
+                    Notifier.success(sender, player.getName() + "'s new rank is now " + rank.name().toLowerCase());
+                } else Notifier.error(sender, "/walls rank " + player.getName() + " <none,vip,pro,gm,mgm,admin>");
+            } else Notifier.error(sender, "/walls rank <player> <none,vip,pro,gm,mgm,admin>");
         } else Notifier.error(sender, "You have no rights to do this");
     }
 
@@ -385,15 +338,6 @@ public class WallsCmd implements CommandExecutor {
         if (sender.isOp()) {
             Walls.clanBattle = !Walls.clanBattle;
             Notifier.success(sender, "Yup. ClanBattle set to " + Walls.clanBattle);
-        } else Notifier.error(sender, "You have no rights to do this");
-    }
-
-    private void forceTagUpdate(CommandSender sender, String[] args) {
-        if (sender.isOp()) {
-            Player player;
-            if (args.length > 1 && (player = Bukkit.getPlayer(args[1])) != null) {
-                walls.myDB.forceLoadPlayer(args[1], player.getUniqueId());
-            } else Notifier.error(sender, "/walls update <player>");
         } else Notifier.error(sender, "You have no rights to do this");
     }
 

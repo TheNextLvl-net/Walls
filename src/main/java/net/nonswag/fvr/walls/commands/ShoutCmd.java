@@ -17,70 +17,62 @@ import java.util.UUID;
 
 public class ShoutCmd implements CommandExecutor{
     
-    Walls myWalls;
+    private final Walls walls;
     
     public static int NUMBER_OF_VIP_YELLS = 3;
     public static int NUMBER_OF_PRO_YELLS = 5;
     private final Map<UUID, Integer> yells = new HashMap<>();
 
-    public ShoutCmd(Walls tw){
-        myWalls=tw;
+    public ShoutCmd(Walls walls){
+        this.walls =walls;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (Walls.shhhhh && !sender.isOp()) return true;
-        final String message = StringUtils.join(args, " ");
         if (!(sender instanceof Player)) {
             sender.sendMessage("Need to be in game for this command :(");
             return true;
         }
-        if (this.myWalls.isSpec(((Player) sender).getUniqueId()) && !this.myWalls.isStaff(((Player) sender).getUniqueId())) {
+        Player player = (Player) sender;
+        WallsPlayer wallsPlayer = walls.players.get(player.getUniqueId());
+        if (this.walls.isSpec(player.getUniqueId()) && !wallsPlayer.rank.staff()) {
             Notifier.error(sender, "Need to be in the fight to use this command :-/");
             return true;
         }
-        WallsPlayer twp = myWalls.getWallsPlayer(((Player) sender).getUniqueId());
-        Player commandPlayer = (Player) sender;
-        if (!this.yells.containsKey(commandPlayer.getUniqueId()) && myWalls.isVIP(commandPlayer.getUniqueId())) {
-            this.yells.put(commandPlayer.getUniqueId(), 0);
+        if (!this.yells.containsKey(player.getUniqueId()) && wallsPlayer.rank.vip()) {
+            this.yells.put(player.getUniqueId(), 0);
         } else {
-            if (!myWalls.isStaff(commandPlayer.getUniqueId()) && !sender.isOp() && !twp.legendary) {
-                if (twp.pro) {
-                    int num = this.yells.get(commandPlayer.getUniqueId());
+            if (!walls.players.get(player.getUniqueId()).rank.staff() && !sender.isOp()) {
+                if (wallsPlayer.rank.pro()) {
+                    int num = this.yells.get(player.getUniqueId());
                     num = num + 1;
-                    this.yells.put(commandPlayer.getUniqueId(), num);
-                    if (this.yells.get(commandPlayer.getUniqueId()) >= NUMBER_OF_PRO_YELLS) {
-                        Notifier.error(commandPlayer, "You have already yelled out " + ShoutCmd.NUMBER_OF_PRO_YELLS + " times this game!");
+                    this.yells.put(player.getUniqueId(), num);
+                    if (this.yells.get(player.getUniqueId()) >= NUMBER_OF_PRO_YELLS) {
+                        Notifier.error(player, "You have already yelled out " + ShoutCmd.NUMBER_OF_PRO_YELLS + " times this game!");
                         return true;
                     }
-                } else if (twp.vip) {
-                    int num = this.yells.get(commandPlayer.getUniqueId());
+                } else if (wallsPlayer.rank.vip()) {
+                    int num = this.yells.get(player.getUniqueId());
                     num = num + 1;
-                    this.yells.put(commandPlayer.getUniqueId(), num);
-                    if (this.yells.get(commandPlayer.getUniqueId()) >= NUMBER_OF_VIP_YELLS) {
-                        Notifier.error(commandPlayer, "You have already yelled out " + ShoutCmd.NUMBER_OF_VIP_YELLS + " times this game! ");
-                        Notifier.notify(commandPlayer, ChatColor.BLUE + "PRO " + ChatColor.WHITE + " players get 5 yells :)");
+                    this.yells.put(player.getUniqueId(), num);
+                    if (this.yells.get(player.getUniqueId()) >= NUMBER_OF_VIP_YELLS) {
+                        Notifier.error(player, "You have already yelled out " + ShoutCmd.NUMBER_OF_VIP_YELLS + " times this game! ");
+                        Notifier.notify(player, ChatColor.BLUE + "PRO " + ChatColor.WHITE + " players get 5 yells :)");
                         return true;
                     }
                 } else {
-                    Notifier.error(commandPlayer, "You need a rank to be able to shout! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " + Walls.DISCORD);
+                    Notifier.error(player, "You need a rank to be able to shout! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " + Walls.DISCORD);
                     return true;
                 }
             }
         }
-        String gm = "";
-        String mvp = "";
-        String dmvp = "";
         String clan = "";
-        if (twp.gm) gm = "§b[GM]";
-        if (twp.mgm) gm = "§6[MGM]";
-        if (twp.admin) gm = "§c[ADMIN]";
-        if (twp.nMVP) mvp = "§e[MVP]";
-        if (twp.dMVP) dmvp = "§3[MVP]";
-        if (twp.clan != null)
-            clan = ChatColor.DARK_RED + "" + ChatColor.BOLD + ChatColor.translateAlternateColorCodes('&', twp.clan) + ChatColor.WHITE + "◊";
-        String the_message = gm + mvp + dmvp + clan + "" + Walls.teamChatColors[twp.playerState.ordinal()] + ((Player) sender).getDisplayName() + ChatColor.GOLD + " YELLS out " + ChatColor.WHITE + message;
-        Bukkit.getOnlinePlayers().forEach(all -> all.sendMessage(the_message));
+        final String arguments = StringUtils.join(args, " ");
+        if (wallsPlayer.clan != null)
+            clan = ChatColor.DARK_RED + "" + ChatColor.BOLD + ChatColor.translateAlternateColorCodes('&', wallsPlayer.clan) + ChatColor.WHITE + "◊";
+        String message = wallsPlayer.rank.display() + clan + "" + Walls.teamChatColors[wallsPlayer.playerState.ordinal()] + player.getDisplayName() + ChatColor.GOLD + " YELLS out " + ChatColor.WHITE + arguments;
+        Bukkit.getOnlinePlayers().forEach(all -> all.sendMessage(message));
         return true;
     }
 }

@@ -21,7 +21,7 @@ public class DatabaseUtil {
 
             try {
                 Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `paidkits` (uuid varchar(255), kitname varchar(255))");
-                Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `accounts` (username varchar(255), uuid varchar(255), pro int, vip int, gm int, mgm int, admin int, legendary int, owner int, mvplevel int, kills int, deaths int, wins int, guild varchar(255))");
+                Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `accounts` (username varchar(255), uuid varchar(255), rank int, kills int, deaths int, wins int, guild varchar(255))");
                 Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `guilds` (plain varchar(255), name varchar(255), uuid varchar(255))");
                 Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `player_stats` (kills int, deaths int, win varchar(255), uuid varchar(255), username varchar(255))");
             } catch (SQLException e) {
@@ -39,12 +39,6 @@ public class DatabaseUtil {
                 }
             }
         }, 0, 12);
-    }
-
-    public void forceLoadPlayer(String playerName, UUID aUID) {
-        if (!walls.getAllPlayers().containsKey(aUID)) {
-            this.queue.put(aUID, playerName);
-        }
     }
 
     public void loadPlayer(String playerName, UUID aUID) {
@@ -76,27 +70,7 @@ public class DatabaseUtil {
         try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE uuid = ?", uuid)) {
             if (resultSet == null) return;
             if (resultSet.first()) {
-                if (resultSet.getInt("vip") == 1) {
-                    wallsPlayer.vip = true;
-                }
-                if (resultSet.getInt("gm") == 1) {
-                    wallsPlayer.gm = true;
-                }
-                if (resultSet.getInt("mgm") == 1) {
-                    wallsPlayer.mgm = true;
-                }
-                if (resultSet.getInt("admin") == 1) {
-                    wallsPlayer.admin = true;
-                }
-                if (resultSet.getInt("pro") == 1) {
-                    wallsPlayer.pro = true;
-                }
-                if (resultSet.getInt("legendary") == 1) {
-                    wallsPlayer.legendary = true;
-                }
-                if (resultSet.getInt("owner") == 1) {
-                    wallsPlayer.owner = true;
-                }
+                wallsPlayer.rank = Walls.Rank.values()[resultSet.getInt("rank")];
                 wallsPlayer.clan = resultSet.getString("guild");
             } else {
                 Database.getConnection().executeUpdate("INSERT INTO `accounts` (`username`) VALUES (?)", playerName);
@@ -117,13 +91,6 @@ public class DatabaseUtil {
         try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE uuid = ?", tempUID)) {
             if (resultSet == null) return;
             if (resultSet.first()) {
-                int mvplevel = resultSet.getInt("mvplevel");
-                if (mvplevel == 1 || mvplevel == 3) {
-                    wallsPlayer.nMVP = true;
-                }
-                if (mvplevel == 2 || mvplevel == 3) {
-                    wallsPlayer.dMVP = true;
-                }
                 wallsPlayer.statsKills = resultSet.getInt("kills");
                 wallsPlayer.statsDeaths = resultSet.getInt("deaths");
                 wallsPlayer.statsWins = resultSet.getInt("wins");
@@ -173,14 +140,14 @@ public class DatabaseUtil {
         }
     }
 
-    public void setPro(final String player, int onOrOff) {
+    public void setRank(final String player, int rank) {
         try (ResultSet set = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE `username` = ?", player)) {
             if (set == null) return;
             if (set.next()) {
-                Database.getConnection().executeUpdate("UPDATE `accounts` SET `pro` = ? WHERE `username` = ?", onOrOff, player);
+                Database.getConnection().executeUpdate("UPDATE `accounts` SET `rank` = ? WHERE `username` = ?", rank, player);
                 this.walls.getLogger().log(Level.INFO, "Pro set for user { " + player + " }");
             } else {
-                Database.getConnection().executeUpdate("INSERT INTO `accounts` (`username`, `pro`) VALUES (?,?)", player, onOrOff);
+                Database.getConnection().executeUpdate("INSERT INTO `accounts` (`username`, `rank`) VALUES (?,?)", player, rank);
                 this.walls.getLogger().log(Level.INFO, "Pro set for user { " + player + " }");
             }
         } catch (SQLException e) {

@@ -12,10 +12,10 @@ import org.bukkit.entity.Player;
 
 public class TPCmd implements CommandExecutor {
 
-    Walls myWalls;
+    private final Walls walls;
 
-    public TPCmd(Walls tw) {
-        myWalls = tw;
+    public TPCmd(Walls walls) {
+        this.walls = walls;
     }
 
     @Override
@@ -26,7 +26,7 @@ public class TPCmd implements CommandExecutor {
             return true;
         }
 
-        if (sender instanceof Player && !this.myWalls.isVIP(((Player) sender).getUniqueId())) {
+        if (sender instanceof Player && !walls.players.get(((Player) sender).getUniqueId()).rank.vip()) {
             Notifier.error(sender, "Sorry only VIP and above can use this command.");
             return true;
         }
@@ -36,19 +36,19 @@ public class TPCmd implements CommandExecutor {
         if (friend == null) {
             return true;
         }
-        switch (myWalls.getGameState()) {
+        switch (walls.getGameState()) {
             case PEACETIME:
                 if (!(sender instanceof Player)) {
                     Notifier.notify(sender, "This is a player command");
                     return true;
                 }
-                if (myWalls.isSpec(((Player) sender).getUniqueId())) {
+                if (walls.isSpec(((Player) sender).getUniqueId())) {
                     ((Player) sender).teleport(friend.getLocation().add(0, +5, 0));
                     sender.sendMessage(ChatColor.GREEN + "You have been teleported to " + args[0]);
                     break;
                 }
 
-                if (myWalls.sameTeam(((Player) sender).getUniqueId(), friend.getUniqueId())) {
+                if (walls.sameTeam(((Player) sender).getUniqueId(), friend.getUniqueId())) {
                     ((Player) sender).teleport(friend);
                     sender.sendMessage(ChatColor.GREEN + "You have been teleported to " + args[0]);
                     friend.sendMessage(sender.getName() + ChatColor.GREEN + " teleported to you.");
@@ -58,12 +58,12 @@ public class TPCmd implements CommandExecutor {
                 break;
             case FIGHTING:
             case FINISHED:
-                if (sender instanceof Player && myWalls.isSpec(((Player) sender).getUniqueId())) {
-                    ((Player) sender).teleport(friend.getLocation().add(0, +5, 0));
-                    sender.sendMessage(ChatColor.GREEN + "You have been teleported to " + args[0]);
-                } else {
-                    Notifier.notify(sender, "This is a player command");
-                }
+                if (sender instanceof Player) {
+                    if (walls.isSpec(((Player) sender).getUniqueId())) {
+                        ((Player) sender).teleport(friend.getLocation().add(0, +5, 0));
+                        sender.sendMessage(ChatColor.GREEN + "You have been teleported to " + args[0]);
+                    } else Notifier.notify(sender, "You are not a spectator");
+                } else Notifier.notify(sender, "This is a player command");
                 break;
             default:
                 break;

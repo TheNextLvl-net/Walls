@@ -14,20 +14,20 @@ import org.bukkit.entity.Player;
 
 public class SurfaceCmd implements CommandExecutor {
 
-    private final Walls myWalls;
+    private final Walls walls;
 
     public SurfaceCmd(Walls walls) {
-        myWalls = walls;
+        this.walls = walls;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
-        if (myWalls.getGameState() != GameState.PEACETIME) {
+        if (walls.getGameState() != GameState.PEACETIME) {
             Notifier.error(sender, "Sorry /surface is only available during peace time.");
             return true;
         }
         final Player player = (Player) sender;
-        if (myWalls.isVIP(player.getUniqueId()) || player.isOp()) {
+        if (walls.players.get(player.getUniqueId()).rank.vip() || player.isOp()) {
             final Location loc = new Location(Bukkit.getServer().getWorld(Walls.levelName), player.getLocation().getBlockX(),
                     Bukkit.getServer().getWorld(Walls.levelName).getHighestBlockYAt(player.getLocation().getBlockX(),
                             player.getLocation().getBlockZ()), player.getLocation().getBlockZ());

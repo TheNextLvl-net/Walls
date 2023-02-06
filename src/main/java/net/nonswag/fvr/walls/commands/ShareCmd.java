@@ -13,63 +13,52 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-public class ShareCmd implements CommandExecutor{
-    
-    Walls myWalls;
-    
-    public ShareCmd(Walls tw){
-        myWalls=tw;
+public class ShareCmd implements CommandExecutor {
+
+    private final Walls walls;
+
+    public ShareCmd(Walls walls) {
+        this.walls = walls;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
-
-        if (myWalls.getGameState() != GameState.PEACETIME){
-            Notifier.error((sender),"You can only share during Peacetime :-/");
+        if (walls.getGameState() != GameState.PEACETIME) {
+            Notifier.error((sender), "You can only share during Peacetime :-/");
             return true;
         }
-        
-        if (args.length < 1){
-            if (sender instanceof Player){                
+        if (args.length < 1) {
+            if (sender instanceof Player) {
                 Notifier.error(sender, "Share whats in your hand - usage: /share <IGN>");
-            }else{
+            } else {
                 sender.sendMessage("you need to be a legit player in game :( sorry - try /give");
             }
             return true;
         }
-        Player player = (Player)sender;
-        if (!myWalls.isVIP(player.getUniqueId())){
-            Notifier.error(player,"You need a rank to be able to share! Get "+ChatColor.BLUE+"PRO"+ChatColor.RED+" / "+ChatColor.GREEN+"VIP"+ChatColor.RED+" at " + Walls.DISCORD);
+        Player player = (Player) sender;
+        if (!walls.players.get(player.getUniqueId()).rank.vip()) {
+            Notifier.error(player, "You need a rank to be able to share! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " + Walls.DISCORD);
             return true;
         }
-
-        if (myWalls.isSpec(player.getUniqueId())){
-            Notifier.error(player,"You need to be in the fight to share!");
+        if (walls.isSpec(player.getUniqueId())) {
+            Notifier.error(player, "You need to be in the fight to share!");
             return true;
         }
-
         Player friend = Bukkit.getPlayer(args[0]);
-        if (friend!=null){
-            
-            if (myWalls.sameTeam(player.getUniqueId(), friend.getUniqueId())){
-
+        if (friend != null) {
+            if (walls.sameTeam(player.getUniqueId(), friend.getUniqueId())) {
                 int itemInHandSlot = player.getInventory().getHeldItemSlot();
-                
                 ItemStack sharedItemStack = player.getInventory().getItem(itemInHandSlot);
-                
                 friend.getInventory().addItem(sharedItemStack);
                 player.getInventory().setItem(itemInHandSlot, new ItemStack(Material.AIR));
-                Notifier.success(player,"You shared some " + sharedItemStack.getType().name() + " with "+friend.getName());
-                Notifier.success(friend,player.getName()+" shared some "+sharedItemStack.getType().name()+" with you!");
+                Notifier.success(player, "You shared some " + sharedItemStack.getType().name() + " with " + friend.getName());
+                Notifier.success(friend, player.getName() + " shared some " + sharedItemStack.getType().name() + " with you!");
                 friend.updateInventory();
                 player.updateInventory();
-                
-            }else{
+            } else {
                 Notifier.error(sender, "You need to be on the same team to share stuff :(");
             }
         }
-        
         return true;
     }
-
 }

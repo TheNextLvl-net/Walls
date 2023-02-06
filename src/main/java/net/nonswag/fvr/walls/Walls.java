@@ -46,20 +46,53 @@ import java.util.*;
 
 public class Walls extends JavaPlugin implements Listener {
 
+    public enum Rank {
+        NONE, VIP, PRO, GM, MGM, ADMIN;
+
+        public boolean vip() {
+            return equals(VIP) || pro();
+        }
+
+        public boolean pro() {
+            return equals(PRO) || staff();
+        }
+
+        public boolean staff() {
+            return equals(GM) || mgm();
+        }
+
+        public boolean mgm() {
+            return equals(MGM) || admin();
+        }
+
+        public boolean admin() {
+            return equals(ADMIN);
+        }
+
+        public String display() {
+            if (admin()) return "§c[ADMIN]";
+            if (mgm()) return "§6[MGM]";
+            if (staff()) return "§b[GM]";
+            if (pro()) return "§9[PRO]";
+            if (vip()) return "§a[VIP]";
+            return "";
+        }
+
+        public static Rank parse(String string) {
+            try {
+                return valueOf(string.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return null;
+            }
+        }
+    }
+
     public static class WallsPlayer {
         public String clan = null;
         public String username = null;
         public String uid = null;
         public String paidKits = null;
-        public boolean vip = false;
-        public boolean pro = false;
-        public boolean nMVP = false;
-        public boolean dMVP = false;
-        public boolean gm = false;
-        public boolean mgm = false;
-        public boolean legendary = false;
-        public boolean admin = false;
-        public boolean owner = false;
+        public Rank rank = Rank.NONE;
         public boolean clanLeader = false;
         public boolean compassPointsToEnemy = true;
         public int statsKills = 0;
@@ -122,12 +155,11 @@ public class Walls extends JavaPlugin implements Listener {
 
     public enum PlayerState {SPECTATORS, RED, YELLOW, GREEN, BLUE}
 
-    public enum PlayerJoinType {ANYONE, VIP, PRO, LEGENDARY, STAFF}
+    public enum PlayerJoinType {ANYONE, VIP, PRO, STAFF}
 
     private final List<Material> allowedFoods = new ArrayList<>();
     private final List<EntityType> allowedMobs = new ArrayList<>();
     private final List<Selection> selections = new ArrayList<>();
-    private final List<Selection> cuboids = new ArrayList<>();
     public Clock clock;
     private GameState gameState = GameState.PREGAME;
     private final Map<UUID, PlayerInventory> inventory = new HashMap<>();
@@ -408,23 +440,18 @@ public class Walls extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         event.setRespawnLocation(Walls.gameSpawn);
-
-        if (isVIP(event.getPlayer().getUniqueId())) {
+        if (players.get(event.getPlayer().getUniqueId()).rank.vip()) {
             this.specPlayerType.givePlayerKit(event.getPlayer());
             PlayerVisibility.makeSpecInvis(this, event.getPlayer());
             PlayerVisibility.makeSpecVisToSpecs(this, event.getPlayer());
         } else {
-            final Player p = event.getPlayer();
-
-            Notifier.notify(p, "You Died :( RIP. Want to fly spectate /surface /spawn ? Get Walls " + ChatColor.GREEN + "VIP" + ChatColor.WHITE + " at " + Walls.DISCORD);
-
+            Notifier.notify(event.getPlayer(), "You Died :( RIP. Want to fly spectate /surface /spawn ? Get Walls " + ChatColor.GREEN + "VIP" + ChatColor.WHITE + " at " + Walls.DISCORD);
         }
     }
 
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onBlockBreak(BlockBreakEvent event) {
-
         switch (this.gameState) {
             case PREGAME:
                 if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
@@ -495,61 +522,45 @@ public class Walls extends JavaPlugin implements Listener {
 
     private void wallsJoinMessage(PlayerJoinEvent event) {
         if (event.getPlayer().isOp()) return;
-        if (isStaff(event.getPlayer().getUniqueId())) {
+        if (players.get(event.getPlayer().getUniqueId()).rank.staff()) {
             event.setJoinMessage("");
             Notifier.staff(this, event.getPlayer().getName() + " joined the server.");
-            WallsPlayer tWP = this.getWallsPlayer(event.getPlayer().getUniqueId());
-            this.getAllPlayers().put(event.getPlayer().getUniqueId(), tWP);
+            WallsPlayer player = this.getWallsPlayer(event.getPlayer().getUniqueId());
+            this.getAllPlayers().put(event.getPlayer().getUniqueId(), player);
         } else {
             WallsPlayer player = this.getWallsPlayer(event.getPlayer().getUniqueId());
             if (Walls.clanBattle) {
                 if (player != null && player.clan == null) {
-                    Notifier.error(event.getPlayer(), "Sorry, this game is a Clan Battle!!");
+                    event.getPlayer().kickPlayer("§cSorry, this game is a Clan Battle!!");
                     return;
                 }
                 if (player != null && !Walls.clans.contains(player.clan)) {
-                    Notifier.error(event.getPlayer(), "Sorry, this game is a Clan Battle!!");
+                    event.getPlayer().kickPlayer("Sorry, this game is a Clan Battle!!");
                     return;
                 }
             }
-
             if (playerJoinRestriction != PlayerJoinType.ANYONE) {
-
                 boolean kick = false;
-
                 switch (playerJoinRestriction) {
                     case VIP:
-                        if (!this.isVIP(event.getPlayer().getUniqueId())) {
-                            kick = true;
-                        }
+                        kick = player == null || !player.rank.vip();
                         break;
                     case PRO:
-                        if (!this.isPRO(event.getPlayer().getUniqueId())) {
-                            kick = true;
-                        }
-                        break;
-                    case LEGENDARY:
-                        if (player != null && !player.legendary && !event.getPlayer().isOp() && !this.isStaff(event.getPlayer().getUniqueId())) {
-                            kick = true;
-                        }
+                        kick = player == null || !player.rank.pro();
                         break;
                     case STAFF:
-                        if (!this.isStaff(event.getPlayer().getUniqueId())) {
-                            kick = true;
-                        }
+                        kick = player == null || !player.rank.staff();
                         break;
                 }
                 if (kick) {
-                    Notifier.error(event.getPlayer(), "Sorry, this game is " + Walls.playerJoinRestriction.toString() + " only just now.");
+                    event.getPlayer().kickPlayer("§cSorry, this game is " + Walls.playerJoinRestriction.toString() + " only just now.");
                     return;
                 }
-
-
             }
 
             if (this.gameState != GameState.PREGAME) {
-                if (isSpec(event.getPlayer().getUniqueId()) && !this.isVIP(event.getPlayer().getUniqueId())) {
-                    Notifier.error(event.getPlayer(), "Sorry, the game is already in progress, you need VIP and up to spectate - " + Walls.DISCORD + " !");
+                if (isSpec(event.getPlayer().getUniqueId()) && player != null && !player.rank.vip()) {
+                    event.getPlayer().kickPlayer("§cSorry, the game is already in progress, you need VIP and up to spectate - " + Walls.DISCORD + " !");
                     return;
                 }
             }
@@ -667,7 +678,7 @@ public class Walls extends JavaPlugin implements Listener {
                 deadWallsPlayer.minutes = (this.clock.getSecondsRemaining() / 60);
                 this.players.put(event.getEntity().getUniqueId(), deadWallsPlayer);
 
-                if (deadWallsPlayer.vip) {
+                if (deadWallsPlayer.rank.equals(Rank.VIP)) {
                     player.setAllowFlight(true);
                 }
 
@@ -719,6 +730,8 @@ public class Walls extends JavaPlugin implements Listener {
             case PREGAME:
                 event.getPlayer().getInventory().clear();
                 this.players.remove(event.getPlayer().getUniqueId());
+                playerScoreBoard.removePlayerFromTeam(event.getPlayer().getUniqueId());
+                WallsCmd.VOTES.remove(event.getPlayer().getUniqueId());
                 break;
             case PEACETIME:
             case FIGHTING:
@@ -1714,7 +1727,7 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onWeatherChange(WeatherChangeEvent event) {
-        event.setCancelled(event.toWeatherState());
+        event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -1788,9 +1801,9 @@ public class Walls extends JavaPlugin implements Listener {
                 }
             }
             int max = 2;
-            if (this.isPRO(event.getPlayer().getUniqueId())) {
+            if (players.get(event.getPlayer().getUniqueId()).rank.pro()) {
                 max = 7;
-            } else if (this.isVIP(event.getPlayer().getUniqueId())) {
+            } else if (players.get(event.getPlayer().getUniqueId()).rank.vip()) {
                 max = 5;
             }
 
@@ -1800,7 +1813,7 @@ public class Walls extends JavaPlugin implements Listener {
             } else {
                 Notifier.error(event.getPlayer(), ChatColor.RED + "You have reached your protection limit!");
                 Notifier.error(event.getPlayer(), ChatColor.RED + "Unprotect other owned containers");
-                if (!this.isVIP(event.getPlayer().getUniqueId())) {
+                if (!players.get(event.getPlayer().getUniqueId()).rank.vip()) {
                     Notifier.notify(event.getPlayer(), ChatColor.AQUA + "VIP & PRO get more protected containers! " + Walls.DISCORD);
                 }
             }
@@ -1946,11 +1959,11 @@ public class Walls extends JavaPlugin implements Listener {
     }
 
     public List<UUID> getStaffList() {
-        List<UUID> wp = new ArrayList<>();
-        for (UUID u : this.players.keySet()) {
-            if (this.isStaff(u)) wp.add(u);
+        List<UUID> staffs = new ArrayList<>();
+        for (UUID uuid : this.players.keySet()) {
+            if (players.get(uuid).rank.staff()) staffs.add(uuid);
         }
-        return wp;
+        return staffs;
     }
 
     public List<UUID> getTeamList(UUID uid) {
@@ -1993,29 +2006,6 @@ public class Walls extends JavaPlugin implements Listener {
 
     public boolean isSpec(UUID a) {
         return players.containsKey(a) && players.get(a).playerState.equals(PlayerState.SPECTATORS);
-    }
-
-    public boolean isStaff(UUID a) {
-        return players.containsKey(a) && (players.get(a).gm || players.get(a).mgm || players.get(a).admin || players.get(a).owner);
-    }
-
-    public boolean isMGM(UUID a) {
-        return players.containsKey(a) && (players.get(a).mgm || players.get(a).admin || players.get(a).owner);
-    }
-
-    public boolean isVIP(UUID a) {
-        WallsPlayer twp = players.get(a);
-        return twp.vip || isPRO(a);
-    }
-
-    public boolean isPRO(UUID a) {
-        WallsPlayer twp = players.get(a);
-        return twp.pro || isLEGENDARY(a);
-    }
-
-    public boolean isLEGENDARY(UUID a) {
-        WallsPlayer twp = players.get(a);
-        return twp.legendary || isStaff(a);
     }
 
     public boolean sameTeam(UUID a, UUID b) {
@@ -2114,32 +2104,18 @@ public class Walls extends JavaPlugin implements Listener {
         c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         c.setPointA(-160, 0, -29);
         c.setPointB(-15, 0, 117);
-        this.cuboids.add(c);
 
         c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         c.setPointA(-160, 0, 285);
         c.setPointB(-15, 0, 142);
-        this.cuboids.add(c);
 
         c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         c.setPointA(155, 0, 287);
         c.setPointB(10, 0, 142);
-        this.cuboids.add(c);
 
         c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
         c.setPointA(159, 0, -31);
         c.setPointB(10, 0, 117);
-        this.cuboids.add(c);
-
-//        // Ice center
-//        this.center = new Selection(this.getServer().getWorld(Walls.levelName).getName());
-//        this.center.setPointA(0, 65, 127);
-//        this.center.setPointB(-5, 82, 132);
-//
-//        // Arena
-//        this.arena = new Selection(this.getServer().getWorld(Walls.levelName).getName());
-//        this.arena.setPointA(-141, 0, -9);// lower left corner
-//        this.arena.setPointB(136, buildHeight, 268);// upper right corner
 
         Selection s;
 

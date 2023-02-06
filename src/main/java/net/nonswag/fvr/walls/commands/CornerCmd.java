@@ -15,24 +15,24 @@ import org.bukkit.entity.Player;
 
 public class CornerCmd implements CommandExecutor {
 
-    private final Walls myWalls;
+    private final Walls walls;
 
     public CornerCmd(Walls walls) {
-        myWalls = walls;
+        this.walls = walls;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
-        if (myWalls.getGameState() != GameState.PEACETIME) {
+        if (walls.getGameState() != GameState.PEACETIME) {
             Notifier.error(sender, "Sorry /corner is only available during peace time.");
             return true;
         }
         Player player = (Player) sender;
-        if (!myWalls.isVIP(player.getUniqueId()) && !myWalls.isStaff(player.getUniqueId()) && !sender.isOp()) {
+        if (!walls.players.get(player.getUniqueId()).rank.vip() && !sender.isOp()) {
             Notifier.error(player, "You need a rank to be able to /corner! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " + Walls.DISCORD);
             return true;
         }
-        WallsPlayer twp = myWalls.getWallsPlayer(player.getUniqueId());
+        WallsPlayer twp = walls.getWallsPlayer(player.getUniqueId());
         Location corner;
         corner = Walls.corners.get(twp.playerState.ordinal());
         final Location loc = new Location(
