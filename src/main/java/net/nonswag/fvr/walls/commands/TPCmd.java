@@ -26,40 +26,33 @@ public class TPCmd implements CommandExecutor {
             return true;
         }
 
-        if (sender instanceof Player && !walls.players.get(((Player) sender).getUniqueId()).rank.vip()) {
+        if (sender instanceof Player && !walls.getPlayer(((Player) sender).getUniqueId()).rank.vip()) {
             Notifier.error(sender, "Sorry only VIP and above can use this command.");
             return true;
         }
-
-        Player friend = Bukkit.getServer().getPlayer(args[0]);
-
-        if (friend == null) {
-            return true;
-        }
+        Player friend = Bukkit.getPlayer(args[0]);
+        if (friend == null) return true;
         switch (walls.getGameState()) {
             case PEACETIME:
                 if (!(sender instanceof Player)) {
                     Notifier.notify(sender, "This is a player command");
                     return true;
                 }
-                if (walls.isSpec(((Player) sender).getUniqueId())) {
+                if (walls.isSpectator((Player) sender)) {
                     ((Player) sender).teleport(friend.getLocation().add(0, +5, 0));
                     sender.sendMessage(ChatColor.GREEN + "You have been teleported to " + args[0]);
                     break;
                 }
-
                 if (walls.sameTeam(((Player) sender).getUniqueId(), friend.getUniqueId())) {
                     ((Player) sender).teleport(friend);
                     sender.sendMessage(ChatColor.GREEN + "You have been teleported to " + args[0]);
                     friend.sendMessage(sender.getName() + ChatColor.GREEN + " teleported to you.");
-                } else {
-                    Notifier.error(sender, "Sorry you can only TP to people on your team.");
-                }
+                } else Notifier.error(sender, "Sorry you can only TP to people on your team.");
                 break;
             case FIGHTING:
             case FINISHED:
                 if (sender instanceof Player) {
-                    if (walls.isSpec(((Player) sender).getUniqueId())) {
+                    if (walls.isSpectator((Player) sender)) {
                         ((Player) sender).teleport(friend.getLocation().add(0, +5, 0));
                         sender.sendMessage(ChatColor.GREEN + "You have been teleported to " + args[0]);
                     } else Notifier.notify(sender, "You are not a spectator");

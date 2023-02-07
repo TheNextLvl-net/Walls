@@ -35,15 +35,15 @@ public class ShoutCmd implements CommandExecutor{
             return true;
         }
         Player player = (Player) sender;
-        WallsPlayer wallsPlayer = walls.players.get(player.getUniqueId());
-        if (this.walls.isSpec(player.getUniqueId()) && !wallsPlayer.rank.staff()) {
+        WallsPlayer wallsPlayer = walls.getPlayer(player.getUniqueId());
+        if (this.walls.isSpectator(player) && !wallsPlayer.rank.staff()) {
             Notifier.error(sender, "Need to be in the fight to use this command :-/");
             return true;
         }
         if (!this.yells.containsKey(player.getUniqueId()) && wallsPlayer.rank.vip()) {
             this.yells.put(player.getUniqueId(), 0);
         } else {
-            if (!walls.players.get(player.getUniqueId()).rank.staff() && !sender.isOp()) {
+            if (!walls.getPlayer(player.getUniqueId()).rank.staff() && !sender.isOp()) {
                 if (wallsPlayer.rank.pro()) {
                     int num = this.yells.get(player.getUniqueId());
                     num = num + 1;

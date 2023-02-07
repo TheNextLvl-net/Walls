@@ -31,7 +31,7 @@ public class WhisperCmd implements CommandExecutor {
             Notifier.error(sender, "/" + commandLabel + " <player> <message>");
             return false;
         } else {
-            Player p = Bukkit.getServer().getPlayer(args[0]);
+            Player p = Bukkit.getPlayer(args[0]);
             if (p != null) {
                 final StringBuilder whisper = new StringBuilder();
                 for (int x = 1; x < args.length; x++) {

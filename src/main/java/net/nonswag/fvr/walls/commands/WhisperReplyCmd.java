@@ -40,7 +40,7 @@ public class WhisperReplyCmd implements CommandExecutor{
             
         } else {
 
-            Player p = Bukkit.getServer().getPlayer(myWalls.whispers.get(((Player)sender).getUniqueId()));
+            Player p = Bukkit.getPlayer(myWalls.whispers.get(((Player)sender).getUniqueId()));
 
             if (p != null) {
                 final StringBuilder whisper = new StringBuilder();

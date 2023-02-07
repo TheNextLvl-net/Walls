@@ -20,7 +20,7 @@ public class Walls extends JavaPlugin implements Runnable {
 
     @Override
     public void onEnable() {
-        getServer().getScheduler().scheduleSyncDelayedTask(this, this, 1);
+        Bukkit.getScheduler().scheduleSyncDelayedTask(this, this, 1);
     }
 
     @Override

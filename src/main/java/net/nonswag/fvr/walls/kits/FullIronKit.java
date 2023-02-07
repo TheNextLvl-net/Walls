@@ -14,31 +14,32 @@ public class FullIronKit {
         this.walls = walls;
     }
 
-    public void givePlayerKit(Player p) {
+    public void givePlayerKit(Player player) {
         switch (walls.getGameState()) {
             case PREGAME:
-                Notifier.error(p, "Kits available once you spawn into the game :)");
+                Notifier.error(player, "Kits available once you spawn into the game :)");
                 break;
             case PEACETIME:
             case FIGHTING:
-                p.setLevel(6);
-                p.getInventory().addItem(new ItemStack(Material.IRON_AXE, 1));
-                p.getInventory().addItem(new ItemStack(Material.IRON_PICKAXE, 1));
-                p.getInventory().addItem(new ItemStack(Material.TNT, 16));
-                p.getInventory().addItem(new ItemStack(Material.IRON_SWORD, 1));
-                p.getInventory().addItem(new ItemStack(Material.COOKED_BEEF, 8));
-                p.getInventory().addItem(new ItemStack(Material.BUCKET, 2));
-                p.getInventory().addItem(new ItemStack(Material.BOW, 1));
-                p.getInventory().addItem(new ItemStack(Material.LEAVES, 64, (short) 1));
-                p.getInventory().addItem(new ItemStack(Material.FLINT_AND_STEEL, 1));
-                p.getInventory().addItem(new ItemStack(Material.ARROW, 16));
-                p.getInventory().setBoots(new ItemStack(Material.IRON_BOOTS, 1));
-                p.getInventory().setChestplate(new ItemStack(Material.IRON_CHESTPLATE, 1));
-                p.getInventory().setHelmet(new ItemStack(Material.IRON_HELMET, 1));
-                p.getInventory().setLeggings(new ItemStack(Material.IRON_LEGGINGS, 1));
+                player.setLevel(6);
+                player.getInventory().clear();
+                player.getInventory().addItem(new ItemStack(Material.IRON_AXE, 1));
+                player.getInventory().addItem(new ItemStack(Material.IRON_PICKAXE, 1));
+                player.getInventory().addItem(new ItemStack(Material.TNT, 16));
+                player.getInventory().addItem(new ItemStack(Material.IRON_SWORD, 1));
+                player.getInventory().addItem(new ItemStack(Material.COOKED_BEEF, 8));
+                player.getInventory().addItem(new ItemStack(Material.BUCKET, 2));
+                player.getInventory().addItem(new ItemStack(Material.BOW, 1));
+                player.getInventory().addItem(new ItemStack(Material.LEAVES, 64, (short) 1));
+                player.getInventory().addItem(new ItemStack(Material.FLINT_AND_STEEL, 1));
+                player.getInventory().addItem(new ItemStack(Material.ARROW, 16));
+                player.getInventory().setBoots(new ItemStack(Material.IRON_BOOTS, 1));
+                player.getInventory().setChestplate(new ItemStack(Material.IRON_CHESTPLATE, 1));
+                player.getInventory().setHelmet(new ItemStack(Material.IRON_HELMET, 1));
+                player.getInventory().setLeggings(new ItemStack(Material.IRON_LEGGINGS, 1));
                 break;
             case FINISHED:
-                Notifier.error(p, "Too late :(. Kits only available during game time.");
+                Notifier.error(player, "Too late :(. Kits only available during game time.");
                 break;
             default:
                 break;

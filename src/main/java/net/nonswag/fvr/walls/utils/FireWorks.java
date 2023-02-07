@@ -20,9 +20,9 @@ import java.util.UUID;
 public class FireWorks {
 
 
-    public static void spawnFireworksForPlayers(final Walls myWalls) {
-        myWalls.getServer().getScheduler().scheduleSyncDelayedTask(myWalls, () -> {
-            List<UUID> winningTeam = myWalls.getTeamList(PlayerState.values()[myWalls.getWinningTeam()]);
+    public static void spawnFireworksForPlayers(Walls walls) {
+        Bukkit.getScheduler().scheduleSyncDelayedTask(walls, () -> {
+            List<UUID> winningTeam = walls.getTeamList(PlayerState.values()[walls.getWinningTeam()]);
 
             // Spawn the Fireworks for winners
 

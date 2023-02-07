@@ -26,11 +26,11 @@ public class SpawnCmd implements CommandExecutor {
             return true;
         }
         final Player player = (Player) sender;
-        if (!walls.players.get(player.getUniqueId()).rank.vip() && !sender.isOp()) {
+        if (!walls.getPlayer(player.getUniqueId()).rank.vip() && !sender.isOp()) {
             Notifier.error(player, "You need a rank to be able to /spawn! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " +  Walls.DISCORD);
             return true;
         }
-        WallsPlayer twp = walls.getWallsPlayer(player.getUniqueId());
+        WallsPlayer twp = walls.getPlayer(player.getUniqueId());
         switch (twp.playerState) {
             case RED:
                 player.teleport(Walls.team1Spawn);

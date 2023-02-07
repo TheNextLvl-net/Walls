@@ -33,7 +33,6 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.projectiles.ProjectileSource;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
@@ -112,7 +111,7 @@ public class Walls extends JavaPlugin implements Listener {
     public static ChatColor[] teamChatColors = {ChatColor.LIGHT_PURPLE, ChatColor.RED, ChatColor.YELLOW, ChatColor.GREEN, ChatColor.BLUE};
 
     private final Map<UUID, Integer> mutedPlayers = new HashMap<>();
-    public final Map<UUID, WallsPlayer> players = new HashMap<>();
+    private final Map<UUID, WallsPlayer> players = new HashMap<>();
 
     private final Map<UUID, Long> inCombat = new HashMap<>();
 
@@ -142,7 +141,7 @@ public class Walls extends JavaPlugin implements Listener {
     public static List<Location> corners = new ArrayList<>();
 
 
-    SpecPlayerKit specPlayerType;
+    private SpecPlayerKit spectatorKit;
     public PlayerScoreBoard playerScoreBoard;
 
     private final Map<Location, PlayerState> boom = new HashMap<>();
@@ -157,7 +156,6 @@ public class Walls extends JavaPlugin implements Listener {
 
     public enum PlayerJoinType {ANYONE, VIP, PRO, STAFF}
 
-    private final List<Material> allowedFoods = new ArrayList<>();
     private final List<EntityType> allowedMobs = new ArrayList<>();
     private final List<Selection> selections = new ArrayList<>();
     public Clock clock;
@@ -184,7 +182,7 @@ public class Walls extends JavaPlugin implements Listener {
     private final int restartTimer = 15;
     public boolean starting = false;
     private final Set<ProtectedContainer> protectedContainers = new HashSet<>();
-    private final Map<UUID, Integer> quitters = new HashMap<>();
+    private final List<UUID> quitters = new ArrayList<>();
     private final Map<UUID, BukkitTask> quitterTasks = new HashMap<>();
     public static final Random random = new Random();
     private int relogTime = 60;
@@ -249,7 +247,7 @@ public class Walls extends JavaPlugin implements Listener {
             Walls.clans = clans;
         }
 
-        World world = this.getServer().getWorlds().get(0);
+        World world = Bukkit.getWorlds().get(0);
         Walls.gameSpawn = new Location(world, -2, world.getHighestBlockYAt(-2, 130), 130);
 
         Walls.team1Spawn = new Location(world, -149, 65, -17);
@@ -272,9 +270,6 @@ public class Walls extends JavaPlugin implements Listener {
         corners.add(Walls.team3Corner);
         corners.add(Walls.team4Corner);
 
-        this.allowedFoods.add(Material.CARROT);
-        this.allowedFoods.add(Material.CARROT_ITEM);
-
         this.allowedMobs.add(EntityType.CAVE_SPIDER);
         this.allowedMobs.add(EntityType.ZOMBIE);
         this.allowedMobs.add(EntityType.SKELETON);
@@ -288,19 +283,19 @@ public class Walls extends JavaPlugin implements Listener {
         this.allowedMobs.add(EntityType.GHAST);
         this.allowedMobs.add(EntityType.BLAZE);
 
-        specPlayerType = new SpecPlayerKit(this);
+        spectatorKit = new SpecPlayerKit(this);
 
         playerScoreBoard = new PlayerScoreBoard(this);
 
         DeathMessages.initializeDeathMessages();
 
-        this.getServer().getPluginManager().registerEvents(this, this);
+        Bukkit.getPluginManager().registerEvents(this, this);
 
         getCommand("ping").setExecutor(new PingCommand());
         getCommand("shout").setExecutor(new ShoutCmd(this));
         getCommand("tp").setExecutor(new TPCmd(this));
         getCommand("walls").setExecutor(new WallsCmd(this));
-        getCommand("giveall").setExecutor(new FullDiamondCmd(this));
+        getCommand("giveall").setExecutor(new FullKitCommand(this));
         getCommand("spawn").setExecutor(new SpawnCmd(this));
         getCommand("corner").setExecutor(new CornerCmd(this));
         getCommand("surface").setExecutor(new SurfaceCmd(this));
@@ -318,7 +313,7 @@ public class Walls extends JavaPlugin implements Listener {
 
         defineArena();
 
-        this.getServer().getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
+        Bukkit.getMessenger().registerOutgoingPluginChannel(this, "BungeeCord");
 
         this.clock = new Clock(this);
 
@@ -326,7 +321,7 @@ public class Walls extends JavaPlugin implements Listener {
 
 
         if (Walls.advert != null && !Walls.advert.equals("")) {
-            this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> Bukkit.getServer().getLogger().info(advert), 20L * 40, 20L * 240);
+            Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> Bukkit.getLogger().info(advert), 20L * 40, 20L * 240);
         }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (WallsCmd.FIX_DB) fixDatabase();
@@ -411,7 +406,7 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onServerListPing(ServerListPingEvent event) {
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
                 event.setMotd("§aWaiting for more players to start\n§6Click to join");
                 break;
@@ -440,9 +435,9 @@ public class Walls extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         event.setRespawnLocation(Walls.gameSpawn);
-        if (players.get(event.getPlayer().getUniqueId()).rank.vip()) {
-            this.specPlayerType.givePlayerKit(event.getPlayer());
-            PlayerVisibility.makeSpecInvis(this, event.getPlayer());
+        if (getPlayer(event.getPlayer().getUniqueId()).rank.vip()) {
+            this.spectatorKit.givePlayerKit(event.getPlayer());
+            PlayerVisibility.makeSpecInvisible(this, event.getPlayer());
             PlayerVisibility.makeSpecVisToSpecs(this, event.getPlayer());
         } else {
             Notifier.notify(event.getPlayer(), "You Died :( RIP. Want to fly spectate /surface /spawn ? Get Walls " + ChatColor.GREEN + "VIP" + ChatColor.WHITE + " at " + Walls.DISCORD);
@@ -452,7 +447,7 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onBlockBreak(BlockBreakEvent event) {
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
                 if (event.getPlayer().getGameMode() != GameMode.CREATIVE) {
                     event.setCancelled(true);
@@ -522,13 +517,13 @@ public class Walls extends JavaPlugin implements Listener {
 
     private void wallsJoinMessage(PlayerJoinEvent event) {
         if (event.getPlayer().isOp()) return;
-        if (players.get(event.getPlayer().getUniqueId()).rank.staff()) {
+        if (getPlayer(event.getPlayer().getUniqueId()).rank.staff()) {
             event.setJoinMessage("");
             Notifier.staff(this, event.getPlayer().getName() + " joined the server.");
-            WallsPlayer player = this.getWallsPlayer(event.getPlayer().getUniqueId());
-            this.getAllPlayers().put(event.getPlayer().getUniqueId(), player);
+            WallsPlayer player = this.getPlayer(event.getPlayer().getUniqueId());
+            this.getPlayers().put(event.getPlayer().getUniqueId(), player);
         } else {
-            WallsPlayer player = this.getWallsPlayer(event.getPlayer().getUniqueId());
+            WallsPlayer player = this.getPlayer(event.getPlayer().getUniqueId());
             if (Walls.clanBattle) {
                 if (player != null && player.clan == null) {
                     event.getPlayer().kickPlayer("§cSorry, this game is a Clan Battle!!");
@@ -558,8 +553,8 @@ public class Walls extends JavaPlugin implements Listener {
                 }
             }
 
-            if (this.gameState != GameState.PREGAME) {
-                if (isSpec(event.getPlayer().getUniqueId()) && player != null && !player.rank.vip()) {
+            if (getGameState() != GameState.PREGAME) {
+                if (isSpectator(event.getPlayer()) && player != null && !player.rank.vip()) {
                     event.getPlayer().kickPlayer("§cSorry, the game is already in progress, you need VIP and up to spectate - " + Walls.DISCORD + " !");
                     return;
                 }
@@ -572,60 +567,48 @@ public class Walls extends JavaPlugin implements Listener {
     public void onPlayerJoin(final PlayerJoinEvent event) {
         event.setJoinMessage("");
 
-        this.getServer().getScheduler().runTaskLater(this, () -> Walls.this.wallsJoinMessage(event), 2 * 20L);
+        Bukkit.getScheduler().runTaskLater(this, () -> wallsJoinMessage(event), 2 * 20L);
 
         WallsPlayer wallsPlayer = new WallsPlayer();
 
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
-
-
-                if (!players.containsKey(event.getPlayer().getUniqueId())) {
+                if (!getPlayers().containsKey(event.getPlayer().getUniqueId())) {
                     wallsPlayer.playerState = PlayerState.SPECTATORS;
-                    this.players.put(event.getPlayer().getUniqueId(), wallsPlayer);
+                    this.getPlayers().put(event.getPlayer().getUniqueId(), wallsPlayer);
                 }
-                this.specPlayerType.givePlayerKit(event.getPlayer());
+                this.spectatorKit.givePlayerKit(event.getPlayer());
                 event.getPlayer().setHealth(20);
                 event.getPlayer().setFoodLevel(20);
                 playerScoreBoard.setScoreBoard(event.getPlayer().getUniqueId());
                 playerScoreBoard.updateScoreboardScores();
-
-                if (!starting && this.players.size() >= Walls.preGameAutoStartPlayers && !Walls.clanBattle && !Walls.tournamentMode) {
-
+                if (!starting && getPlayers().size() >= Walls.preGameAutoStartPlayers && !Walls.clanBattle && !Walls.tournamentMode) {
                     Notifier.broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + preGameAutoStartSeconds + ChatColor.WHITE + " seconds!!");
-
-                    this.clock.setClock(preGameAutoStartSeconds, () -> GameStarter.startGame(Walls.this.players, Walls.this));
+                    this.clock.setClock(preGameAutoStartSeconds, () -> GameStarter.startGame(getPlayers(), Walls.this));
                     this.starting = true;
                 }
                 break;
             case PEACETIME:
             case FIGHTING:
             case FINISHED:
-
-                if (!this.quitters.containsKey(event.getPlayer().getUniqueId())) {
-                    this.specPlayerType.givePlayerKit(event.getPlayer());
-
+                if (!this.quitters.contains(event.getPlayer().getUniqueId())) {
+                    this.spectatorKit.givePlayerKit(event.getPlayer());
                     playerScoreBoard.addPlayerToTeam(event.getPlayer().getUniqueId(), PlayerState.SPECTATORS);
                     event.getPlayer().setHealth(20);
                     event.getPlayer().setFoodLevel(20);
-                    PlayerVisibility.makeSpecInvis(this, event.getPlayer());
+                    PlayerVisibility.makeSpecInvisible(this, event.getPlayer());
                     PlayerVisibility.makeSpecVisToSpecs(this, event.getPlayer());
                 } else {
-
                     this.quitters.remove(event.getPlayer().getUniqueId());
                     this.inventory.remove(event.getPlayer().getUniqueId());
                     this.quitterTasks.get(event.getPlayer().getUniqueId()).cancel();
-
                     PlayerVisibility.hideAllSpecs(this, event.getPlayer());
-
                 }
-
                 playerScoreBoard.setScoreBoard(event.getPlayer().getUniqueId());
                 break;
             default:
                 break;
         }
-
     }
 
 
@@ -638,14 +621,14 @@ public class Walls extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
 
-        if (!this.players.containsKey(event.getUniqueId())) {
+        if (!getPlayers().containsKey(event.getUniqueId())) {
             this.myDB.loadPlayer(event.getName(), event.getUniqueId());
         }
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onDrop(PlayerDropItemEvent event) {
-        if (this.gameState == GameState.PREGAME) event.setCancelled(true);
+        if (getGameState() == GameState.PREGAME) event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -656,234 +639,162 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerDeath(PlayerDeathEvent event) {
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PEACETIME:
             case FIGHTING:
-
                 event.setDeathMessage("");
                 Player player = event.getEntity();
-
                 DeathMessages.getDeathMessage(event, this);
-
                 if (Walls.UHC) {
                     event.getEntity().getKiller().getInventory().addItem(new ItemStack(Material.GOLDEN_APPLE, 1));
                     Notifier.success(event.getEntity().getKiller(), "You got a Golden Apple for that Kill!! Eat it for health!");
                 }
-
                 playerScoreBoard.removePlayerFromTeam(event.getEntity().getUniqueId());
                 playerScoreBoard.addPlayerToTeam(event.getEntity().getUniqueId(), PlayerState.SPECTATORS);
-
-                WallsPlayer deadWallsPlayer = this.players.get(event.getEntity().getUniqueId());
+                WallsPlayer deadWallsPlayer = getPlayer(event.getEntity().getUniqueId());
                 deadWallsPlayer.deaths = 1;
                 deadWallsPlayer.minutes = (this.clock.getSecondsRemaining() / 60);
-                this.players.put(event.getEntity().getUniqueId(), deadWallsPlayer);
-
+                getPlayers().put(event.getEntity().getUniqueId(), deadWallsPlayer);
                 if (deadWallsPlayer.rank.equals(Rank.VIP)) {
                     player.setAllowFlight(true);
                 }
-
                 if (Walls.clanBattle || Walls.tournamentMode) {
-                    Walls.this.getServer().dispatchCommand(Walls.this.getServer().getConsoleSender(), "whitelist remove " + player.getName());
-                    Walls.this.getServer().dispatchCommand(Walls.this.getServer().getConsoleSender(), "whitelist reload");
                     event.getEntity().kickPlayer("§cGG. No Specs in this game I'm afraid.");
                 }
-
-
                 this.foodTime = 0;
                 if (this.foodDisabled) {
                     this.foodDisabled = false;
                     Notifier.broadcast("You can now eat again!");
-
                 }
-
-                WallsPlayer twp = this.players.get(player.getUniqueId());
-                twp.playerState = PlayerState.SPECTATORS;
+                WallsPlayer wallsPlayer = getPlayer(player.getUniqueId());
+                wallsPlayer.playerState = PlayerState.SPECTATORS;
                 player.closeInventory();
                 player.getInventory().clear();
-                this.players.put(player.getUniqueId(), twp);
-
+                getPlayers().put(player.getUniqueId(), wallsPlayer);
                 if (calculateTeamsLeft() < 2) {
-
-                    this.gameState = GameState.FINISHED;
-
+                    setGameState(GameState.FINISHED);
                     Notifier.broadcast("Server restarting in " + restartTimer + " seconds!");
-                    Walls.this.getServer().getScheduler().scheduleSyncDelayedTask(Walls.this, () -> Walls.this.getServer().dispatchCommand(Walls.this.getServer().getConsoleSender(), "stop Game restarting"), 20L * this.restartTimer);
-
-
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(Walls.this, () -> System.exit(0), 20L * this.restartTimer);
                 }
                 playerScoreBoard.updateScoreboardScores();
-
                 break;
             default:
                 break;
         }
     }
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onPlayerQuit(final PlayerQuitEvent event) {
-
-        final Player player = event.getPlayer();
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
         WallsCmd.VOTES.remove(player.getUniqueId());
-        final WallsPlayer twp = this.getWallsPlayer(player.getUniqueId());
-
-        switch (this.gameState) {
+        WallsPlayer wallsPlayer = getPlayer(player);
+        switch (getGameState()) {
             case PREGAME:
-                event.getPlayer().getInventory().clear();
-                this.players.remove(event.getPlayer().getUniqueId());
-                playerScoreBoard.removePlayerFromTeam(event.getPlayer().getUniqueId());
-                WallsCmd.VOTES.remove(event.getPlayer().getUniqueId());
+                player.getInventory().clear();
+                getPlayers().remove(player.getUniqueId());
+                playerScoreBoard.removePlayerFromTeam(player.getUniqueId());
+                WallsCmd.VOTES.remove(player.getUniqueId());
                 break;
             case PEACETIME:
             case FIGHTING:
             case FINISHED:
-
                 event.setQuitMessage("");
-
-                if (!this.isSpec(event.getPlayer().getUniqueId())) {
-
-                    if (this.inCombat.containsKey(event.getPlayer().getUniqueId())) {
-                        Notifier.broadcast(event.getPlayer().getDisplayName() + " just left while in combat. (Grab their stuff! x:"
-                                + event.getPlayer().getLocation().getBlockX()
-                                + " y:" + event.getPlayer().getLocation().getBlockY()
-                                + " z:" + event.getPlayer().getLocation().getBlockZ() + ")");
-                        for (final ItemStack item : event.getPlayer().getInventory()) {
+                if (!this.isSpectator(player)) {
+                    if (this.inCombat.containsKey(player.getUniqueId())) {
+                        System.out.println();
+                        System.out.println();
+                        System.out.println();
+                        System.out.println(player.getName() + " left while in combat");
+                        System.out.println();
+                        System.out.println();
+                        System.out.println();
+                        Notifier.broadcast(player.getDisplayName() + " just left while in combat. (Grab their stuff! x:"
+                                + player.getLocation().getBlockX()
+                                + " y:" + player.getLocation().getBlockY()
+                                + " z:" + player.getLocation().getBlockZ() + ")");
+                        for (final ItemStack item : player.getInventory()) {
                             if (item != null) {
-                                Walls.this.getServer().getWorld(Walls.levelName).dropItemNaturally(event.getPlayer().getLocation(), item);
+                                Bukkit.getWorld(Walls.levelName).dropItemNaturally(player.getLocation(), item);
                             }
                         }
-
                         HolographicDisplaysAPI.get(this).createHologram(player.getLocation().add(0, 2.5, 0)).getLines().appendItem(new ItemStack(Material.RAW_CHICKEN));
                         Hologram tempHologram = HolographicDisplaysAPI.get(this).createHologram(player.getLocation().add(0, 2, 0));
-                        tempHologram.getLines().appendText(Walls.teamChatColors[twp.playerState.ordinal()] + player.getDisplayName());
+                        tempHologram.getLines().appendText(Walls.teamChatColors[wallsPlayer.playerState.ordinal()] + player.getDisplayName());
                         tempHologram.getLines().appendText(ChatColor.WHITE + " COMBAT LOGGED HERE");
                         tempHologram.getLines().appendText("Chicken.");
-
-
-                        this.inCombat.remove(event.getPlayer().getUniqueId());
-
-
-                        Walls.this.foodTime = 0;
-                        if (Walls.this.foodDisabled) {
-                            Walls.this.foodDisabled = false;
+                        this.inCombat.remove(player.getUniqueId());
+                        foodTime = 0;
+                        if (foodDisabled) {
+                            foodDisabled = false;
                             Notifier.broadcast("You can now eat again!");
-
                         }
-
-                        twp.playerState = PlayerState.SPECTATORS;
-                        twp.deaths = twp.deaths + 5;
-                        twp.kills = 0;
-                        twp.wins = 0;
+                        wallsPlayer.playerState = PlayerState.SPECTATORS;
+                        wallsPlayer.deaths = wallsPlayer.deaths + 5;
+                        wallsPlayer.kills = 0;
+                        wallsPlayer.wins = 0;
                         player.closeInventory();
                         player.getInventory().clear();
-                        Walls.this.players.put(player.getUniqueId(), twp);
-
-                        playerScoreBoard.removePlayerFromTeam(event.getPlayer().getUniqueId());
-                        playerScoreBoard.addPlayerToTeam(event.getPlayer().getUniqueId(), PlayerState.SPECTATORS);
+                        getPlayers().put(player.getUniqueId(), wallsPlayer);
+                        playerScoreBoard.removePlayerFromTeam(player.getUniqueId());
+                        playerScoreBoard.addPlayerToTeam(player.getUniqueId(), PlayerState.SPECTATORS);
                         playerScoreBoard.updateScoreboardScores();
-
-                        if (Walls.clanBattle || Walls.tournamentMode) {
-                            Walls.this.getServer().dispatchCommand(Walls.this.getServer().getConsoleSender(), "whitelist remove " + player.getName());
-                            Walls.this.getServer().dispatchCommand(Walls.this.getServer().getConsoleSender(), "whitelist reload");
-                        }
-
-
                         if (calculateTeamsLeft() < 2) {
-
-                            Walls.this.gameState = GameState.FINISHED;
-
-                            Notifier.broadcast("Server restarting in " + Walls.this.restartTimer + " seconds!");
-
-                            Walls.this.getServer().getScheduler().scheduleSyncDelayedTask(Walls.this, () -> Walls.this.getServer().dispatchCommand(Walls.this.getServer().getConsoleSender(), "stop Game restarting"), 20L * Walls.this.restartTimer);
-
-
+                            setGameState(GameState.FINISHED);
+                            Notifier.broadcast("Server restarting in " + restartTimer + " seconds!");
+                            Bukkit.getScheduler().scheduleSyncDelayedTask(Walls.this, () -> System.exit(0), 20L * restartTimer);
                         }
-
-
                     } else {
-
-                        Notifier.broadcast(event.getPlayer().getDisplayName() + " may have just left the game..");
-
+                        System.out.println();
+                        System.out.println();
+                        System.out.println();
+                        System.out.println(player.getName() + " may have left");
+                        System.out.println();
+                        System.out.println();
+                        System.out.println();
+                        Notifier.broadcast(player.getDisplayName() + " may have just left the game..");
                         if (!this.inventory.containsKey(player.getUniqueId())) {
                             this.inventory.put(player.getUniqueId(), player.getInventory());
                         }
-                        this.quitters.put(event.getPlayer().getUniqueId(), 0);
-
-
-                        BukkitTask newQuitterTask = new BukkitRunnable() {
-                            @Override
-                            public void run() {
-
-                                if (Walls.this.quitters.containsKey(player.getUniqueId())) {
-
-                                    Walls.this.playerScoreBoard.removePlayerFromTeam(event.getPlayer().getUniqueId());
-                                    Walls.this.playerScoreBoard.addPlayerToTeam(event.getPlayer().getUniqueId(), PlayerState.SPECTATORS);
-
-                                    Walls.this.quitters.remove(player.getUniqueId());
-
-
-                                    if (!Walls.this.getServer().getOfflinePlayer(event.getPlayer().getUniqueId()).isOnline()) {
-                                        for (final ItemStack item : Walls.this.inventory.get(event.getPlayer().getUniqueId())) {
-                                            if (item != null) {
-                                                Walls.this.getServer().getWorld(Walls.levelName).dropItemNaturally(event.getPlayer().getLocation(), item);
-                                            }
-                                        }
-                                        Notifier.broadcast("Yup " + event.getPlayer().getDisplayName()
-                                                + " left the game.. (Grab their stuff! x:"
-                                                + event.getPlayer().getLocation().getBlockX()
-                                                + " y:" + event.getPlayer().getLocation().getBlockY()
-                                                + " z:" + event.getPlayer().getLocation().getBlockZ() + ")");
-                                    }
-                                    Walls.this.foodTime = 0;
-                                    if (Walls.this.foodDisabled) {
-                                        Walls.this.foodDisabled = false;
-                                        Notifier.broadcast("You can now eat again!");
-
-                                    }
-
-                                    WallsPlayer twp = Walls.this.players.get(player.getUniqueId());
-                                    twp.playerState = PlayerState.SPECTATORS;
-                                    player.closeInventory();
-                                    player.getInventory().clear();
-                                    Walls.this.players.put(player.getUniqueId(), twp);
-
-                                    if (Walls.clanBattle || Walls.tournamentMode) {
-                                        Walls.this.getServer().dispatchCommand(Walls.this.getServer().getConsoleSender(), "whitelist remove " + player.getName());
-                                        Walls.this.getServer().dispatchCommand(Walls.this.getServer().getConsoleSender(), "whitelist reload");
-                                    }
-
-
-                                    if (calculateTeamsLeft() < 2) {
-
-                                        Walls.this.gameState = GameState.FINISHED;
-
-                                        Notifier.broadcast("Server restarting in " + Walls.this.restartTimer + " seconds!");
-                                        Walls.this.getServer().getScheduler().scheduleSyncDelayedTask(Walls.this, () -> Walls.this.getServer().dispatchCommand(Walls.this.getServer().getConsoleSender(), "stop Game restarting"), 20L * Walls.this.restartTimer);
-
-
-                                    }
-
-
+                        quitters.add(player.getUniqueId());
+                        quitterTasks.put(player.getUniqueId(), Bukkit.getScheduler().runTaskLater(this, () -> {
+                            if (!quitters.contains(player.getUniqueId())) return;
+                            playerScoreBoard.removePlayerFromTeam(player.getUniqueId());
+                            playerScoreBoard.addPlayerToTeam(player.getUniqueId(), PlayerState.SPECTATORS);
+                            quitters.remove(player.getUniqueId());
+                            if (!Bukkit.getOfflinePlayer(player.getUniqueId()).isOnline()) {
+                                for (ItemStack item : inventory.get(player.getUniqueId())) {
+                                    if (item == null) continue;
+                                    player.getWorld().dropItemNaturally(player.getLocation(), item);
                                 }
-
+                                Notifier.broadcast("Yup " + player.getDisplayName()
+                                        + " left the game.. (Grab their stuff! x:"
+                                        + player.getLocation().getBlockX()
+                                        + " y:" + player.getLocation().getBlockY()
+                                        + " z:" + player.getLocation().getBlockZ() + ")");
                             }
-                        }.runTaskLater(this, relogTime * 20L);
-                        this.quitterTasks.put(event.getPlayer().getUniqueId(), newQuitterTask);
+                            foodTime = 0;
+                            if (foodDisabled) {
+                                foodDisabled = false;
+                                Notifier.broadcast("You can now eat again!");
+                            }
+                            WallsPlayer updatedPlayer = getPlayer(player.getUniqueId());
+                            updatedPlayer.playerState = PlayerState.SPECTATORS;
+                            player.closeInventory();
+                            player.getInventory().clear();
+                            getPlayers().put(player.getUniqueId(), updatedPlayer);
+                            if (calculateTeamsLeft() > 1) return;
+                            setGameState(GameState.FINISHED);
+                            Notifier.broadcast("Server restarting in " + restartTimer + " seconds!");
+                            Bukkit.getScheduler().scheduleSyncDelayedTask(Walls.this, () -> System.exit(0), 20L * restartTimer);
+                        }, relogTime * 20L));
                     }
-
-
-                } else {
-                    event.getPlayer().getInventory().clear();
-                }
-
+                } else player.getInventory().clear();
                 playerScoreBoard.updateScoreboardScores();
-
                 break;
             default:
                 break;
         }
-
     }
-
 
     @EventHandler(priority = EventPriority.LOW)
     public void onDispense(BlockDispenseEvent event) {
@@ -892,25 +803,22 @@ public class Walls extends JavaPlugin implements Listener {
         }
     }
 
-
     @EventHandler
     public void onDamage(EntityDamageEvent event) {
-
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
                 if (event.getEntity() instanceof Player) {
                     Player player = (Player) event.getEntity();
                     if (player.getInventory().getItemInHand().getType() == Material.SNOW_BALL) {
                         player.setHealth(20);
                     } else {
-
                         event.setCancelled(true);
                     }
                 }
                 break;
             case PEACETIME:
             case FIGHTING:
-                if (isSpec(event.getEntity().getUniqueId())) {
+                if (isSpectator(event.getEntity())) {
                     event.setCancelled(true);
                 }
                 break;
@@ -921,7 +829,6 @@ public class Walls extends JavaPlugin implements Listener {
                 break;
         }
     }
-
 
     @EventHandler
     void PlayerTeleportEvent(PlayerTeleportEvent event) {
@@ -947,7 +854,7 @@ public class Walls extends JavaPlugin implements Listener {
                 Player damaged = (Player) event.getEntity();
 
                 try {
-                    if (this.isSpec(event.getEntity().getUniqueId())) {
+                    if (this.isSpectator(event.getEntity())) {
                         damaged.teleport(event.getDamager().getLocation().add(0, 5, 0));
                         damaged.setFlying(true);
 
@@ -976,7 +883,7 @@ public class Walls extends JavaPlugin implements Listener {
                 Player damaged = (Player) event.getEntity();
 
                 try {
-                    if (this.isSpec(event.getEntity().getUniqueId())) {
+                    if (this.isSpectator(event.getEntity())) {
                         damaged.teleport(event.getEntity().getLocation().add(0, 5, 0));
                         damaged.setFlying(true);
 
@@ -1005,7 +912,7 @@ public class Walls extends JavaPlugin implements Listener {
 
                 // spec block
                 try {
-                    if (this.isSpec(event.getEntity().getUniqueId())) {
+                    if (this.isSpectator(event.getEntity())) {
                         damaged.teleport(event.getEntity().getLocation().add(0, 5, 0));
                         damaged.setFlying(true);
 
@@ -1033,7 +940,7 @@ public class Walls extends JavaPlugin implements Listener {
         Entity entityDamager = event.getDamager();
 
 
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
                 if (entityDamager instanceof Player) {
                     Player damager = (Player) entityDamager;
@@ -1051,13 +958,13 @@ public class Walls extends JavaPlugin implements Listener {
                     return;
                 }
 
-                if (entityDamager instanceof Player && this.isSpec(entityDamager.getUniqueId())) {
+                if (entityDamager instanceof Player && this.isSpectator(entityDamager)) {
                     event.setCancelled(true);
                     break;
                 }
 
                 if (event.getEntity() instanceof Player && event.getDamager() instanceof Player) {
-                    if (isSpec(event.getEntity().getUniqueId()) || isSpec(event.getDamager().getUniqueId())) {
+                    if (isSpectator(event.getEntity()) || isSpectator(event.getDamager())) {
                         event.setCancelled(true);
                         break;
                     }
@@ -1134,7 +1041,7 @@ public class Walls extends JavaPlugin implements Listener {
                 for (Entity entity : event.getPlayer().getNearbyEntities(2, 2, 2)) {
                     if (entity instanceof Player) {
                         Player spectator = (Player) entity;
-                        if (this.isSpec(entity.getUniqueId())) {
+                        if (this.isSpectator(entity)) {
                             spectator.setFlying(true);
                             spectator.teleport(entity.getLocation().add(0, 5, 0));
                             return;
@@ -1148,12 +1055,10 @@ public class Walls extends JavaPlugin implements Listener {
     private void checkForCompassSwitch(PlayerInteractEvent event) {
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_AIR) {
             if (event.getPlayer().getItemInHand().getType() == Material.COMPASS) {
-                WallsPlayer twp = this.getWallsPlayer(event.getPlayer().getUniqueId());
+                WallsPlayer twp = this.getPlayer(event.getPlayer().getUniqueId());
                 twp.compassPointsToEnemy = !twp.compassPointsToEnemy;
-                this.players.put(event.getPlayer().getUniqueId(), twp);
-
-                ItemMeta compass = Bukkit.getServer().getItemFactory().getItemMeta(Material.COMPASS);
-
+                getPlayers().put(event.getPlayer().getUniqueId(), twp);
+                ItemMeta compass = Bukkit.getItemFactory().getItemMeta(Material.COMPASS);
                 if (twp.compassPointsToEnemy) {
                     Notifier.error(event.getPlayer(), "Compass Points to Enemy!!");
                     compass.setDisplayName("Enemy Finder");
@@ -1162,63 +1067,38 @@ public class Walls extends JavaPlugin implements Listener {
                     Notifier.success(event.getPlayer(), "Compass Points to Friend!!");
                     compass.setDisplayName(ChatColor.GREEN + "Find MY TEAM!!");
                     ItemStackTools.enchantItem(event.getPlayer().getItemInHand(), Enchantment.DAMAGE_ARTHROPODS, 1);
-
                 }
-
                 event.getPlayer().getItemInHand().setItemMeta(compass);
-
-                final List<Player> fightingPlayers = new ArrayList<>();
-                for (final Player player : Walls.this.getServer().getOnlinePlayers()) {
-                    if (!Walls.this.isSpec(player.getUniqueId())) {
-                        fightingPlayers.add(player);
-                    }
+                List<Player> fightingPlayers = new ArrayList<>();
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    if (!isSpectator(player)) fightingPlayers.add(player);
                 }
-
                 try {
-                    Walls.this.processCompass(event.getPlayer(), fightingPlayers);
+                    processCompass(event.getPlayer(), fightingPlayers);
                 } catch (Exception e) {
-                    Walls.this.getLogger().info("Could not process compass so skipping it..");
+                    getLogger().info("Could not process compass so skipping it..");
                 }
-
-
             }
         }
     }
 
-
     public void kickOffCombatThread() {
-
-        this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
-
-            List<UUID> markForRemoval = new ArrayList<>();
-
-            for (final UUID pUID : Walls.this.inCombat.keySet()) {
-
-                if ((System.currentTimeMillis() - Walls.this.inCombat.get(pUID)) > (Walls.combatLogTimeInSeconds * 1000L)) {
-                    markForRemoval.add(pUID);
-                }
-
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
+            for (UUID uuid : inCombat.keySet()) {
+                if (System.currentTimeMillis() - inCombat.get(uuid) <= Walls.combatLogTimeInSeconds * 1000L) continue;
+                Player player = Bukkit.getPlayer(uuid);
+                if (player != null) Notifier.success(player, "You are now no longer in combat !");
             }
-            for (final UUID pUID : markForRemoval) {
-                Walls.this.inCombat.remove(pUID);
-                Player p = Bukkit.getPlayer(pUID);
-                if (p != null) {
-                    Notifier.success(Bukkit.getPlayer(pUID), "You are now no longer in combat !");
-                }
-            }
+            inCombat.clear();
         }, 0L, 20L);
     }
 
     private void checkForContainerProtection(PlayerInteractEvent event) {
-
-
         if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
             final Material clickedMaterial = event.getClickedBlock().getType();
             if ((clickedMaterial == Material.CHEST) || (clickedMaterial == Material.FURNACE) || (clickedMaterial == Material.BURNING_FURNACE)
                     || (clickedMaterial == Material.ENCHANTMENT_TABLE) || (clickedMaterial == Material.WORKBENCH)) {
-
-                final Location location = event.getClickedBlock().getLocation();
-
+                Location location = event.getClickedBlock().getLocation();
                 for (ProtectedContainer container : this.protectedContainers) {
                     if (container.matches(location, null)) {
                         if (container.getOwner().equals(event.getPlayer().getName())) {
@@ -1267,16 +1147,15 @@ public class Walls extends JavaPlugin implements Listener {
                 }
             }
         }
-
     }
 
     private void checkForKitButtonPressed(PlayerInteractEvent event) {
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PEACETIME:
             case FIGHTING:
-                if ((event.getAction() == Action.LEFT_CLICK_BLOCK) || (event.getAction() == Action.RIGHT_CLICK_BLOCK) && !this.isSpec(event.getPlayer().getUniqueId())) {
+                if ((event.getAction() == Action.LEFT_CLICK_BLOCK) || (event.getAction() == Action.RIGHT_CLICK_BLOCK) && !this.isSpectator(event.getPlayer())) {
                     final Block block = event.getClickedBlock();
-                    if ((block != null) && (block.getType() == Material.WOOD_BUTTON || block.getType() == Material.STONE_BUTTON) && !this.isSpec(event.getPlayer().getUniqueId())) {
+                    if ((block != null) && (block.getType() == Material.WOOD_BUTTON || block.getType() == Material.STONE_BUTTON) && !this.isSpectator(event.getPlayer())) {
                         final Block above = block.getRelative(BlockFace.DOWN);
                         if ((above != null) && (above.getType() == Material.WALL_SIGN)) {
                             final Sign sign = (Sign) above.getState();
@@ -1298,14 +1177,14 @@ public class Walls extends JavaPlugin implements Listener {
     }
 
     private void checkSpecPlayerFinder(PlayerInteractEvent event) {
-        if (isSpec(event.getPlayer().getUniqueId())) {
+        if (isSpectator(event.getPlayer())) {
             if (event.getPlayer().getItemInHand().getType() == Material.SKULL_ITEM) {
-                Inventory chest = Bukkit.getServer().createInventory(null, 6 * 9, "Player Finder :)");
-                for (UUID pUID : this.players.keySet()) {
-                    if (!this.isSpec(pUID)) {
-                        ItemStack newSkull = new ItemStack(Material.SKULL_ITEM, 1, (byte) 3);
-                        chest.addItem(ItemStackTools.changeItemName(newSkull, Bukkit.getOfflinePlayer(pUID).getName()));
-                    }
+                Inventory chest = Bukkit.createInventory(null, 6 * 9, "Player Finder :)");
+                for (UUID uuid : getPlayers().keySet()) {
+                    Player player = Bukkit.getPlayer(uuid);
+                    if (player == null || isSpectator(player)) continue;
+                    ItemStack skull = new ItemStack(Material.SKULL_ITEM, 1, (byte) 3);
+                    chest.addItem(ItemStackTools.changeItemName(skull, player.getName()));
                 }
                 event.getPlayer().openInventory(chest);
                 event.setCancelled(true);
@@ -1318,7 +1197,7 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onPlayerInteract(PlayerInteractEvent event) {
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
                 if (event.getPlayer().getItemInHand().getType() == Material.WOOL) {
                     final String itemName = ChatColor.stripColor(event.getPlayer().getItemInHand().getItemMeta().getDisplayName());
@@ -1335,7 +1214,7 @@ public class Walls extends JavaPlugin implements Listener {
 
                     if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
 
-                        WallsPlayer twp = getWallsPlayer(event.getPlayer().getUniqueId());
+                        WallsPlayer twp = getPlayer(event.getPlayer().getUniqueId());
 
                         if (this.checkEnoughSpaceInTeam(tps.ordinal())) {
                             if (twp.playerState.compareTo(tps) == 0) {
@@ -1364,7 +1243,7 @@ public class Walls extends JavaPlugin implements Listener {
                 checkForContainerProtection(event);
                 checkForKitButtonPressed(event);
 
-                if (event.getAction() == Action.PHYSICAL && this.isSpec(event.getPlayer().getUniqueId())) {
+                if (event.getAction() == Action.PHYSICAL && this.isSpectator(event.getPlayer())) {
                     event.setCancelled(true);
                 }
 
@@ -1394,43 +1273,40 @@ public class Walls extends JavaPlugin implements Listener {
                 checkForKitButtonPressed(event);
                 checkForCompassSwitch(event);
 
-                if (event.getAction() == Action.PHYSICAL && this.isSpec(event.getPlayer().getUniqueId())) {
+                if (event.getAction() == Action.PHYSICAL && this.isSpectator(event.getPlayer())) {
                     event.setCancelled(true);
                 }
 
 
                 if (event.getAction() == Action.PHYSICAL) {
-                    if (isSpec(event.getPlayer().getUniqueId())) {
+                    if (isSpectator(event.getPlayer())) {
                         event.setCancelled(true);
                         return;
                     }
-                    if (event.getClickedBlock().getType() == Material.TRIPWIRE && event.getClickedBlock().getLocation().distance(new Location(event.getClickedBlock().getWorld(), -3, 51, 129)) < 10 && !this.isSpec(event.getPlayer().getUniqueId())) {
-                        Bukkit.getOnlinePlayers().forEach(all -> all.sendMessage(event.getPlayer().getDisplayName() + ChatColor.DARK_PURPLE + " is at THE CENTER TRAP trying to take stuff!!"));
+                    if (event.getClickedBlock().getType() == Material.TRIPWIRE && event.getClickedBlock().getLocation().distance(new Location(event.getClickedBlock().getWorld(), -3, 51, 129)) < 10 && !isSpectator(event.getPlayer())) {
+                        Bukkit.getOnlinePlayers().forEach(all -> all.sendMessage(event.getPlayer().getName() + ChatColor.DARK_PURPLE + " is at THE CENTER TRAP trying to take stuff!!"));
                     }
                 }
 
             case FINISHED:
                 checkSpecPlayerFinder(event);
-
                 handleKitInteraction(event);
-                if (isSpec(event.getPlayer().getUniqueId())) {
+                if (isSpectator(event.getPlayer())) {
                     event.setCancelled(true);
                     return;
-                }
-                if (this.foodDisabled) {
-                    final Player player = event.getPlayer();
-                    final Material item = player.getItemInHand().getType();
-                    if (!this.allowedFoods.contains(item) && item.isEdible()) {
-                        player.sendMessage(ChatColor.RED + "Food is currently disabled!");
-                        event.setCancelled(true);
-                        return;
-                    }
                 }
                 break;
             default:
                 break;
         }
 
+    }
+
+    @EventHandler
+    public void onConsume(PlayerItemConsumeEvent event) {
+        if (!foodDisabled || !event.getItem().getType().isEdible()) return;
+        Notifier.error(event.getPlayer(), "Food is currently disabled!");
+        event.setCancelled(true);
     }
 
     private void handleKitInteraction(PlayerInteractEvent event) {
@@ -1441,7 +1317,7 @@ public class Walls extends JavaPlugin implements Listener {
             if ((block != null) && (block.getType() == Material.STONE_PLATE)
                     && (block.getRelative(0, -1, 0).getType() == Material.GRAVEL)) {
                 final PlayerState team = this.boom.get(block.getLocation());
-                if ((team != null) && team != this.players.get(player.getUniqueId()).playerState) {
+                if ((team != null) && team != getPlayer(player.getUniqueId()).playerState) {
                     block.getWorld().createExplosion(block.getLocation(), 3F);
                     this.boom.remove(block.getLocation());
                 }
@@ -1486,7 +1362,7 @@ public class Walls extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onPlayerMove(PlayerMoveEvent event) {
 
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
 
                 int lobbyHeight = Walls.gameSpawn.getBlockY();
@@ -1506,13 +1382,13 @@ public class Walls extends JavaPlugin implements Listener {
                             this.allitems.add(droppedItem);
 
                             final Player p = event.getPlayer();
-                            this.getServer().getScheduler().runTaskLater(this, () -> {
+                            Bukkit.getScheduler().runTaskLater(this, () -> {
 
-                                if (!(Walls.this.droppedItems.get(p.getUniqueId())).isEmpty()) {
-                                    Iterator<Entity> iterator = Walls.this.droppedItems.get(p.getUniqueId()).iterator();
+                                if (!(droppedItems.get(p.getUniqueId())).isEmpty()) {
+                                    Iterator<Entity> iterator = droppedItems.get(p.getUniqueId()).iterator();
                                     Entity next1 = iterator.next();
-                                    Walls.this.droppedItems.get(p.getUniqueId()).remove(next1);
-                                    Walls.this.allitems.remove(next1);
+                                    droppedItems.get(p.getUniqueId()).remove(next1);
+                                    allitems.remove(next1);
                                     next1.remove();
                                 }
                             }, 25);
@@ -1525,7 +1401,7 @@ public class Walls extends JavaPlugin implements Listener {
 
                 break;
             case PEACETIME:
-                if (!this.isSpec(event.getPlayer().getUniqueId())) {
+                if (!this.isSpectator(event.getPlayer())) {
                     if (this.isOnPaths(event.getTo())) {
                         event.setCancelled(true);
                         Notifier.error(event.getPlayer(), "Trying to escape :( try /spawn");
@@ -1540,7 +1416,7 @@ public class Walls extends JavaPlugin implements Listener {
                 break;
             case FIGHTING:
             case FINISHED:
-                if (!this.isSpec(event.getPlayer().getUniqueId())) {
+                if (!this.isSpectator(event.getPlayer())) {
                     if (event.getTo().getBlockY() > (Walls.gameSpawn.getBlockY() - 4)) {
                         event.setCancelled(true);
                         Notifier.error(event.getPlayer(), "Trying to escape :( try /spawn");
@@ -1548,7 +1424,7 @@ public class Walls extends JavaPlugin implements Listener {
                     }
                 }
 
-                if (this.isInASpawn(event.getTo()) && event.getTo().getBlockY() > 82 && !this.isSpec(event.getPlayer().getUniqueId())) {
+                if (this.isInASpawn(event.getTo()) && event.getTo().getBlockY() > 82 && !this.isSpectator(event.getPlayer())) {
                     event.getPlayer().teleport(event.getTo().add(0, -3, 0));
                     Notifier.error(event.getPlayer(), "Aww man its way too dangerous to climb up there.. :(");
                     return;
@@ -1563,7 +1439,7 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onRegainHealthChange(EntityRegainHealthEvent event) {
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
             case PEACETIME:
             case FIGHTING:
@@ -1584,14 +1460,14 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
             case PEACETIME:
             case FINISHED:
                 event.setCancelled(true);
                 break;
             case FIGHTING:
-                if (isSpec(event.getEntity().getUniqueId())) {
+                if (isSpectator(event.getEntity())) {
                     event.setCancelled(true);
                 }
                 break;
@@ -1619,7 +1495,7 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PEACETIME:
                 if (event.getBucket() == Material.LAVA_BUCKET) {
                     event.setCancelled(true);
@@ -1637,16 +1513,12 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onBucketPlace(PlayerBucketEmptyEvent event) {
-
-        if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
-            return;
-        }
-        if (isSpec(event.getPlayer().getUniqueId())) {
+        if (event.getPlayer().getGameMode() == GameMode.CREATIVE) return;
+        if (isSpectator(event.getPlayer())) {
             event.setCancelled(true);
             return;
         }
-
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PEACETIME:
                 if (event.getBucket() == Material.LAVA_BUCKET) {
                     event.setCancelled(true);
@@ -1675,7 +1547,7 @@ public class Walls extends JavaPlugin implements Listener {
                 event.setCancelled(true);
                 return;
             }
-            switch (this.gameState) {
+            switch (getGameState()) {
                 case PREGAME:
                 case PEACETIME:
                     if (m == Material.HOPPER_MINECART || m == Material.EXPLOSIVE_MINECART) {
@@ -1693,14 +1565,14 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onInventoryClick(InventoryClickEvent event) {
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
                 if (!event.getWhoClicked().getGameMode().equals(GameMode.CREATIVE)) event.setCancelled(true);
                 break;
             case PEACETIME:
             case FIGHTING:
                 if (!(event.getWhoClicked() instanceof Player)) return;
-                if (!this.isSpec((event.getWhoClicked()).getUniqueId())) return;
+                if (!this.isSpectator(event.getWhoClicked())) return;
                 if (event.getCurrentItem() == null || !event.getCurrentItem().hasItemMeta()) return;
                 String itemName = ChatColor.stripColor(event.getCurrentItem().getItemMeta().getDisplayName());
                 Player player = Bukkit.getPlayer(itemName);
@@ -1712,7 +1584,7 @@ public class Walls extends JavaPlugin implements Listener {
                 break;
             case FINISHED:
                 if (!(event.getWhoClicked() instanceof Player)) return;
-                if (this.isSpec((event.getWhoClicked()).getUniqueId())) event.setCancelled(true);
+                if (this.isSpectator(event.getWhoClicked())) event.setCancelled(true);
                 break;
             default:
                 break;
@@ -1723,7 +1595,6 @@ public class Walls extends JavaPlugin implements Listener {
     public void StopBrew(BrewEvent event) {
         event.setCancelled(true);
     }
-
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onWeatherChange(WeatherChangeEvent event) {
@@ -1741,16 +1612,12 @@ public class Walls extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onChest(InventoryOpenEvent event) {
         if (!event.getPlayer().isOp() && (event.getPlayer() instanceof Player)) {
-            if ((event.getInventory().getType() != InventoryType.PLAYER) && isSpec((event.getPlayer().getUniqueId()))) {
-                if (!event.getInventory().getTitle().equals("Player Finder :)")) {
-                    event.setCancelled(true);
-                }
+            if ((event.getInventory().getType() != InventoryType.PLAYER) && isSpectator(event.getPlayer())) {
+                if (!event.getInventory().getTitle().equals("Player Finder :)")) event.setCancelled(true);
             }
         }
         if (event.getInventory().getType() == InventoryType.CHEST && event.getPlayer().getLocation().distance(new Location(event.getPlayer().getWorld(), -10, 53, 129)) < 5) {
-
             Notifier.broadcast(event.getPlayer().getName() + ChatColor.DARK_PURPLE + " SET OFF THE CENTER TRAP.. 20 SECONDS TO BOOOM!");
-
             World w = event.getPlayer().getWorld();
             w.getBlockAt(new Location(w, -2, 50, 130)).setType(Material.AIR);
             TNTPrimed tnt = (TNTPrimed) w.spawnEntity(new Location(w, -2, 51, 130), EntityType.PRIMED_TNT);
@@ -1758,14 +1625,11 @@ public class Walls extends JavaPlugin implements Listener {
         }
     }
 
-
     private void checkForProtectedPlacement(BlockPlaceEvent event) {
-
         Block placedBlock = event.getBlock();
         Material typePlaced = placedBlock.getType();
         if ((typePlaced == Material.CHEST) || (typePlaced == Material.FURNACE) || (typePlaced == Material.BURNING_FURNACE)
                 || (typePlaced == Material.ENCHANTMENT_TABLE) || (typePlaced == Material.WORKBENCH)) {
-
             final Location location = event.getBlock().getLocation();
             Location second = null;
             if (typePlaced == Material.CHEST) {
@@ -1801,19 +1665,18 @@ public class Walls extends JavaPlugin implements Listener {
                 }
             }
             int max = 2;
-            if (players.get(event.getPlayer().getUniqueId()).rank.pro()) {
+            if (getPlayer(event.getPlayer().getUniqueId()).rank.pro()) {
                 max = 7;
-            } else if (players.get(event.getPlayer().getUniqueId()).rank.vip()) {
+            } else if (getPlayer(event.getPlayer().getUniqueId()).rank.vip()) {
                 max = 5;
             }
-
             if (owncount < max) {
                 this.protectedContainers.add(new ProtectedContainer(location, event.getPlayer().getName()));
                 Notifier.success(event.getPlayer(), "Protection extended! You have protected " + owncount + " containers");
             } else {
                 Notifier.error(event.getPlayer(), ChatColor.RED + "You have reached your protection limit!");
                 Notifier.error(event.getPlayer(), ChatColor.RED + "Unprotect other owned containers");
-                if (!players.get(event.getPlayer().getUniqueId()).rank.vip()) {
+                if (!getPlayer(event.getPlayer().getUniqueId()).rank.vip()) {
                     Notifier.notify(event.getPlayer(), ChatColor.AQUA + "VIP & PRO get more protected containers! " + Walls.DISCORD);
                 }
             }
@@ -1822,16 +1685,14 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onBlockPlace(BlockPlaceEvent event) {
-        if (event.getPlayer().getGameMode() == GameMode.CREATIVE) {
-            return;
-        }
-        if (isSpec(event.getPlayer().getUniqueId())) {
+        if (event.getPlayer().getGameMode().equals(GameMode.CREATIVE)) return;
+        if (isSpectator(event.getPlayer())) {
             event.setCancelled(true);
             return;
         }
         if (event.getBlock().getLocation().getBlockY() > Walls.buildHeight) {
             event.setCancelled(true);
-            if (gameState.equals(GameState.PREGAME)) return;
+            if (getGameState().equals(GameState.PREGAME)) return;
             Notifier.error(event.getPlayer(), "You reached the build limit and cannot place blocks here!");
             return;
         }
@@ -1839,24 +1700,22 @@ public class Walls extends JavaPlugin implements Listener {
             event.setCancelled(true);
             return;
         }
-        if (event.getBlockPlaced().getType() == Material.CARROT) {
+        if (event.getBlockPlaced().getType().equals(Material.CARROT)) {
             Notifier.error(event.getPlayer(), "You don't look like a rabbit.. why you need to farm carrots?");
             event.setCancelled(true);
             return;
         }
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
             case FINISHED:
                 event.setCancelled(true);
                 break;
             case PEACETIME:
-
                 if (this.isOnPaths(event.getBlock().getLocation())) {
                     event.setCancelled(true);
                     Notifier.error(event.getPlayer(), "You are not allowed to place blocks here.");
                     return;
                 }
-
                 final Material type = event.getBlock().getType();
                 if (type == Material.TNT) {
                     event.setCancelled(true);
@@ -1866,10 +1725,8 @@ public class Walls extends JavaPlugin implements Listener {
                 checkForProtectedPlacement(event);
                 final ItemStack stack = event.getPlayer().getItemInHand();
                 if (this.loreMatch(stack, "BOOOM")) {
-                    this.boom.put(event.getBlock().getLocation(), this.players.get(event.getPlayer().getUniqueId()).playerState);
+                    this.boom.put(event.getBlock().getLocation(), getPlayer(event.getPlayer().getUniqueId()).playerState);
                 }
-
-
                 break;
             default:
                 break;
@@ -1879,19 +1736,15 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onItemDrop(PlayerDropItemEvent event) {
-        if (event.getPlayer().isOp()) {
-            return;
-        }
-        switch (this.gameState) {
+        if (event.getPlayer().isOp()) return;
+        switch (getGameState()) {
             case PREGAME:
                 event.setCancelled(true);
                 break;
             case PEACETIME:
             case FIGHTING:
             case FINISHED:
-                if (isSpec(event.getPlayer().getUniqueId())) {
-                    event.setCancelled(true);
-                }
+                if (isSpectator(event.getPlayer())) event.setCancelled(true);
                 break;
             default:
                 break;
@@ -1899,24 +1752,20 @@ public class Walls extends JavaPlugin implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void NoTarget(EntityTargetEvent event) {
-        if (event.getTarget() instanceof Player) {
-            if (isSpec(event.getTarget().getUniqueId())) {
-                event.setCancelled(true);
-            }
-        }
+    public void onTarget(EntityTargetEvent event) {
+        if (isSpectator(event.getTarget())) event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void onItemPickup(PlayerPickupItemEvent event) {
-        switch (this.gameState) {
+        switch (getGameState()) {
             case PREGAME:
                 event.setCancelled(true);
                 break;
             case PEACETIME:
             case FIGHTING:
             case FINISHED:
-                if (isSpec(event.getPlayer().getUniqueId())) {
+                if (isSpectator(event.getPlayer())) {
                     event.setCancelled(true);
                 }
                 break;
@@ -1929,95 +1778,95 @@ public class Walls extends JavaPlugin implements Listener {
     public void dropWalls() {
         Bukkit.getWorlds().forEach(world -> world.setGameRuleValue("doFireTick", "true"));
         Notifier.broadcast("Get ready to kill your enemy!");
-        this.gameState = GameState.FIGHTING;
-
-
+        setGameState(GameState.FIGHTING);
         final List<Selection> toRemove = new ArrayList<>();
         for (final Selection s : this.selections) {
             if (s.getType() == 1) {
-                s.remove(this.getServer().getWorld(Walls.levelName));
+                s.remove(Bukkit.getWorld(Walls.levelName));
                 toRemove.add(s);
             }
         }
         this.selections.removeAll(toRemove);
-
         Notifier.broadcast("The walls are now gone!");
-        this.checkForHunger();
+        startHungerChecker();
         this.clock.abort();
         this.kickOffNoWinnerThread();
         this.kickOffCombatThread();
-        this.getServer().getScheduler().runTaskLater(this, () -> {
-            if (!Walls.this.leprechaunOwners.isEmpty()) {
-                Walls.this.leprechaunOwners.clear();
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            if (!leprechaunOwners.isEmpty()) {
+                leprechaunOwners.clear();
                 Notifier.broadcast("Leprechaun kit just lost power :(");
             }
         }, 1800 * 20);
     }
 
-    public WallsPlayer getWallsPlayer(UUID uid) {
-        return this.players.getOrDefault(uid, null);
+    public Map<UUID, WallsPlayer> getPlayers() {
+        return players;
+    }
+
+    public WallsPlayer getPlayer(Player player) {
+        return getPlayer(player.getUniqueId());
+    }
+
+    public WallsPlayer getPlayer(UUID uuid) {
+        return getPlayers().getOrDefault(uuid, null);
     }
 
     public List<UUID> getStaffList() {
         List<UUID> staffs = new ArrayList<>();
-        for (UUID uuid : this.players.keySet()) {
-            if (players.get(uuid).rank.staff()) staffs.add(uuid);
+        for (UUID uuid : getPlayers().keySet()) {
+            if (getPlayer(uuid).rank.staff()) staffs.add(uuid);
         }
         return staffs;
     }
 
     public List<UUID> getTeamList(UUID uid) {
-        return getTeamList(this.players.get(uid).playerState);
+        return getTeamList(getPlayer(uid).playerState);
     }
 
     public List<UUID> getTeamList(PlayerState playerState) {
         List<UUID> teamList = new ArrayList<>();
-        for (UUID u : this.players.keySet()) {
-            if (this.players.get(u).playerState == playerState) {
-                teamList.add(u);
+        for (UUID uuid : getPlayers().keySet()) {
+            if (getPlayer(uuid).playerState == playerState) {
+                teamList.add(uuid);
             }
         }
         return teamList;
     }
 
-    public void printTeamMates(Player p, PlayerState ps) {
+    public void printTeamMates(Player player, PlayerState ps) {
         List<UUID> teamUIDS = this.getTeamList(ps);
         if (!teamUIDS.isEmpty()) {
             List<String> names = new ArrayList<>();
-            for (UUID pUID : teamUIDS) names.add(Bukkit.getOfflinePlayer(pUID).getName());
-            Notifier.notify(p, Walls.teamChatColors[ps.ordinal()] + String.join("§7, " + Walls.teamChatColors[ps.ordinal()], names));
-        } else {
-            Notifier.notify(p, "§cTeam " + Walls.teamsNames[ps.ordinal()] + "§c is empty");
-        }
-
+            for (UUID uuid : teamUIDS) names.add(Bukkit.getOfflinePlayer(uuid).getName());
+            Notifier.notify(player, Walls.teamChatColors[ps.ordinal()] + String.join("§7, " + Walls.teamChatColors[ps.ordinal()], names));
+        } else Notifier.notify(player, "§cTeam " + Walls.teamsNames[ps.ordinal()] + "§c is empty");
     }
 
-    public int getTeamSize(PlayerState ps) {
-
+    public int getTeamSize(PlayerState state) {
         int teamCounter = 0;
-
-        for (WallsPlayer wp : this.players.values()) {
-            if (wp.playerState.compareTo(ps) == 0) {
-                teamCounter++;
-            }
+        for (WallsPlayer player : getPlayers().values()) {
+            if (player.playerState.equals(state)) teamCounter++;
         }
         return teamCounter;
     }
 
-    public boolean isSpec(UUID a) {
-        return players.containsKey(a) && players.get(a).playerState.equals(PlayerState.SPECTATORS);
+    public boolean isSpectator(Entity entity) {
+        if (entity == null) return false;
+        WallsPlayer wallsPlayer = getPlayer(entity.getUniqueId());
+        return wallsPlayer != null && wallsPlayer.playerState.equals(PlayerState.SPECTATORS);
     }
 
     public boolean sameTeam(UUID a, UUID b) {
-        return this.players.get(a).playerState.compareTo(this.players.get(b).playerState) == 0;
+        return getPlayer(a).playerState.compareTo(getPlayer(b).playerState) == 0;
     }
 
-    public void setGameState(GameState gs) {
-        this.gameState = gs;
+    public void setGameState(GameState gameState) {
+        this.gameState = gameState;
     }
 
     public GameState getGameState() {
-        return this.gameState;
+        return gameState;
     }
 
     public int calculateTeamsLeft() {
@@ -2026,7 +1875,7 @@ public class Walls extends JavaPlugin implements Listener {
         int t2 = 0;
         int t3 = 0;
         int t4 = 0;
-        for (WallsPlayer wp : this.players.values()) {
+        for (WallsPlayer wp : getPlayers().values()) {
             switch (wp.playerState) {
                 case RED:
                     t1++;
@@ -2076,7 +1925,7 @@ public class Walls extends JavaPlugin implements Listener {
                 Notifier.broadcast("---------------------------------------------");
                 FireWorks.spawnFireworksForPlayers(this);
                 for (UUID winner : this.getTeamList(PlayerState.values()[winningTeam])) {
-                    WallsPlayer wallsWinner = this.getWallsPlayer(winner);
+                    WallsPlayer wallsWinner = this.getPlayer(winner);
                     wallsWinner.wins = 1;
                     wallsWinner.minutes = (this.clock.getSecondsRemaining() / 60);
                 }
@@ -2086,12 +1935,8 @@ public class Walls extends JavaPlugin implements Listener {
         return this.teams;
     }
 
-    public Map<UUID, WallsPlayer> getAllPlayers() {
-        return this.players;
-    }
-
     public int getNumberOfPlayers() {
-        return this.players.size();
+        return getPlayers().size();
     }
 
     public int getWinningTeam() {
@@ -2101,80 +1946,80 @@ public class Walls extends JavaPlugin implements Listener {
     public final void defineArena() {
 
         Selection c;
-        c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        c = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         c.setPointA(-160, 0, -29);
         c.setPointB(-15, 0, 117);
 
-        c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        c = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         c.setPointA(-160, 0, 285);
         c.setPointB(-15, 0, 142);
 
-        c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        c = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         c.setPointA(155, 0, 287);
         c.setPointB(10, 0, 142);
 
-        c = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        c = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         c.setPointA(159, 0, -31);
         c.setPointB(10, 0, 117);
 
         Selection s;
 
         // Lobby
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(-20, 198, 112);// lower left corner
         s.setPointB(15, 204, 147);// upper right corner
         this.selections.add(s);
 
         // Logo
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(42, 186, 130);// lower left corner
         s.setPointB(-52, 168, 129);// upper right corner
         this.selections.add(s);
 
         // walls
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(-14, 129, -10);// lower left corner
         s.setPointB(-14, 62, 118);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(9, 129, -10);// lower left corner
         s.setPointB(9, 62, 118);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(10, 129, 118);// lower left corner
         s.setPointB(137, 62, 118);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(10, 129, 141);// lower left corner
         s.setPointB(137, 62, 141);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(9, 129, 141);// lower left corner
         s.setPointB(9, 62, 269);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(-14, 129, 141);// lower left corner
         s.setPointB(-14, 62, 269);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(-15, 129, 141);// lower left corner
         s.setPointB(-142, 62, 141);// upper right corner
         s.setType(1);
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(-15, 129, 118);// lower left corner
         s.setPointB(-142, 62, 118);// upper right corner
         s.setType(1);
@@ -2182,22 +2027,22 @@ public class Walls extends JavaPlugin implements Listener {
 
         // Starting pads
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(-156, 77, -26);// lower left corner
         s.setPointB(-135, 62, -3);// upper right corner
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(150, 85, -23);// lower left corner
         s.setPointB(131, 62, -4);// upper right corner
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(152, 77, 284);// lower left corner
         s.setPointB(131, 62, 263);// upper right corner
         this.selections.add(s);
 
-        s = new Selection(this.getServer().getWorld(Walls.levelName).getName());
+        s = new Selection(Bukkit.getWorld(Walls.levelName).getName());
         s.setPointA(-155, 77, 283);// lower left corner
         s.setPointB(-135, 62, 263);// upper right corner
         this.selections.add(s);
@@ -2258,43 +2103,34 @@ public class Walls extends JavaPlugin implements Listener {
     }
 
     private void kickOffNoWinnerThread() {
-        this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
-
-            if (Walls.this.calculateTeamsLeft() < 2 && Walls.this.gameState != GameState.FINISHED && Walls.this.gameState != GameState.PREGAME) {
-                Walls.this.getServer().dispatchCommand(Walls.this.getServer().getConsoleSender(), "stop Game restarting");
-            }
-
-
-        }, 20L * 120, 20L * 120);
-
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
+            if (calculateTeamsLeft() < 2 && getGameState() != GameState.FINISHED && getGameState() != GameState.PREGAME)
+                System.exit(0);
+        }, 2400, 2400);
     }
 
     public void kickOffCompassThread() {
-        this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
-            final List<Player> fightingPlayers = new ArrayList<>();
-            for (final Player player : Walls.this.getServer().getOnlinePlayers()) {
-                if (!Walls.this.isSpec(player.getUniqueId())) {
-                    fightingPlayers.add(player);
-                }
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
+            List<Player> fightingPlayers = new ArrayList<>();
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (!isSpectator(player)) fightingPlayers.add(player);
             }
-            for (final Player player : Walls.this.getServer().getOnlinePlayers()) {
+            for (Player player : Bukkit.getOnlinePlayers()) {
                 if (fightingPlayers.size() > 0 && player != null) {
                     try {
-                        Walls.this.processCompass(player, fightingPlayers);
+                        processCompass(player, fightingPlayers);
                     } catch (Exception e) {
-                        Walls.this.getLogger().info("Could not process compass so skipping it..");
+                        getLogger().info("Could not process compass so skipping it..");
                     }
                 } else {
-
                     if (Walls.debugMode) {
-                        Walls.this.getLogger().info("Processing compass - fightingPlayersSize = " + fightingPlayers.size());
+                        getLogger().info("Processing compass - fightingPlayersSize = " + fightingPlayers.size());
                         if (player == null) {
-                            Walls.this.getLogger().info("Processing compass - player = null");
+                            getLogger().info("Processing compass - player = null");
                         }
                     }
                 }
             }
-
         }, 20L * 2, 20L * 5);
 
     }
@@ -2304,8 +2140,7 @@ public class Walls extends JavaPlugin implements Listener {
         if (this.assassinTargets.containsKey(player.getUniqueId())) {
 
             final Player targetPlayer = Bukkit.getPlayerExact(this.assassinTargets.get(player.getUniqueId()));
-            if ((targetPlayer != null) && (this.sameTeam(player.getUniqueId(), player.getUniqueId())
-                    && !this.isSpec(targetPlayer.getUniqueId()))) {
+            if ((targetPlayer != null) && (this.sameTeam(player.getUniqueId(), player.getUniqueId()) && !this.isSpectator(targetPlayer))) {
                 target = targetPlayer.getLocation();
             }
         } else {
@@ -2317,11 +2152,10 @@ public class Walls extends JavaPlugin implements Listener {
 
                 if (!potentialEnemy.equals(player)) {
 
-                    if (this.players.containsKey(potentialEnemy.getUniqueId())) {
+                    if (getPlayers().containsKey(potentialEnemy.getUniqueId())) {
 
-                        if (this.getWallsPlayer(player.getUniqueId()).compassPointsToEnemy) {
-                            if (!this.isSpec(potentialEnemy.getUniqueId()) && !this.sameTeam(player.getUniqueId(), potentialEnemy.getUniqueId())) {
-
+                        if (this.getPlayer(player.getUniqueId()).compassPointsToEnemy) {
+                            if (!this.isSpectator(potentialEnemy) && !this.sameTeam(player.getUniqueId(), potentialEnemy.getUniqueId())) {
                                 final Location temploc = potentialEnemy.getLocation();
                                 final double tempdis = location.distanceSquared(temploc);
                                 if (tempdis < closestdis) {
@@ -2331,7 +2165,7 @@ public class Walls extends JavaPlugin implements Listener {
 
                             }
                         } else {
-                            if (!this.isSpec(potentialEnemy.getUniqueId()) && this.sameTeam(player.getUniqueId(), potentialEnemy.getUniqueId())) {
+                            if (!this.isSpectator(potentialEnemy) && this.sameTeam(player.getUniqueId(), potentialEnemy.getUniqueId())) {
 
                                 final Location temploc = potentialEnemy.getLocation();
                                 final double tempdis = location.distanceSquared(temploc);
@@ -2351,11 +2185,11 @@ public class Walls extends JavaPlugin implements Listener {
         if (target != null) {
             player.setCompassTarget(target);
             if (Walls.debugMode) {
-                Walls.this.getLogger().info("Target found and set for player " + player.getName());
+                getLogger().info("Target found and set for player " + player.getName());
             }
         } else {
             if (Walls.debugMode) {
-                Walls.this.getLogger().info("Target for compass was NULL ??!?");
+                getLogger().info("Target for compass was NULL ??!?");
             }
 
         }
@@ -2387,17 +2221,15 @@ public class Walls extends JavaPlugin implements Listener {
 
     }
 
-    private void checkForHunger() {
-        this.getServer().getScheduler().scheduleSyncRepeatingTask(this, () -> {
-            if (!Walls.this.foodDisabled) {
-                Walls.this.foodTime = Walls.this.foodTime + 5;
-                if (Walls.this.foodTime == 300) {
-                    Walls.this.foodDisabled = true;
-                    Walls.this.foodTime = 0;
-                    Notifier.broadcast("Food disabled until next kill!");
-                }
+    private void startHungerChecker() {
+        Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> {
+            if (foodDisabled) return;
+            if (++foodTime >= 60) {
+                foodDisabled = true;
+                foodTime = 0;
+                Notifier.broadcast("Food disabled until next kill!");
             }
-        }, 20L * 30, 20L * 5);
+        }, 0, 200);
     }
 
     public boolean checkEnoughSpaceInTeam(int teamNumber) {
@@ -2405,6 +2237,6 @@ public class Walls extends JavaPlugin implements Listener {
             return true;
         }
         int extraTeamAllowance = 2;
-        return (this.getTeamSize(PlayerState.values()[teamNumber]) < ((this.getAllPlayers().size() / 4) + extraTeamAllowance));
+        return (this.getTeamSize(PlayerState.values()[teamNumber]) < ((this.getPlayers().size() / 4) + extraTeamAllowance));
     }
 }

@@ -5,6 +5,7 @@ import com.sk89q.worldedit.EditSession;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldedit.bukkit.BukkitWorld;
 import com.sk89q.worldedit.schematic.SchematicFormat;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -21,7 +22,7 @@ public class SchematicLoader {
     @SuppressWarnings("deprecation")
     public SchematicLoader(JavaPlugin plugin) {
         this.plugin = plugin;
-        session = new EditSession(new BukkitWorld(plugin.getServer().getWorlds().get(0)), Short.MAX_VALUE);
+        session = new EditSession(new BukkitWorld(Bukkit.getWorlds().get(0)), Short.MAX_VALUE);
         session.enableQueue();
     }
 

@@ -13,14 +13,14 @@ import java.util.Random;
 
 public class TrapPopulator extends BlockPopulator {
 
-    public JavaPlugin plugin;
+    public JavaPlugin walls;
 
     public int chance = 27;
 
     public WorldFiller filler;
 
     public TrapPopulator(WorldFiller filler) {
-        this.plugin = (JavaPlugin) Bukkit.getServer().getPluginManager().getPlugin("WallsPopulator");
+        this.walls = (JavaPlugin) Bukkit.getPluginManager().getPlugin("WallsPopulator");
         this.filler = filler;
     }
 
@@ -51,7 +51,7 @@ public class TrapPopulator extends BlockPopulator {
     }
 
     public void paste(Location loc, Random rand) {
-        SchematicLoader loader = new SchematicLoader(plugin);
+        SchematicLoader loader = new SchematicLoader(walls);
         // choose a random schematic
         List<String> options = loader.getSchematics("trap");
         if (options.isEmpty()) return;

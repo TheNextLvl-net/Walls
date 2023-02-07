@@ -74,7 +74,7 @@ public class DeathMessages {
         }
 
         Player player = event.getEntity();
-        WallsPlayer deadPlayer = myWalls.getWallsPlayer(player.getUniqueId());
+        WallsPlayer deadPlayer = myWalls.getPlayer(player.getUniqueId());
 
         DamageCause damageCause = player.getLastDamageCause().getCause();
         DeathCause deathCause = DeathCause.getByDamageCause(damageCause);
@@ -89,7 +89,7 @@ public class DeathMessages {
             case PVP:
                 killer = player.getKiller();
                 if (killer != null) {
-                    wallsKiller = myWalls.getWallsPlayer(killer.getUniqueId());
+                    wallsKiller = myWalls.getPlayer(killer.getUniqueId());
                     StringBuilder wielding = new StringBuilder("Unknown");
                     ItemStack killedByItem = null;
                     if (killer.getItemInHand() != null) {
@@ -124,7 +124,7 @@ public class DeathMessages {
             case PROJECTILE:
                 if (player.getKiller() != null) {
                     killer = player.getKiller();
-                    wallsKiller = myWalls.getWallsPlayer(killer.getUniqueId());
+                    wallsKiller = myWalls.getPlayer(killer.getUniqueId());
                     message = message.replace("<killer>", Walls.teamChatColors[wallsKiller.playerState.ordinal()]
                             + killer.getName()).replace("<killerteam>", Walls.teamsNames[wallsKiller.playerState.ordinal()]);
                     message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.playerState.ordinal()]
@@ -171,7 +171,7 @@ public class DeathMessages {
         Notifier.broadcast(ChatColor.translateAlternateColorCodes('&', message));
         if (wallsKiller != null) {
             wallsKiller.kills++;
-            myWalls.getAllPlayers().put(killer.getUniqueId(), wallsKiller);
+            myWalls.getPlayers().put(killer.getUniqueId(), wallsKiller);
         }
     }
 }

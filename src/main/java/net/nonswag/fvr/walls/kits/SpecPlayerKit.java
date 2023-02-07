@@ -29,7 +29,7 @@ public class SpecPlayerKit {
     public SpecPlayerKit(Walls walls) {
 
         this.walls = walls;
-        SpecPlayerKit.book = (BookMeta) Bukkit.getServer().getItemFactory().getItemMeta(Material.WRITTEN_BOOK);
+        SpecPlayerKit.book = (BookMeta) Bukkit.getItemFactory().getItemMeta(Material.WRITTEN_BOOK);
 
 
         SpecPlayerKit.book.setPages(ChatColor.DARK_PURPLE + "Welcome to The Walls" + ChatColor.BLACK + "\n------------------\nThis is a PvP Game that consists of players having 15 minutes of peaceful mode where they should get resources and forge weapons. After those 15 minutes end, The Walls will drop and the battle begins!",
@@ -39,18 +39,18 @@ public class SpecPlayerKit {
         SpecPlayerKit.book.setAuthor("TheWalls");
         SpecPlayerKit.book.setTitle("Instructions");
 
-        SpecPlayerKit.vipbook = (BookMeta) Bukkit.getServer().getItemFactory().getItemMeta(Material.WRITTEN_BOOK);
+        SpecPlayerKit.vipbook = (BookMeta) Bukkit.getItemFactory().getItemMeta(Material.WRITTEN_BOOK);
         SpecPlayerKit.vipbook.setPages(ChatColor.DARK_GREEN + "Walls VIP Status" + ChatColor.BLACK + "\n---------------\n- Spectating games with flight\n- Joining full servers.\n- Join full teams\n- /surface command\n-Teleport during peace time\n-Get random items and 5 levels of XP at start\n- Chat Prefix\n-Can /shout (3 times)\n-Cool forum tag/color, access to VIP forums. Buy it at\n" + ChatColor.BLUE
                 + Walls.DISCORD);
         SpecPlayerKit.vipbook.setAuthor("My Walls");
         SpecPlayerKit.vipbook.setTitle("VIP");
 
-        this.redWoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
-        this.yellowWoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
-        this.greenWoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
-        this.blueWoolMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.WOOL);
-        this.snowBallMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.SNOW_BALL);
-        this.skullMeta = Bukkit.getServer().getItemFactory().getItemMeta(Material.SKULL_ITEM);
+        this.redWoolMeta = Bukkit.getItemFactory().getItemMeta(Material.WOOL);
+        this.yellowWoolMeta = Bukkit.getItemFactory().getItemMeta(Material.WOOL);
+        this.greenWoolMeta = Bukkit.getItemFactory().getItemMeta(Material.WOOL);
+        this.blueWoolMeta = Bukkit.getItemFactory().getItemMeta(Material.WOOL);
+        this.snowBallMeta = Bukkit.getItemFactory().getItemMeta(Material.SNOW_BALL);
+        this.skullMeta = Bukkit.getItemFactory().getItemMeta(Material.SKULL_ITEM);
 
         this.redWoolMeta.setDisplayName(Walls.teamsNames[1]);
         this.yellowWoolMeta.setDisplayName(Walls.teamsNames[2]);
@@ -90,7 +90,7 @@ public class SpecPlayerKit {
                     player.getInventory().setItem(4, green);
                     player.getInventory().setItem(5, blue);
                 }
-                walls.getServer().getScheduler().runTaskLater(walls, () -> {
+                Bukkit.getScheduler().runTaskLater(walls, () -> {
                     if (Walls.fullDiamond && Walls.UHC) {
                         TitleManager.sendTitle(player, "§9My UHC Stacked Walls", "§eRegen only with gold apples..");
                     } else if (Walls.diamondONLY && Walls.UHC) {

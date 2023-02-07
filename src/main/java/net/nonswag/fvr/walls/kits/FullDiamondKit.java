@@ -22,6 +22,7 @@ public class FullDiamondKit {
             case PEACETIME:
             case FIGHTING:
                 player.setLevel(64);
+                player.getInventory().clear();
                 player.getInventory().addItem(new ItemStack(Material.DIAMOND_AXE, 1));
                 player.getInventory().addItem(new ItemStack(Material.DIAMOND_PICKAXE, 1));
                 player.getInventory().addItem(new ItemStack(Material.DIAMOND_SWORD, 1));

@@ -4,7 +4,7 @@ import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.Walls.GameState;
 import net.nonswag.fvr.walls.Walls.PlayerState;
 import net.nonswag.fvr.walls.Walls.WallsPlayer;
-import net.nonswag.fvr.walls.commands.FullDiamondCmd;
+import net.nonswag.fvr.walls.commands.FullKitCommand;
 import net.nonswag.fvr.walls.kits.BasicPlayerKit;
 import net.nonswag.fvr.walls.kits.ProStartPlayerKitPerks;
 import net.nonswag.fvr.walls.kits.VipStartPlayerKitPerks;
@@ -44,7 +44,7 @@ public class GameStarter {
 
                 p.setFallDistance(0f);
 
-                WallsPlayer tempWallsPlayer = players.get(all);
+                WallsPlayer tempWallsPlayer = walls.getPlayer(all);
 
                 switch (tempWallsPlayer.playerState) {
                     case SPECTATORS:
@@ -80,11 +80,11 @@ public class GameStarter {
 
                 }
 
-                if (walls.players.get(all).rank.pro()) {
+                if (walls.getPlayer(all).rank.pro()) {
                     proPerks.givePlayerKit(p);
                     if (Walls.debugMode)
                         walls.getLogger().info("Gave PRO + stuff to player " + all.toString());
-                } else if (walls.players.get(all).rank.vip()) {
+                } else if (walls.getPlayer(all).rank.vip()) {
                     vipPerks.givePlayerKit(p);
                     if (Walls.debugMode)
                         walls.getLogger().info("Gave VIP + stuff to player " + all.toString());
@@ -94,7 +94,7 @@ public class GameStarter {
             }
 
             for (UUID uuid : assignedPlayers.keySet()) {
-                WallsPlayer twp = players.get(uuid);
+                WallsPlayer twp = walls.getPlayer(uuid);
                 twp.playerState = assignedPlayers.get(uuid);
                 players.put(uuid, twp);
                 walls.playerScoreBoard.addPlayerToTeam(uuid, twp.playerState);
@@ -110,21 +110,21 @@ public class GameStarter {
 
 
         if (Walls.diamondONLY) {
-            FullDiamondCmd.fullDiamond(walls);
+            FullKitCommand.fullDiamond(walls);
 
         } else if (Walls.ironONLY) {
 
-            FullDiamondCmd.fullIron(walls);
+            FullKitCommand.fullIron(walls);
 
         } else if (Walls.fullDiamond) {
             int whichGame = Walls.random.nextInt(4);
             switch (whichGame) {
                 case 1:
-                    FullDiamondCmd.fullIron(walls);
+                    FullKitCommand.fullIron(walls);
                     break;
                 case 2:
                 case 3:
-                    FullDiamondCmd.fullDiamond(walls);
+                    FullKitCommand.fullDiamond(walls);
                     break;
 
             }

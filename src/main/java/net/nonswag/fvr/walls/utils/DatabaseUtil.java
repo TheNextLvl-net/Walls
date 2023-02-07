@@ -17,32 +17,28 @@ public class DatabaseUtil {
 
     public DatabaseUtil(Walls plugin) {
         this.walls = plugin;
+        try {
+            Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `paidkits` (uuid varchar(255), kitname varchar(255))");
+            Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `accounts` (username varchar(255), uuid varchar(255), rank int, kills int, deaths int, wins int, guild varchar(255))");
+            Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `guilds` (plain varchar(255), name varchar(255), uuid varchar(255))");
+            Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `player_stats` (kills int, deaths int, win varchar(255), uuid varchar(255), username varchar(255))");
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
-
-            try {
-                Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `paidkits` (uuid varchar(255), kitname varchar(255))");
-                Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `accounts` (username varchar(255), uuid varchar(255), rank int, kills int, deaths int, wins int, guild varchar(255))");
-                Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `guilds` (plain varchar(255), name varchar(255), uuid varchar(255))");
-                Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `player_stats` (kills int, deaths int, win varchar(255), uuid varchar(255), username varchar(255))");
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
             if (walls.getGameState().equals(Walls.GameState.FINISHED)) return;
-            synchronized (queue) {
-                for (UUID playerUID : this.queue.keySet()) {
-                    if (Bukkit.getOnlinePlayers().contains(Bukkit.getPlayer(playerUID))) {
-                        loadStatsPlayer(this.queue.get(playerUID), playerUID);
-                        loadStatsWalls(this.queue.get(playerUID), playerUID);
-                        loadPaidKitsForUser(playerUID);
-                        queue.remove(playerUID);
-                    }
-                }
-            }
+            queue.keySet().forEach(uuid -> {
+                if (Bukkit.getPlayer(uuid) == null) return;
+                loadStatsPlayer(queue.get(uuid), uuid);
+                loadStatsWalls(queue.get(uuid), uuid);
+                loadPaidKitsForUser(uuid);
+            });
+            queue.clear();
         }, 0, 12);
     }
 
     public void loadPlayer(String playerName, UUID aUID) {
-        if (!walls.getAllPlayers().containsKey(aUID)) {
+        if (!walls.getPlayers().containsKey(aUID)) {
             synchronized (queue) {
                 this.queue.put(aUID, playerName);
             }
@@ -51,7 +47,7 @@ public class DatabaseUtil {
 
     @SuppressWarnings("StringConcatenationInLoop")
     public void loadPaidKitsForUser(UUID playerUID) {
-        Walls.WallsPlayer twp = walls.getWallsPlayer(playerUID);
+        Walls.WallsPlayer twp = walls.getPlayer(playerUID);
         try (ResultSet result = Database.getConnection().executeQuery("SELECT `kitname` FROM `paidkits` WHERE `uuid` = ? AND `kitname`<> ?", playerUID.toString(), "pro")) {
             if (result == null) return;
             while (result.next()) {
@@ -61,12 +57,12 @@ public class DatabaseUtil {
             walls.getLogger().warning("Failure to load paid kits: " + e.getMessage());
             e.printStackTrace();
         }
-        walls.getAllPlayers().put(playerUID, twp);
+        walls.getPlayers().put(playerUID, twp);
     }
 
     private void loadStatsPlayer(String playerName, UUID aUID) {
         String uuid = aUID.toString();
-        Walls.WallsPlayer wallsPlayer = this.walls.getAllPlayers().getOrDefault(aUID, new Walls.WallsPlayer());
+        Walls.WallsPlayer wallsPlayer = this.walls.getPlayers().getOrDefault(aUID, new Walls.WallsPlayer());
         try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE uuid = ?", uuid)) {
             if (resultSet == null) return;
             if (resultSet.first()) {
@@ -80,12 +76,12 @@ public class DatabaseUtil {
             e.printStackTrace();
         }
         wallsPlayer.clanLeader = isClanOwner(uuid);
-        walls.getAllPlayers().put(aUID, wallsPlayer);
+        walls.getPlayers().put(aUID, wallsPlayer);
     }
 
     private void loadStatsWalls(String playerName, UUID aUID) {
         String tempUID = aUID.toString();
-        Walls.WallsPlayer wallsPlayer = this.walls.getAllPlayers().getOrDefault(aUID, new Walls.WallsPlayer());
+        Walls.WallsPlayer wallsPlayer = this.walls.getPlayers().getOrDefault(aUID, new Walls.WallsPlayer());
         wallsPlayer.username = playerName;
         wallsPlayer.uid = tempUID;
         try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `accounts` WHERE uuid = ?", tempUID)) {
@@ -101,11 +97,11 @@ public class DatabaseUtil {
             this.walls.getLogger().warning("Failure to load stats: " + e.getMessage());
             e.printStackTrace();
         }
-        walls.getAllPlayers().put(aUID, wallsPlayer);
+        walls.getPlayers().put(aUID, wallsPlayer);
     }
 
     public void saveAllData() {
-        for (final Walls.WallsPlayer aWP : walls.getAllPlayers().values()) {
+        for (final Walls.WallsPlayer aWP : walls.getPlayers().values()) {
             this.saveWallsStats(aWP);
         }
     }

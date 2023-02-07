@@ -36,11 +36,11 @@ public class ShareCmd implements CommandExecutor {
             return true;
         }
         Player player = (Player) sender;
-        if (!walls.players.get(player.getUniqueId()).rank.vip()) {
+        if (!walls.getPlayer(player.getUniqueId()).rank.vip()) {
             Notifier.error(player, "You need a rank to be able to share! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " + Walls.DISCORD);
             return true;
         }
-        if (walls.isSpec(player.getUniqueId())) {
+        if (walls.isSpectator(player)) {
             Notifier.error(player, "You need to be in the fight to share!");
             return true;
         }

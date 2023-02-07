@@ -47,7 +47,7 @@ public class ClanCmd implements CommandExecutor {
 
     private void invite(CommandSender sender, String[] args) {
         if (sender instanceof Player) {
-            WallsPlayer twp = walls.getWallsPlayer(((Player) sender).getUniqueId());
+            WallsPlayer twp = walls.getPlayer(((Player) sender).getUniqueId());
             if (twp.clanLeader) {
                 Player invitee = Bukkit.getPlayer(args[1]);
                 if (invitee != null) {
@@ -66,7 +66,7 @@ public class ClanCmd implements CommandExecutor {
 
     private void list(CommandSender sender) {
         if (sender instanceof Player) {
-            WallsPlayer twp = walls.getWallsPlayer(((Player) sender).getUniqueId());
+            WallsPlayer twp = walls.getPlayer(((Player) sender).getUniqueId());
             if (twp.clan != null) {
                 List<String> members = walls.myDB.listClanMembers(twp.clan);
                 if (!members.isEmpty()) Notifier.success(sender, String.join("§7, §a", members));
@@ -79,9 +79,9 @@ public class ClanCmd implements CommandExecutor {
 
     private void rename(CommandSender sender, String[] args) {
         if (sender instanceof Player) {
-            WallsPlayer twp = walls.getWallsPlayer(((Player) sender).getUniqueId());
+            WallsPlayer twp = walls.getPlayer(((Player) sender).getUniqueId());
             Player player = ((Player) sender);
-            if (args.length == 3 && (sender.isOp() || walls.getWallsPlayer(player.getUniqueId()).rank.mgm())) {
+            if (args.length == 3 && (sender.isOp() || walls.getPlayer(player.getUniqueId()).rank.mgm())) {
                 String oldName = args[1];
                 String newName = args[2];
                 oldName = stripSpecialClanCharacters(oldName);
@@ -147,7 +147,7 @@ public class ClanCmd implements CommandExecutor {
 
     private void kick(CommandSender sender, String[] args) {
         if (sender instanceof Player) {
-            WallsPlayer twp = walls.getWallsPlayer(((Player) sender).getUniqueId());
+            WallsPlayer twp = walls.getPlayer(((Player) sender).getUniqueId());
             if (twp.clanLeader && args.length > 0) {
                 String personToKick = args[1];
                 if (sender.getName().equals(personToKick)) {
@@ -158,7 +158,7 @@ public class ClanCmd implements CommandExecutor {
                     Player player = Bukkit.getPlayer(personToKick);
                     if (player != null) {
                         UUID pUID = player.getUniqueId();
-                        WallsPlayer wp = walls.getWallsPlayer(pUID);
+                        WallsPlayer wp = walls.getPlayer(pUID);
                         wp.clan = null;
                     }
                     Notifier.success(sender, personToKick + " has been kicked from " + ChatColor.translateAlternateColorCodes('&', twp.clan));
@@ -176,17 +176,18 @@ public class ClanCmd implements CommandExecutor {
 
     private void accept(CommandSender sender) {
         if (walls.clanInvites.containsKey(((Player) sender).getUniqueId())) {
-            if (walls.getWallsPlayer(((Player) sender).getUniqueId()).clanLeader) {
+            if (walls.getPlayer(((Player) sender).getUniqueId()).clanLeader) {
                 Notifier.error(sender, "Nope. A leader can't just join another clan.. think of YOUR clan members!! (or /clan disband)");
                 return;
             }
             String clanName = walls.clanInvites.get(((Player) sender).getUniqueId());
             this.setClanName(((Player) sender).getUniqueId(), clanName);
-            for (UUID u : walls.getAllPlayers().keySet()) {
-                if (Bukkit.getPlayer(u) != null) {
-                    WallsPlayer anotherWP = walls.getWallsPlayer(u);
-                    if ((anotherWP.clan != null && anotherWP.clan.equals(clanName)) || (Bukkit.getPlayer(u).isOp() && walls.staffListSnooper.contains(u))) {
-                        Bukkit.getPlayer(u).sendMessage(Walls.CLANCHAT_PREFIX.replace("??", clanName) + sender.getName() + ChatColor.WHITE + " joined " + ChatColor.translateAlternateColorCodes('&', clanName));
+            for (UUID u : walls.getPlayers().keySet()) {
+                Player player = Bukkit.getPlayer(u);
+                if (player != null) {
+                    WallsPlayer anotherWP = walls.getPlayer(u);
+                    if ((anotherWP.clan != null && anotherWP.clan.equals(clanName)) || (player.isOp() && walls.staffListSnooper.contains(u))) {
+                        player.sendMessage(Walls.CLANCHAT_PREFIX.replace("??", clanName) + sender.getName() + ChatColor.WHITE + " joined " + ChatColor.translateAlternateColorCodes('&', clanName));
                     }
                 }
             }
@@ -199,7 +200,7 @@ public class ClanCmd implements CommandExecutor {
         if (sender instanceof Player) {
             try {
                 Player player = ((Player) sender);
-                if (args.length == 2 && (sender.isOp() || walls.getWallsPlayer(player.getUniqueId()).rank.mgm())) {
+                if (args.length == 2 && (sender.isOp() || walls.getPlayer(player.getUniqueId()).rank.mgm())) {
                     if (walls.myDB.disbandClanByName(args[1])) {
                         Notifier.success(player, args[1] + " blew up - all gone! :(");
                         Notifier.staff(walls, args[1] + " was disbanded by " + player.getName());
@@ -207,12 +208,12 @@ public class ClanCmd implements CommandExecutor {
                         Notifier.error(sender, "Nope. Something went wrong there :(");
                     }
                 } else if (args.length == 1) {
-                    if (walls.getWallsPlayer(player.getUniqueId()).clanLeader) {
-                        if (walls.myDB.disbandClan(walls.getWallsPlayer(player.getUniqueId()).clan)) {
+                    if (walls.getPlayer(player.getUniqueId()).clanLeader) {
+                        if (walls.myDB.disbandClan(walls.getPlayer(player.getUniqueId()).clan)) {
                             Notifier.success(player, "You're clan blew up - all gone! :(");
-                            Notifier.staff(walls, ChatColor.translateAlternateColorCodes('&', walls.getWallsPlayer(player.getUniqueId()).clan) + " was disbanded.");
-                            walls.getWallsPlayer(player.getUniqueId()).clan = "";
-                            walls.getWallsPlayer(player.getUniqueId()).clanLeader = false;
+                            Notifier.staff(walls, ChatColor.translateAlternateColorCodes('&', walls.getPlayer(player.getUniqueId()).clan) + " was disbanded.");
+                            walls.getPlayer(player.getUniqueId()).clan = "";
+                            walls.getPlayer(player.getUniqueId()).clanLeader = false;
                         } else {
                             Notifier.error(sender, "Nope. Something went wrong there :(");
                         }
@@ -231,15 +232,15 @@ public class ClanCmd implements CommandExecutor {
     private void changeLeader(CommandSender sender, String[] args) {
         if (sender instanceof Player) {
             Player player = ((Player) sender);
-            if (walls.getWallsPlayer(player.getUniqueId()).clanLeader) {
+            if (walls.getPlayer(player.getUniqueId()).clanLeader) {
                 if (args.length == 2) {
                     Player newLeader = Bukkit.getPlayer(args[1]);
                     if (newLeader == null) {
                         Notifier.error(sender, "Nope. New leader must be online");
                         return;
                     }
-                    WallsPlayer twpOldLeader = walls.getWallsPlayer(player.getUniqueId());
-                    WallsPlayer twpNewLeader = walls.getWallsPlayer(newLeader.getUniqueId());
+                    WallsPlayer twpOldLeader = walls.getPlayer(player.getUniqueId());
+                    WallsPlayer twpNewLeader = walls.getPlayer(newLeader.getUniqueId());
                     if (!twpOldLeader.clan.equalsIgnoreCase(twpNewLeader.clan)) {
                         Bukkit.getLogger().info("Old Leader Clan - " + twpOldLeader.clan + " & new - " + twpNewLeader.clan);
                         Notifier.error(sender, "Nope. New leader must be in your clan");
@@ -248,8 +249,8 @@ public class ClanCmd implements CommandExecutor {
                     if (walls.myDB.setNewClanLeader(player.getUniqueId(), newLeader.getName(), newLeader.getUniqueId())) {
                         Notifier.success(player, "You're no longer clan leader! :(");
                         Notifier.success(newLeader, "You're now clan leader! =)");
-                        walls.getWallsPlayer(player.getUniqueId()).clanLeader = false;
-                        walls.getWallsPlayer(newLeader.getUniqueId()).clanLeader = true;
+                        walls.getPlayer(player.getUniqueId()).clanLeader = false;
+                        walls.getPlayer(newLeader.getUniqueId()).clanLeader = true;
                     } else {
                         Notifier.error(sender, "Nope. Couldn't find clan leader O_o. Let staff know pls :)");
                     }
@@ -265,11 +266,11 @@ public class ClanCmd implements CommandExecutor {
     private void leave(CommandSender sender) {
         if (sender instanceof Player) {
             Player player = ((Player) sender);
-            if (walls.getWallsPlayer(player.getUniqueId()).clanLeader) {
+            if (walls.getPlayer(player.getUniqueId()).clanLeader) {
                 Notifier.success(sender, "Nope. A leader can't just leave.. think of the members!! (or /clan disband)");
-            } else if (walls.myDB.kickClanMember(sender.getName(), walls.getWallsPlayer(((Player) sender).getUniqueId()).clan)) {
+            } else if (walls.myDB.kickClanMember(sender.getName(), walls.getPlayer(((Player) sender).getUniqueId()).clan)) {
                 UUID pUID = player.getUniqueId();
-                WallsPlayer twp = walls.getWallsPlayer(pUID);
+                WallsPlayer twp = walls.getPlayer(pUID);
                 twp.clan = null;
                 Notifier.success(player, "You're clanless! :(");
             } else {
@@ -282,7 +283,7 @@ public class ClanCmd implements CommandExecutor {
         if (sender.isOp() && args.length == 3) {
             Player newLeader = Bukkit.getPlayer(args[2]);
 
-            if (walls.getWallsPlayer(newLeader.getUniqueId()).clanLeader) {
+            if (walls.getPlayer(newLeader.getUniqueId()).clanLeader) {
                 Notifier.error(sender, "Player is a leader already.. they need to /clan disband first!");
 
             } else {
@@ -293,7 +294,7 @@ public class ClanCmd implements CommandExecutor {
                     Notifier.success(sender, args[2] + " is now leader of " + newName);
                     Notifier.success(newLeader, "You are now leader of " + newName);
                     this.setClanName(newLeader.getUniqueId(), newName);
-                    walls.getWallsPlayer(newLeader.getUniqueId()).clanLeader = true;
+                    walls.getPlayer(newLeader.getUniqueId()).clanLeader = true;
                 } else {
                     Notifier.error(sender, "Clan NOT created - it already exists.. :-/");
                 }
@@ -301,14 +302,14 @@ public class ClanCmd implements CommandExecutor {
             }
         } else if (args.length == 2 && sender instanceof Player) {
 
-            if (!this.walls.players.get(((Player) sender).getUniqueId()).rank.vip()) {
+            if (!walls.getPlayer(((Player) sender).getUniqueId()).rank.vip()) {
                 Notifier.error(sender, "You need to be VIP and above to create clans.");
                 return;
             }
 
             Player newLeader = (Player) sender;
 
-            if (walls.getWallsPlayer(newLeader.getUniqueId()).clanLeader) {
+            if (walls.getPlayer(newLeader.getUniqueId()).clanLeader) {
                 Notifier.error(sender, "Um... You're a leader already.. you need to /clan disband first!");
 
             } else {
@@ -318,7 +319,7 @@ public class ClanCmd implements CommandExecutor {
                     Notifier.staff(this.walls, newLeader.getName() + " is now leader of " + newName);
                     Notifier.success(newLeader, "You are now leader of " + newName);
                     this.setClanName(newLeader.getUniqueId(), newName);
-                    walls.getWallsPlayer(newLeader.getUniqueId()).clanLeader = true;
+                    walls.getPlayer(newLeader.getUniqueId()).clanLeader = true;
                 } else {
                     Notifier.error(sender, "Clan NOT created - it already exists.. :-/");
                 }
@@ -335,7 +336,7 @@ public class ClanCmd implements CommandExecutor {
         if (walls.myDB.setUsersClan(playerUID, clanName)) {
             if (player != null) {
                 UUID pUID = player.getUniqueId();
-                WallsPlayer twp = walls.getWallsPlayer(pUID);
+                WallsPlayer twp = walls.getPlayer(pUID);
                 twp.clan = clanName;
                 Notifier.success(player, "You're now part of the clan [" + ChatColor.translateAlternateColorCodes('&', clanName) + "] !");
             }

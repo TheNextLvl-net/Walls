@@ -10,19 +10,18 @@ import java.util.UUID;
 
 public class PlayerVisibility {
 
-
-    public static void makeSpecInvis(Walls myWalls, Player spec) {
+    public static void makeSpecInvisible(Walls walls, Player spec) {
         for (int i = 1; i < 5; i++) {
             PlayerState ps = PlayerState.values()[i];
-            for (UUID fighter : myWalls.getTeamList(ps)) {
+            for (UUID fighter : walls.getTeamList(ps)) {
                 Player player = Bukkit.getPlayer(fighter);
                 if (player != null) player.hidePlayer(spec);
             }
         }
     }
 
-    public static void makeSpecVisToSpecs(Walls myWalls, Player spec) {
-        for (UUID specTeam : myWalls.getTeamList(PlayerState.SPECTATORS)) {
+    public static void makeSpecVisToSpecs(Walls walls, Player spec) {
+        for (UUID specTeam : walls.getTeamList(PlayerState.SPECTATORS)) {
             Player player = Bukkit.getPlayer(specTeam);
             if (player == null) continue;
             player.showPlayer(spec);
@@ -30,15 +29,15 @@ public class PlayerVisibility {
         }
     }
 
-    public static void hideAllSpecs(Walls myWalls, Player player) {
-        for (UUID specTeam : myWalls.getTeamList(PlayerState.SPECTATORS)) {
+    public static void hideAllSpecs(Walls walls, Player player) {
+        for (UUID specTeam : walls.getTeamList(PlayerState.SPECTATORS)) {
             Player all = Bukkit.getPlayer(specTeam);
             if (all != null) player.hidePlayer(all);
         }
     }
 
-    public static void makeInVisPlayerNowVisible(Walls myWalls, Player wasInvisible) {
-        for (Player allPlayers : myWalls.getServer().getOnlinePlayers()) {
+    public static void makeInVisPlayerNowVisible(Player wasInvisible) {
+        for (Player allPlayers : Bukkit.getOnlinePlayers()) {
             allPlayers.showPlayer(wasInvisible);
         }
     }

@@ -90,7 +90,7 @@ public class RuinCityBiome extends WorldFiller {
     
     
     private void pickAndPasteRuin() {
-        SchematicLoader loader = new SchematicLoader((JavaPlugin) Bukkit.getServer().getPluginManager().getPlugin("WallsPopulator"));
+        SchematicLoader loader = new SchematicLoader((JavaPlugin) Bukkit.getPluginManager().getPlugin("WallsPopulator"));
         List<String> options = loader.getSchematics("_ruin_");
         if (options.isEmpty()) return;
         

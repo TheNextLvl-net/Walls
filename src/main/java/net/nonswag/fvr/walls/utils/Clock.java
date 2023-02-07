@@ -3,6 +3,7 @@ package net.nonswag.fvr.walls.utils;
 
 import net.nonswag.fvr.walls.Walls;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
 public class Clock extends Thread {
@@ -34,7 +35,7 @@ public class Clock extends Thread {
                 case PREGAME:
                     this.seconds--;
                     if ((this.seconds <= 0) && (this.runner != null)) {
-                        this.plugin.getServer().getScheduler().runTask(this.plugin, this.runner);
+                        Bukkit.getScheduler().runTask(this.plugin, this.runner);
                         this.abort();
                     }
                     this.plugin.playerScoreBoard.updateClock(seconds);
@@ -51,7 +52,7 @@ public class Clock extends Thread {
                         }
                     }
                     if ((this.seconds <= 0) && (this.runner != null)) {
-                        this.plugin.getServer().getScheduler().runTask(this.plugin, this.runner);
+                        Bukkit.getScheduler().runTask(this.plugin, this.runner);
                         this.abort();
                     }
                     this.plugin.playerScoreBoard.updateClock(seconds);

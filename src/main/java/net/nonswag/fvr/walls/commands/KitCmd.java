@@ -153,8 +153,8 @@ public class KitCmd implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         final Player player = (Player) sender;
 
-        if (walls.isSpec(player.getUniqueId())) {
-            Notifier.error(player, "Specs can fly! You dont need a kit :)");
+        if (walls.isSpectator(player)) {
+            Notifier.error(player, "Specs can fly! You don't need a kit :)");
             return true;
         }
         switch (walls.getGameState()) {
@@ -186,7 +186,7 @@ public class KitCmd implements CommandExecutor {
                 Notifier.error(player, "Enjoy FREE kit " + choice);
                 this.used.add(player.getUniqueId());
             } else if (this.paid.containsKey(choice)) {
-                if (walls.players.get(player.getUniqueId()).rank.pro()) {
+                if (walls.getPlayer(player.getUniqueId()).rank.pro()) {
                     if (choice.equalsIgnoreCase("thor")) {
                         walls.thorOwners.put(player.getUniqueId(), 3);
                     } else if (choice.equalsIgnoreCase("leprechaun")) {
@@ -195,7 +195,7 @@ public class KitCmd implements CommandExecutor {
                     player.getInventory().addItem(this.paid.get(choice).toArray(new ItemStack[]{}));
                     Notifier.error(player, "Enjoy PRO kit " + choice);
                     this.used.add(player.getUniqueId());
-                } else if (walls.getWallsPlayer(player.getUniqueId()).paidKits != null && walls.getWallsPlayer(player.getUniqueId()).paidKits.contains(choice)) {
+                } else if (walls.getPlayer(player.getUniqueId()).paidKits != null && walls.getPlayer(player.getUniqueId()).paidKits.contains(choice)) {
                     if (choice.equalsIgnoreCase("thor")) {
                         walls.thorOwners.put(player.getUniqueId(), 3);
                     } else if (choice.equalsIgnoreCase("leprechaun")) {

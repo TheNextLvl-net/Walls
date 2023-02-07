@@ -13,11 +13,11 @@ import java.util.UUID;
 public class PlayerChatHandler {
 
     public static void playerChat(AsyncPlayerChatEvent event, Walls walls) {
-        if (Walls.shhhhh && (!event.getPlayer().isOp() && !walls.players.get(event.getPlayer().getUniqueId()).rank.mgm()) && !Walls.teamCaptains.contains(event.getPlayer().getName())) {
+        if (Walls.shhhhh && (!event.getPlayer().isOp() && !walls.getPlayer(event.getPlayer().getUniqueId()).rank.mgm()) && !Walls.teamCaptains.contains(event.getPlayer().getName())) {
             event.setCancelled(true);
         }
         if (event.isCancelled()) return;
-        WallsPlayer twp = walls.getWallsPlayer(event.getPlayer().getUniqueId());
+        WallsPlayer twp = walls.getPlayer(event.getPlayer().getUniqueId());
         String rank = twp.rank.display();
         String clan = "";
         if (twp.clan != null) {

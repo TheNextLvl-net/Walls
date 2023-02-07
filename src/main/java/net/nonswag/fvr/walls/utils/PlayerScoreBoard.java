@@ -14,7 +14,7 @@ import java.util.UUID;
 public class PlayerScoreBoard {
 
 
-    private final Walls myWalls;
+    private final Walls walls;
 
     private final Scoreboard board;
     private final Team team1;
@@ -24,8 +24,8 @@ public class PlayerScoreBoard {
     private final Team teamSpecs;
     private final Objective teamNumbersObjective;
 
-    public PlayerScoreBoard(Walls aWalls) {
-        myWalls = aWalls;
+    public PlayerScoreBoard(Walls walls) {
+        this.walls = walls;
 
         ScoreboardManager manager = Bukkit.getScoreboardManager();
         board = manager.getNewScoreboard();
@@ -61,8 +61,8 @@ public class PlayerScoreBoard {
 
 
     public void updateNumberOfPlayers() {
-        if (myWalls.getGameState() == GameState.PREGAME && !myWalls.starting) {
-            teamNumbersObjective.setDisplayName((Walls.preGameAutoStartPlayers - myWalls.getNumberOfPlayers()) + " more players");
+        if (walls.getGameState() == GameState.PREGAME && !walls.starting) {
+            teamNumbersObjective.setDisplayName((Walls.preGameAutoStartPlayers - walls.getNumberOfPlayers()) + " more players");
         }
     }
 
@@ -74,14 +74,14 @@ public class PlayerScoreBoard {
         clock += StringUtil.format("00", seconds) + "s";
 
 
-        switch (myWalls.getGameState()) {
+        switch (walls.getGameState()) {
             case PREGAME:
-                if (myWalls.starting) {
+                if (walls.starting) {
                     teamNumbersObjective.setDisplayName(ChatColor.LIGHT_PURPLE + "Starting.. " + ChatColor.WHITE + time);
                 } else if (time == 0) {
                     teamNumbersObjective.setDisplayName("Peace: " + Walls.peaceTimeMins + ":00");
                 } else {
-                    teamNumbersObjective.setDisplayName((Walls.preGameAutoStartPlayers - myWalls.getNumberOfPlayers()) + " more players");
+                    teamNumbersObjective.setDisplayName((Walls.preGameAutoStartPlayers - walls.getNumberOfPlayers()) + " more players");
                 }
                 break;
             case PEACETIME:

@@ -98,7 +98,7 @@ public class WallsCmd implements CommandExecutor {
     private void autoStart() {
         if (VOTES.size() > Walls.preGameAutoStartPlayers / 2) {
             Notifier.broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + "30" + ChatColor.WHITE + " seconds!");
-            walls.clock.setClock(30, () -> GameStarter.startGame(walls.getAllPlayers(), walls));
+            walls.clock.setClock(30, () -> GameStarter.startGame(walls.getPlayers(), walls));
             walls.starting = true;
         } else {
             int players = Walls.preGameAutoStartPlayers / 2 - VOTES.size();
@@ -107,7 +107,7 @@ public class WallsCmd implements CommandExecutor {
     }
 
     private void stop(CommandSender sender) {
-        if (sender.isOp() || (sender instanceof Player && (walls.players.get(((Player) sender).getUniqueId()).rank.staff()))) {
+        if (sender.isOp() || (sender instanceof Player && (walls.getPlayer(((Player) sender).getUniqueId()).rank.staff()))) {
             if (walls.getGameState() != Walls.GameState.PREGAME && walls.getGameState() != Walls.GameState.FINISHED) {
                 walls.setGameState(Walls.GameState.FINISHED);
                 Notifier.broadcast("§cThe game was force closed");
@@ -117,7 +117,7 @@ public class WallsCmd implements CommandExecutor {
     }
 
     private void myStats(CommandSender sender) {
-        WallsPlayer twp = walls.getWallsPlayer(((Player) sender).getUniqueId());
+        WallsPlayer twp = walls.getPlayer(((Player) sender).getUniqueId());
         Notifier.success(sender, "Kills: " + twp.statsKills);
         Notifier.success(sender, "Deaths: " + twp.statsDeaths);
         Notifier.success(sender, "KD: " + twp.statsKills / twp.statsDeaths);
@@ -126,7 +126,7 @@ public class WallsCmd implements CommandExecutor {
 
     private void chatListener(CommandSender sender) {
         if (sender instanceof Player) {
-            if (walls.players.get(((Player) sender).getUniqueId()).rank.staff() || sender.isOp()) {
+            if (walls.getPlayer(((Player) sender).getUniqueId()).rank.staff() || sender.isOp()) {
                 if (walls.staffListSnooper.contains(((Player) sender).getUniqueId())) {
                     walls.staffListSnooper.remove((((Player) sender).getUniqueId()));
                     Notifier.success(sender, "You are no longer listening to all-chat.");
@@ -140,7 +140,7 @@ public class WallsCmd implements CommandExecutor {
 
     private void noStaffChat(CommandSender sender) {
         if (sender instanceof Player) {
-            if (walls.players.get(((Player) sender).getUniqueId()).rank.staff() || sender.isOp()) {
+            if (walls.getPlayer(((Player) sender).getUniqueId()).rank.staff() || sender.isOp()) {
                 if (walls.noStaffChat.contains(((Player) sender).getUniqueId())) {
                     walls.noStaffChat.remove(((Player) sender).getUniqueId());
                     Notifier.notify(sender, "You are now receiving staff chat messages again!");
@@ -153,17 +153,17 @@ public class WallsCmd implements CommandExecutor {
     }
 
     private void startWalls(CommandSender sender) {
-        if (sender.isOp() || (sender instanceof Player && (walls.players.get(((Player) sender).getUniqueId())).rank.mgm())) {
+        if (sender.isOp() || (sender instanceof Player && (walls.getPlayer(((Player) sender).getUniqueId())).rank.mgm())) {
             if (!walls.starting) {
                 Notifier.broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + "30" + ChatColor.WHITE + " seconds!");
-                walls.clock.setClock(30, () -> GameStarter.startGame(walls.getAllPlayers(), walls));
+                walls.clock.setClock(30, () -> GameStarter.startGame(walls.getPlayers(), walls));
                 walls.starting = true;
             } else Notifier.error(sender, "The game is already starting!");
         } else Notifier.error(sender, "You have no rights to do this");
     }
 
     private void addPlayer(CommandSender sender, String[] args) {
-        if (sender.isOp() || (sender instanceof Player && walls.players.get(((Player) sender).getUniqueId()).rank.mgm())) {
+        if (sender.isOp() || (sender instanceof Player && walls.getPlayer(((Player) sender).getUniqueId()).rank.mgm())) {
             if (args.length < 3) {
                 Notifier.error(sender, "Command is /walls addplayer <IGN> <teamNumber>");
                 return;
@@ -181,16 +181,16 @@ public class WallsCmd implements CommandExecutor {
                     Notifier.error(sender, "Invalid team, please use a number between 1 and 4.");
                     return;
                 }
-                WallsPlayer twp = walls.getWallsPlayer(player.getUniqueId());
+                WallsPlayer twp = walls.getPlayer(player.getUniqueId());
 
                 twp.playerState = PlayerState.values()[teamNumber];
-                walls.getAllPlayers().put(player.getUniqueId(), twp);
+                walls.getPlayers().put(player.getUniqueId(), twp);
                 player.setAllowFlight(false);
                 player.getInventory().clear();
                 player.teleport(Walls.spawns.get(twp.playerState.ordinal()));
                 walls.playerScoreBoard.addPlayerToTeam(player.getUniqueId(), twp.playerState);
                 PlayerVisibility.hideAllSpecs(walls, player);
-                PlayerVisibility.makeInVisPlayerNowVisible(walls, player);
+                PlayerVisibility.makeInVisPlayerNowVisible(player);
                 player.setHealth(20);
                 player.setFoodLevel(20);
                 Notifier.success(player, "Gratz! You've been added to " + Walls.teamsNames[twp.playerState.ordinal()]);
@@ -209,14 +209,14 @@ public class WallsCmd implements CommandExecutor {
             if (args.length >= 3 && player != null) {
                 if (walls.myDB.setUsersClan(player.getUniqueId().toString(), args[2])) {
                     UUID pUID = player.getUniqueId();
-                    WallsPlayer twp = walls.getWallsPlayer(pUID);
+                    WallsPlayer twp = walls.getPlayer(pUID);
                     twp.clan = ChatColor.translateAlternateColorCodes('&', args[2]);
                     sender.sendMessage(ChatColor.GREEN + args[1] + " is now part of [" + ChatColor.translateAlternateColorCodes('&', args[2]) + "] clan!");
                 } else Notifier.error(sender, "Database error");
             } else if (args.length == 2 && player != null) {
                 if (walls.myDB.setUsersClan(args[1], null)) {
                     UUID pUID = player.getUniqueId();
-                    WallsPlayer twp = walls.getWallsPlayer(pUID);
+                    WallsPlayer twp = walls.getPlayer(pUID);
                     twp.clan = null;
                     sender.sendMessage(ChatColor.GREEN + args[1] + " had their clan removed!");
                 } else Notifier.error(sender, "Database error");
@@ -227,7 +227,7 @@ public class WallsCmd implements CommandExecutor {
     }
 
     private void silenceComand(CommandSender sender) {
-        if (sender.isOp() || (sender instanceof Player && walls.players.get(((Player) sender).getUniqueId()).rank.mgm())) {
+        if (sender.isOp() || (sender instanceof Player && walls.getPlayer(((Player) sender).getUniqueId()).rank.mgm())) {
             if (Walls.shhhhh = !Walls.shhhhh) Notifier.broadcast("§cEVERYONE JUST GOT SHHHHH'D!!");
             else Notifier.broadcast("§aYou are Free. To speak. (ish)");
         } else Notifier.error(sender, "You have no rights to do this");
@@ -287,9 +287,9 @@ public class WallsCmd implements CommandExecutor {
 
     private void showPlayers(CommandSender sender) {
         Notifier.notify(sender, "Getting all the players in game!");
-        if (!walls.getAllPlayers().isEmpty()) {
-            for (UUID uuid : walls.getAllPlayers().keySet()) {
-                sender.sendMessage(Bukkit.getOfflinePlayer(uuid).getName() + " " + walls.getWallsPlayer(uuid).playerState.name());
+        if (!walls.getPlayers().isEmpty()) {
+            for (UUID uuid : walls.getPlayers().keySet()) {
+                sender.sendMessage(Bukkit.getOfflinePlayer(uuid).getName() + " " + walls.getPlayer(uuid).playerState.name());
             }
         } else Notifier.error(sender, "There are no players");
     }
@@ -300,7 +300,7 @@ public class WallsCmd implements CommandExecutor {
             Walls.Rank rank;
             if (args.length > 1 && (player = Bukkit.getPlayer(args[1])) != null) {
                 if (args.length > 2 && (rank = Walls.Rank.parse(args[2])) != null) {
-                    walls.players.get(player.getUniqueId()).rank = rank;
+                    walls.getPlayer(player.getUniqueId()).rank = rank;
                     walls.myDB.setRank(args[1], rank.ordinal());
                     Notifier.success(sender, player.getName() + "'s new rank is now " + rank.name().toLowerCase());
                 } else Notifier.error(sender, "/walls rank " + player.getName() + " <none,vip,pro,gm,mgm,admin>");

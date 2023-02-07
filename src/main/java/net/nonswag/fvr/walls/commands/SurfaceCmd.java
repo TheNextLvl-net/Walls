@@ -27,9 +27,9 @@ public class SurfaceCmd implements CommandExecutor {
             return true;
         }
         final Player player = (Player) sender;
-        if (walls.players.get(player.getUniqueId()).rank.vip() || player.isOp()) {
-            final Location loc = new Location(Bukkit.getServer().getWorld(Walls.levelName), player.getLocation().getBlockX(),
-                    Bukkit.getServer().getWorld(Walls.levelName).getHighestBlockYAt(player.getLocation().getBlockX(),
+        if (walls.getPlayer(player.getUniqueId()).rank.vip() || player.isOp()) {
+            final Location loc = new Location(Bukkit.getWorld(Walls.levelName), player.getLocation().getBlockX(),
+                    Bukkit.getWorld(Walls.levelName).getHighestBlockYAt(player.getLocation().getBlockX(),
                             player.getLocation().getBlockZ()), player.getLocation().getBlockZ());
             if (loc.getY() > Walls.buildHeight) {
                 player.sendMessage(ChatColor.RED + "Surface is too high! Can't teleport here :(");

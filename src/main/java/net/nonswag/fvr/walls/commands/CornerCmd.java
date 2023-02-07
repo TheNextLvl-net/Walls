@@ -28,16 +28,16 @@ public class CornerCmd implements CommandExecutor {
             return true;
         }
         Player player = (Player) sender;
-        if (!walls.players.get(player.getUniqueId()).rank.vip() && !sender.isOp()) {
+        if (!walls.getPlayer(player.getUniqueId()).rank.vip() && !sender.isOp()) {
             Notifier.error(player, "You need a rank to be able to /corner! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " + Walls.DISCORD);
             return true;
         }
-        WallsPlayer twp = walls.getWallsPlayer(player.getUniqueId());
+        WallsPlayer twp = walls.getPlayer(player.getUniqueId());
         Location corner;
         corner = Walls.corners.get(twp.playerState.ordinal());
         final Location loc = new Location(
-                Bukkit.getServer().getWorld(Walls.levelName), corner.getBlockX(),
-                Bukkit.getServer().getWorld(Walls.levelName).getHighestBlockYAt(corner.getBlockX(), corner.getBlockZ()),
+                Bukkit.getWorld(Walls.levelName), corner.getBlockX(),
+                Bukkit.getWorld(Walls.levelName).getHighestBlockYAt(corner.getBlockX(), corner.getBlockZ()),
                 corner.getBlockZ());
         if (loc.getY() > Walls.buildHeight) {
             player.sendMessage(ChatColor.RED + "Surface is too high! Can't teleport here :(");
