@@ -3,8 +3,9 @@ Language: en
 peaceTimeMins: 15
 preGameAutoStartPlayers: 4
 preGameAutoStartSeconds: 120
-reloadTime: 90
-wallsAdvert: 
+combatRelogTime: 10
+relogTime: 90
+wallsAdvert:
 # --------------------------------------
 # tournamentMode true will prevent "autostart happening" requires an op / admin to start the game.
 tournamentMode: false
@@ -24,10 +25,6 @@ fullDiamond: false
 # diamondONLY restricts the above to ONLY diamond games. Top one sets priority. If diamond is true, iron will be ignored and so on...
 diamondONLY: false
 ironONLY: false
-# --------------------------------------
-# --------------------------------------
-# lobbyTrail sets the trail in the lobby { flowerpower / diamond / richboi / bodyguard / ez / hungry / blockbawz / random / flashy / sweets / dangerous }
-lobbyTrail: 
 # --------------------------------------
 # --------------------------------------
 # clanBattle allows clan naming - which affects team names. restricts to only those with the clan names to join and play.

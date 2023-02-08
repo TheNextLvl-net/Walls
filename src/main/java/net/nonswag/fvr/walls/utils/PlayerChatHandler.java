@@ -13,7 +13,7 @@ import java.util.UUID;
 public class PlayerChatHandler {
 
     public static void playerChat(AsyncPlayerChatEvent event, Walls walls) {
-        if (Walls.shhhhh && (!event.getPlayer().isOp() && !walls.getPlayer(event.getPlayer().getUniqueId()).rank.mgm()) && !Walls.teamCaptains.contains(event.getPlayer().getName())) {
+        if (Walls.shhhhh && (!event.getPlayer().isOp() && !walls.getPlayer(event.getPlayer().getUniqueId()).rank.mgm()) && !Walls.teamCaptains.contains(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
         }
         if (event.isCancelled()) return;
