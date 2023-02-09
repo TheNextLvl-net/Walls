@@ -9,11 +9,6 @@ import org.bukkit.generator.BlockPopulator;
 
 import java.util.Random;
 
-/**
- * BlockPopulator that adds trees based on the biome.
- * 
- * @author heldplayer
- */
 public class TreePopulator extends BlockPopulator {
     public enum Type {
         FOREST,
@@ -27,17 +22,15 @@ public class TreePopulator extends BlockPopulator {
         TUNDRA,
         OASIS
     }
-    
+
     Type type;
     Container container;
-    
-    public TreePopulator(Type type)
-    {
+
+    public TreePopulator(Type type) {
         this(type, (x, z) -> true);
     }
-    
-    public TreePopulator(Type type, Container container)
-    {
+
+    public TreePopulator(Type type, Container container) {
         this.type = type;
         this.container = container;
     }
@@ -47,17 +40,14 @@ public class TreePopulator extends BlockPopulator {
     public void populate(World world, Random random, Chunk chunk) {
         int centerX;
         int centerZ;
-
         byte data = 0;
         int chance = 0;
         int height = 4 + random.nextInt(3);
         int multiplier = 1;
-
         if (random.nextBoolean()) {
             data = 2;
             height = 5 + random.nextInt(3);
         }
-
         switch (type) {
             case FOREST:
             case RAINFOREST:
@@ -69,7 +59,7 @@ public class TreePopulator extends BlockPopulator {
                 break;
             case SAVANNA:
                 chance = 50;
-                data=1;
+                data = 1;
                 multiplier = 8;
                 break;
             case SEASONAL_FOREST:
@@ -98,16 +88,13 @@ public class TreePopulator extends BlockPopulator {
                 multiplier = 22;
                 height = 7 + random.nextInt(3);
         }
-
         for (int i = 0; i < multiplier; i++) {
             centerX = (chunk.getX() << 4) + random.nextInt(16);
             centerZ = (chunk.getZ() << 4) + random.nextInt(16);
             if (random.nextInt(300) < chance) {
                 int centerY = world.getHighestBlockYAt(centerX, centerZ) - 1;
                 Block sourceBlock = world.getBlockAt(centerX, centerY, centerZ);
-                if(!container.contains(sourceBlock.getX(), sourceBlock.getZ()))
-                    continue;
-
+                if (!container.contains(sourceBlock.getX(), sourceBlock.getZ())) continue;
                 if ((sourceBlock.getType() == Material.GRASS || sourceBlock.getType() == Material.NETHER_BRICK) && sourceBlock.getRelative(0, 1, 1).getType() != Material.WATER) {
                     world.getBlockAt(centerX, centerY + height + 1, centerZ).setTypeIdAndData(18, data, true);
                     for (int j = 0; j < 4; j++) {
@@ -116,7 +103,6 @@ public class TreePopulator extends BlockPopulator {
                         world.getBlockAt(centerX - 1, centerY + height + 1 - j, centerZ).setTypeIdAndData(18, data, true);
                         world.getBlockAt(centerX + 1, centerY + height + 1 - j, centerZ).setTypeIdAndData(18, data, true);
                     }
-
                     if (random.nextBoolean()) {
                         world.getBlockAt(centerX + 1, centerY + height, centerZ + 1).setTypeIdAndData(18, data, true);
                     }
@@ -129,7 +115,6 @@ public class TreePopulator extends BlockPopulator {
                     if (random.nextBoolean()) {
                         world.getBlockAt(centerX - 1, centerY + height, centerZ - 1).setTypeIdAndData(18, data, true);
                     }
-
                     world.getBlockAt(centerX + 1, centerY + height - 1, centerZ + 1).setTypeIdAndData(18, data, true);
                     world.getBlockAt(centerX + 1, centerY + height - 1, centerZ - 1).setTypeIdAndData(18, data, true);
                     world.getBlockAt(centerX - 1, centerY + height - 1, centerZ + 1).setTypeIdAndData(18, data, true);
@@ -138,7 +123,6 @@ public class TreePopulator extends BlockPopulator {
                     world.getBlockAt(centerX + 1, centerY + height - 2, centerZ - 1).setTypeIdAndData(18, data, true);
                     world.getBlockAt(centerX - 1, centerY + height - 2, centerZ + 1).setTypeIdAndData(18, data, true);
                     world.getBlockAt(centerX - 1, centerY + height - 2, centerZ - 1).setTypeIdAndData(18, data, true);
-
                     for (int j = 0; j < 2; j++) {
                         for (int k = -2; k <= 2; k++) {
                             for (int l = -2; l <= 2; l++) {
@@ -146,7 +130,6 @@ public class TreePopulator extends BlockPopulator {
                             }
                         }
                     }
-
                     for (int j = 0; j < 2; j++) {
                         if (random.nextBoolean()) {
                             world.getBlockAt(centerX + 2, centerY + height - 1 - j, centerZ + 2).setTypeIdAndData(0, (byte) 0, true);
@@ -161,8 +144,6 @@ public class TreePopulator extends BlockPopulator {
                             world.getBlockAt(centerX - 2, centerY + height - 1 - j, centerZ - 2).setTypeIdAndData(0, (byte) 0, true);
                         }
                     }
-
-                    // Trunk
                     for (int y = 1; y <= height; y++) {
                         world.getBlockAt(centerX, centerY + y, centerZ).setTypeIdAndData(17, data, true);
                     }
@@ -170,5 +151,4 @@ public class TreePopulator extends BlockPopulator {
             }
         }
     }
-
 }

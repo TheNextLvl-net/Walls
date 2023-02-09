@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Walls extends JavaPlugin implements Listener {
 
@@ -172,14 +173,12 @@ public class Walls extends JavaPlugin implements Listener {
     public static boolean tournamentMode = false;
     public static boolean allowPickTeams = false;
     public static boolean shhhhh = false;
-    public static String advert = null;
     public static List<String> clans = new ArrayList<>();
     private final int restartTimer = 15;
     public boolean starting = false;
     private final Set<ProtectedContainer> protectedContainers = new HashSet<>();
     private final List<UUID> quitters = new ArrayList<>();
     private final Map<UUID, BukkitTask> quitterTasks = new HashMap<>();
-    public static final Random random = new Random();
     private int combatRelogTime = 10;
     private int relogTime = 90;
     private int teams = 4;
@@ -194,12 +193,7 @@ public class Walls extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
-        try {
-            WorldEdit.getInstance().getConfiguration().navigationWand = -1;
-            this.getConfig().save(new File(getDataFolder(), "config.yml"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        WorldEdit.getInstance().getConfiguration().navigationWand = -1;
         Bukkit.getWorlds().forEach(world -> {
             world.setGameRuleValue("doFireTick", "false");
             world.setGameRuleValue("doDaylightCycle", "false");
@@ -208,31 +202,32 @@ public class Walls extends JavaPlugin implements Listener {
             world.setTime(1000);
         });
 
-        debugMode = this.getConfig().getBoolean("debugMode");
-        UHC = this.getConfig().getBoolean("UHCMode");
-        peaceTimeMins = this.getConfig().getInt("peaceTimeMins");
-        preGameAutoStartPlayers = this.getConfig().getInt("preGameAutoStartPlayers");
-        preGameAutoStartSeconds = this.getConfig().getInt("preGameAutoStartSeconds");
-        relogTime = this.getConfig().getInt("relogTime");
-        combatRelogTime = this.getConfig().getInt("combatRelogTime");
-        fullDiamond = this.getConfig().getBoolean("fullDiamond");
-        diamondONLY = this.getConfig().getBoolean("diamondONLY");
-        ironONLY = this.getConfig().getBoolean("ironONLY");
-        clanBattle = this.getConfig().getBoolean("clanBattle");
-        tournamentMode = this.getConfig().getBoolean("tournamentMode");
-        playerJoinRestriction = PlayerJoinType.valueOf(this.getConfig().getString("playerJoinRestriction"));
-        allowPickTeams = this.getConfig().getBoolean("allowPickTeams");
+        saveDefaultConfig();
+        reloadConfig();
 
-        advert = this.getConfig().getString("wallsAdvert");
-
+        debugMode = getConfig().getBoolean("debugMode");
+        UHC = getConfig().getBoolean("UHCMode");
+        peaceTimeMins = getConfig().getInt("peaceTimeMins");
+        preGameAutoStartPlayers = getConfig().getInt("preGameAutoStartPlayers");
+        preGameAutoStartSeconds = getConfig().getInt("preGameAutoStartSeconds");
+        relogTime = getConfig().getInt("relogTime");
+        combatRelogTime = getConfig().getInt("combatRelogTime");
+        fullDiamond = getConfig().getBoolean("fullDiamond");
+        diamondONLY = getConfig().getBoolean("diamondONLY");
+        ironONLY = getConfig().getBoolean("ironONLY");
+        clanBattle = getConfig().getBoolean("clanBattle");
+        tournamentMode = getConfig().getBoolean("tournamentMode");
+        playerJoinRestriction = PlayerJoinType.valueOf(getConfig().getString("playerJoinRestriction"));
+        allowPickTeams = getConfig().getBoolean("allowPickTeams");
+        
         if (clanBattle || tournamentMode) {
-            teamsNames[1] = teamChatColors[1] + this.getConfig().getString("clan-1");
-            teamsNames[2] = teamChatColors[2] + this.getConfig().getString("clan-2");
-            teamsNames[3] = teamChatColors[3] + this.getConfig().getString("clan-3");
-            teamsNames[4] = teamChatColors[4] + this.getConfig().getString("clan-4");
+            teamsNames[1] = teamChatColors[1] + getConfig().getString("clan-1");
+            teamsNames[2] = teamChatColors[2] + getConfig().getString("clan-2");
+            teamsNames[3] = teamChatColors[3] + getConfig().getString("clan-3");
+            teamsNames[4] = teamChatColors[4] + getConfig().getString("clan-4");
             List<String> clans = new ArrayList<>();
             for (int i = 1; i <= 4; i++) {
-                String string = this.getConfig().getString("clan-" + i);
+                String string = getConfig().getString("clan-" + i);
                 teamsNames[i] = teamChatColors[i] + string;
                 clans.add(string);
             }
@@ -304,9 +299,6 @@ public class Walls extends JavaPlugin implements Listener {
         defineArena();
         this.clock = new Clock(this);
         this.myDB = new DatabaseUtil(this);
-        if (advert != null && !advert.equals("")) {
-            Bukkit.getScheduler().scheduleSyncRepeatingTask(this, () -> Bukkit.getLogger().info(advert), 20L * 40, 20L * 240);
-        }
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (WallsCommand.FIX_DB) fixDatabase();
             changeLevelName(nextMap);
@@ -468,7 +460,7 @@ public class Walls extends JavaPlugin implements Listener {
 
                 if ((block.getType() == Material.IRON_ORE) || (block.getType() == Material.GOLD_ORE)
                         || (block.getType() == Material.DIAMOND_ORE) || (block.getType() == Material.EMERALD_ORE)) {
-                    if (random.nextDouble() < 0.2D) {
+                    if (ThreadLocalRandom.current().nextDouble() < 0.2D) {
                         if (leprechaunOwners.containsKey(event.getPlayer().getUniqueId())) {
                             checkLeprechaunDrop(block);
                         }
@@ -485,7 +477,7 @@ public class Walls extends JavaPlugin implements Listener {
                 block = event.getBlock();
                 if ((block.getType() == Material.IRON_ORE) || (block.getType() == Material.GOLD_ORE)
                         || (block.getType() == Material.DIAMOND_ORE) || (block.getType() == Material.EMERALD_ORE)) {
-                    if (random.nextDouble() < 0.2D) {
+                    if (ThreadLocalRandom.current().nextDouble() < 0.2D) {
                         if (leprechaunOwners.containsKey(event.getPlayer().getUniqueId())) {
                             checkLeprechaunDrop(block);
                         }
@@ -1552,10 +1544,9 @@ public class Walls extends JavaPlugin implements Listener {
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
-    public void fireDamageControl2(BlockSpreadEvent event) {
-        if (event.getNewState().getType() == Material.FIRE && random.nextDouble() > 0.7) {
-            event.setCancelled(true);
-        }
+    public void fireDamageControl(BlockSpreadEvent event) {
+        if (event.getNewState().getType() != Material.FIRE || !(ThreadLocalRandom.current().nextDouble() > 0.7)) return;
+        event.setCancelled(true);
     }
 
 
@@ -1568,9 +1559,9 @@ public class Walls extends JavaPlugin implements Listener {
         }
         if (event.getInventory().getType() == InventoryType.CHEST && event.getPlayer().getLocation().distance(new Location(event.getPlayer().getWorld(), -10, 53, 129)) < 5) {
             Notifier.broadcast(event.getPlayer().getName() + ChatColor.DARK_PURPLE + " SET OFF THE CENTER TRAP.. 20 SECONDS TO BOOOM!");
-            World w = event.getPlayer().getWorld();
-            w.getBlockAt(new Location(w, -2, 50, 130)).setType(Material.AIR);
-            TNTPrimed tnt = (TNTPrimed) w.spawnEntity(new Location(w, -2, 51, 130), EntityType.PRIMED_TNT);
+            World world = event.getPlayer().getWorld();
+            world.getBlockAt(new Location(world, -2, 50, 130)).setType(Material.AIR);
+            TNTPrimed tnt = (TNTPrimed) world.spawnEntity(new Location(world, -2, 51, 130), EntityType.PRIMED_TNT);
             tnt.setFuseTicks(400);
         }
     }
@@ -1873,7 +1864,7 @@ public class Walls extends JavaPlugin implements Listener {
                 Notifier.broadcast("---------------------------------------------");
                 Notifier.broadcast("  Congratulations to " + teamsNames[winningTeam] + ChatColor.WHITE + " for winning!");
                 Notifier.broadcast("---------------------------------------------");
-                FireWorks.spawnFireworksForPlayers(this);
+                Fireworks.spawnFireworksForPlayers(this);
                 for (UUID winner : this.getTeamList(PlayerState.values()[winningTeam])) {
                     WallsPlayer wallsWinner = this.getPlayer(winner);
                     wallsWinner.wins = 1;
@@ -2183,9 +2174,7 @@ public class Walls extends JavaPlugin implements Listener {
     }
 
     public boolean checkEnoughSpaceInTeam(int teamNumber) {
-        if (tournamentMode) {
-            return true;
-        }
+        if (tournamentMode) return true;
         int extraTeamAllowance = 2;
         return (this.getTeamSize(PlayerState.values()[teamNumber]) < ((this.getPlayers().size() / 4) + extraTeamAllowance));
     }

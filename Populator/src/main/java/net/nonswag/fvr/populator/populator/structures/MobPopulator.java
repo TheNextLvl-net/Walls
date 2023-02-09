@@ -34,17 +34,15 @@ public class MobPopulator extends BlockPopulator {
     @Override
     public void populate(World world, Random random, Chunk chunk) {
         int number = 1;
-        Random rand = new Random();
-
         for (int i = 0; i < number; i++) {
-            int x = rand.nextInt(16);
-            int z = rand.nextInt(16);
+            int x = random.nextInt(16);
+            int z = random.nextInt(16);
 
             Location loc = Utils.getHighestBlock(chunk, x, z).getLocation();
             loc.setY(loc.getY() + 2);
 
             if (filler.contains(loc.getBlockX(), loc.getBlockZ())) {
-                world.spawn(loc, mobs.get(rand.nextInt(mobs.size())));
+                world.spawn(loc, mobs.get(random.nextInt(mobs.size())));
             }
 
         }

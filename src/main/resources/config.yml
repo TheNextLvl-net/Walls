@@ -5,7 +5,7 @@ preGameAutoStartPlayers: 4
 preGameAutoStartSeconds: 120
 combatRelogTime: 10
 relogTime: 90
-wallsAdvert:
+UHCMode: false
 # --------------------------------------
 # tournamentMode true will prevent "autostart happening" requires an op / admin to start the game.
 tournamentMode: false

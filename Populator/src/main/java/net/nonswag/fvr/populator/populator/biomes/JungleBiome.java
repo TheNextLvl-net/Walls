@@ -40,7 +40,7 @@ public class JungleBiome extends WorldFiller {
 
     @Override
     public void generate() {
-        Random seed = this.rand;
+        Random seed = this.random;
         SimplexOctaveGenerator g = new SimplexOctaveGenerator(seed, 8);
         PerlinOctaveGenerator gg = new PerlinOctaveGenerator(seed, 8);
         g.setScale(0.0022D);

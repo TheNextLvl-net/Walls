@@ -26,7 +26,7 @@ public abstract class WorldFiller implements Container {
     protected final int centerX;
     protected final int centerZ;
 
-    protected final Random rand;
+    protected final Random random;
 
     private final List<BlockPopulator> populators = new ArrayList<>();
 
@@ -45,7 +45,7 @@ public abstract class WorldFiller implements Container {
         this.centerX = (minX + maxX) / 2;
         this.centerZ = (minZ + maxZ) / 2;
 
-        this.rand = Walls.GLOBAL_RANDOM;
+        this.random = Walls.GLOBAL_RANDOM;
 
         addPopulator(new OrePopulator(this));
         addPopulator(new CavePopulator(this));
@@ -73,10 +73,8 @@ public abstract class WorldFiller implements Container {
     }
 
     public void addPopulator(BlockPopulator pop, boolean front) {
-        if (front)
-            populators.add(0, pop);
-        else
-            populators.add(pop);
+        if (front) populators.add(0, pop);
+        else populators.add(pop);
     }
 
     public Chunk[] getChunks() {
@@ -84,10 +82,8 @@ public abstract class WorldFiller implements Container {
         Chunk[] chunks = new Chunk[9 * 9];
         int count = 0;
         World world = bottomLeft.getWorld();
-
         int cx = world.getChunkAt(bottomLeft).getX();
         int cz = world.getChunkAt(bottomLeft).getZ();
-
         for (int x = 0; x < 9; x++) {
             for (int z = 0; z < 9; z++) {
                 chunks[count] = world.getChunkAt(cx + x, cz + z);
@@ -99,16 +95,16 @@ public abstract class WorldFiller implements Container {
 
     public void populate() {
         Chunk[] chunks = getChunks();
-        for (BlockPopulator pop : populators) {
+        populators.forEach(populator -> {
             for (Chunk chunk : chunks) {
                 for (int x = 0; x < 16; x++) {
                     for (int z = 0; z < 16; z++) {
                         world.setBiome(chunk.getX() * 16 + x, chunk.getZ() * 16 + z, biome);
                     }
                 }
-                pop.populate(world, rand, chunk);
+                populator.populate(world, random, chunk);
             }
-        }
+        });
     }
 
     public abstract void generate();

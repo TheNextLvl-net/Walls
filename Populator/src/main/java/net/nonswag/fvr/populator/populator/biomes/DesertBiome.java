@@ -31,7 +31,7 @@ public class DesertBiome extends WorldFiller {
 
     @Override
     public void generate() {
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(this.rand, 8);
+        SimplexOctaveGenerator g = new SimplexOctaveGenerator(this.random, 8);
         g.setScale(1 / 48d);
         for (int x = minX; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {

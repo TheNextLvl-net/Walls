@@ -15,6 +15,7 @@ import org.bukkit.entity.Player;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class GameStarter {
 
@@ -117,7 +118,7 @@ public class GameStarter {
             FullKitCommand.fullIron(walls);
 
         } else if (Walls.fullDiamond) {
-            int whichGame = Walls.random.nextInt(4);
+            int whichGame = ThreadLocalRandom.current().nextInt(4);
             switch (whichGame) {
                 case 1:
                     FullKitCommand.fullIron(walls);

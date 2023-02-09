@@ -59,7 +59,7 @@ public class IslandBiome extends WorldFiller {
         int d = 10;
         createSphere(block, d);
         for (int i = d; i > 0; i--) {
-            block = block.getRelative(d - rand.nextInt(d * 2), -rand.nextInt(d), d - rand.nextInt(d * 2));
+            block = block.getRelative(d - random.nextInt(d * 2), -random.nextInt(d), d - random.nextInt(d * 2));
             createSphere(block, d);
         }
     }
@@ -83,7 +83,7 @@ public class IslandBiome extends WorldFiller {
     public void generate() {
         //super.generate();
 
-        Random seed = this.rand;
+        Random seed = this.random;
         SimplexOctaveGenerator g = new SimplexOctaveGenerator(seed, 9);
         PerlinOctaveGenerator gg = new PerlinOctaveGenerator(seed, 8);
         //PerlinOctaveGenerator ggg = new PerlinOctaveGenerator(seed, 8);
