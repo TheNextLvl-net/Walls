@@ -9,7 +9,6 @@ import org.bukkit.generator.BlockPopulator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.Stack;
 
 public abstract class WorldFiller implements Container {
@@ -25,8 +24,6 @@ public abstract class WorldFiller implements Container {
 
     protected final int centerX;
     protected final int centerZ;
-
-    protected final Random random;
 
     private final List<BlockPopulator> populators = new ArrayList<>();
 
@@ -44,8 +41,6 @@ public abstract class WorldFiller implements Container {
 
         this.centerX = (minX + maxX) / 2;
         this.centerZ = (minZ + maxZ) / 2;
-
-        this.random = Walls.GLOBAL_RANDOM;
 
         addPopulator(new OrePopulator(this));
         addPopulator(new CavePopulator(this));
@@ -102,7 +97,7 @@ public abstract class WorldFiller implements Container {
                         world.setBiome(chunk.getX() * 16 + x, chunk.getZ() * 16 + z, biome);
                     }
                 }
-                populator.populate(world, random, chunk);
+                populator.populate(world, Populator.RANDOM, chunk);
             }
         });
     }

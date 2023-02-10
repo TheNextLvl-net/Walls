@@ -1,5 +1,6 @@
 package net.nonswag.fvr.populator.populator.biomes;
 
+import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.populator.blocks.Populator_Water_Lily;
 import net.nonswag.fvr.populator.populator.structures.*;
@@ -58,6 +59,7 @@ public class IslandBiome extends WorldFiller {
         Block block = start;
         int d = 10;
         createSphere(block, d);
+        Random random = Populator.RANDOM;
         for (int i = d; i > 0; i--) {
             block = block.getRelative(d - random.nextInt(d * 2), -random.nextInt(d), d - random.nextInt(d * 2));
             createSphere(block, d);
@@ -83,9 +85,8 @@ public class IslandBiome extends WorldFiller {
     public void generate() {
         //super.generate();
 
-        Random seed = this.random;
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(seed, 9);
-        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(seed, 8);
+        SimplexOctaveGenerator g = new SimplexOctaveGenerator(Populator.RANDOM, 9);
+        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(Populator.RANDOM, 8);
         //PerlinOctaveGenerator ggg = new PerlinOctaveGenerator(seed, 8);
         g.setScale(0.0122D);
         gg.setScale(0.053625D);

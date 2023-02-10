@@ -3,15 +3,22 @@ package net.nonswag.fvr.walls;
 import com.sk89q.worldedit.WorldEdit;
 import me.filoghost.holographicdisplays.api.HolographicDisplaysAPI;
 import me.filoghost.holographicdisplays.api.hologram.Hologram;
+import net.nonswag.core.api.file.formats.GsonFile;
 import net.nonswag.core.api.file.formats.PropertiesFile;
 import net.nonswag.core.api.math.MathUtil;
 import net.nonswag.core.api.sql.Database;
+import net.nonswag.fvr.populator.Populator;
+import net.nonswag.fvr.walls.api.*;
+import net.nonswag.fvr.walls.api.signs.BiomeSign;
+import net.nonswag.fvr.walls.api.signs.BiomeSigns;
+import net.nonswag.fvr.walls.api.signs.StatSigns;
 import net.nonswag.fvr.walls.commands.*;
 import net.nonswag.fvr.walls.kits.SpecPlayerKit;
-import net.nonswag.fvr.walls.utils.*;
+import net.nonswag.fvr.walls.listeners.SignListener;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
@@ -45,6 +52,9 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class Walls extends JavaPlugin implements Listener {
+    public static final GsonFile<StatSigns> STAT_SIGNS = new GsonFile<>("plugins/TheWalls", "stats.json", new StatSigns());
+    public static final GsonFile<BiomeSigns> BIOME_SIGNS = new GsonFile<>("plugins/TheWalls", "biomes.json", new BiomeSigns());
+    public static final HashMap<Team, String> BIOMES = new HashMap<>();
 
     public enum Rank {
         NONE, VIP, PRO, GM, MGM, ADMIN;
@@ -102,13 +112,13 @@ public class Walls extends JavaPlugin implements Listener {
         public int deaths = 0;
         public int wins = 0;
         public int minutes = 0;
-        public PlayerState playerState = PlayerState.SPECTATORS;
+        public Team playerState = Team.SPECTATORS;
     }
 
-    public static final String STAFFCHATT_PREFIX = ChatColor.RED + "[" + ChatColor.AQUA + "StaffChat" + ChatColor.RED + "] ";
-    public static final String CLANCHAT_PREFIX = ChatColor.RED + "[" + ChatColor.DARK_AQUA + "??" + ChatColor.RED + "] ";
-    public static final String OPCHAT_PREFIX = ChatColor.RED + "[" + ChatColor.RED + "OPCHAT" + ChatColor.RED + "] ";
-    public static String[] teamsNames = {ChatColor.LIGHT_PURPLE + "Specs", ChatColor.RED + "Team 1", ChatColor.YELLOW + "Team 2", ChatColor.GREEN + "Team 3", ChatColor.BLUE + "Team 4"};
+    public static final String STAFFCHATT_PREFIX = "§c[§bStaffChat§c] ";
+    public static final String CLANCHAT_PREFIX = "§c[§3??§c] ";
+    public static final String OPCHAT_PREFIX = "§c[§cOPCHAT§c] ";
+    public static String[] teamNames = {"§dSpecs", "§cRed", "§eYellow", "§aGreen", "§9Blue"};
     public static ChatColor[] teamChatColors = {ChatColor.LIGHT_PURPLE, ChatColor.RED, ChatColor.YELLOW, ChatColor.GREEN, ChatColor.BLUE};
 
     private final Map<UUID, Integer> mutedPlayers = new HashMap<>();
@@ -143,16 +153,22 @@ public class Walls extends JavaPlugin implements Listener {
     private SpecPlayerKit spectatorKit;
     public PlayerScoreBoard playerScoreBoard;
 
-    private final Map<Location, PlayerState> boom = new HashMap<>();
+    private final Map<Location, Team> boom = new HashMap<>();
     public Map<UUID, String> assassinTargets = new HashMap<>();
     public Map<UUID, Integer> leprechaunOwners = new HashMap<>();
     public Map<UUID, Integer> thorOwners = new HashMap<>();
 
-    public enum GameState {PREGAME, PEACETIME, FIGHTING, FINISHED}
+    public enum GameState {
+        PREGAME, PEACETIME, FIGHTING, FINISHED
+    }
 
-    public enum PlayerState {SPECTATORS, RED, YELLOW, GREEN, BLUE}
+    public enum Team {
+        SPECTATORS, RED, YELLOW, GREEN, BLUE
+    }
 
-    public enum PlayerJoinType {ANYONE, VIP, PRO, STAFF}
+    public enum PlayerJoinType {
+        ANYONE, VIP, PRO, STAFF
+    }
 
     private final List<EntityType> allowedMobs = new ArrayList<>();
     private final List<Selection> selections = new ArrayList<>();
@@ -193,7 +209,13 @@ public class Walls extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        Populator.selectBiomes().forEach((ordinal, biome) -> BIOMES.put(Team.values()[ordinal], biome));
         WorldEdit.getInstance().getConfiguration().navigationWand = -1;
+        Bukkit.getScheduler().runTaskLater(this, () -> {
+            updateBiomeSigns();
+            updateStatSigns();
+        }, 1);
+
         Bukkit.getWorlds().forEach(world -> {
             world.setGameRuleValue("doFireTick", "false");
             world.setGameRuleValue("doDaylightCycle", "false");
@@ -221,14 +243,14 @@ public class Walls extends JavaPlugin implements Listener {
         allowPickTeams = getConfig().getBoolean("allowPickTeams");
         
         if (clanBattle || tournamentMode) {
-            teamsNames[1] = teamChatColors[1] + getConfig().getString("clan-1");
-            teamsNames[2] = teamChatColors[2] + getConfig().getString("clan-2");
-            teamsNames[3] = teamChatColors[3] + getConfig().getString("clan-3");
-            teamsNames[4] = teamChatColors[4] + getConfig().getString("clan-4");
+            teamNames[1] = teamChatColors[1] + getConfig().getString("clan-1");
+            teamNames[2] = teamChatColors[2] + getConfig().getString("clan-2");
+            teamNames[3] = teamChatColors[3] + getConfig().getString("clan-3");
+            teamNames[4] = teamChatColors[4] + getConfig().getString("clan-4");
             List<String> clans = new ArrayList<>();
             for (int i = 1; i <= 4; i++) {
                 String string = getConfig().getString("clan-" + i);
-                teamsNames[i] = teamChatColors[i] + string;
+                teamNames[i] = teamChatColors[i] + string;
                 clans.add(string);
             }
             Walls.clans = clans;
@@ -277,6 +299,7 @@ public class Walls extends JavaPlugin implements Listener {
         DeathMessages.initializeDeathMessages();
 
         Bukkit.getPluginManager().registerEvents(this, this);
+        Bukkit.getPluginManager().registerEvents(new SignListener(this), this);
 
         getCommand("ping").setExecutor(new PingCommand());
         getCommand("shout").setExecutor(new ShoutCommand(this));
@@ -309,6 +332,8 @@ public class Walls extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        Walls.STAT_SIGNS.save();
+        Walls.BIOME_SIGNS.save();
         this.clock.interrupt();
         Database.disconnect();
     }
@@ -550,7 +575,7 @@ public class Walls extends JavaPlugin implements Listener {
         switch (getGameState()) {
             case PREGAME:
                 if (!getPlayers().containsKey(event.getPlayer().getUniqueId())) {
-                    wallsPlayer.playerState = PlayerState.SPECTATORS;
+                    wallsPlayer.playerState = Team.SPECTATORS;
                     this.getPlayers().put(event.getPlayer().getUniqueId(), wallsPlayer);
                 }
                 this.spectatorKit.givePlayerKit(event.getPlayer());
@@ -569,7 +594,7 @@ public class Walls extends JavaPlugin implements Listener {
             case FINISHED:
                 if (!this.quitters.contains(event.getPlayer().getUniqueId())) {
                     this.spectatorKit.givePlayerKit(event.getPlayer());
-                    playerScoreBoard.addPlayerToTeam(event.getPlayer().getUniqueId(), PlayerState.SPECTATORS);
+                    playerScoreBoard.addPlayerToTeam(event.getPlayer().getUniqueId(), Team.SPECTATORS);
                     event.getPlayer().setHealth(20);
                     event.getPlayer().setFoodLevel(20);
                     PlayerVisibility.makeSpecInvisible(this, event.getPlayer());
@@ -592,7 +617,6 @@ public class Walls extends JavaPlugin implements Listener {
     public void onPlayerChat(AsyncPlayerChatEvent event) {
         PlayerChatHandler.playerChat(event, this);
     }
-
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
@@ -622,7 +646,7 @@ public class Walls extends JavaPlugin implements Listener {
                     Notifier.success(event.getEntity().getKiller(), "You got a Golden Apple for that Kill!! Eat it for health!");
                 }
                 playerScoreBoard.removePlayerFromTeam(event.getEntity().getUniqueId());
-                playerScoreBoard.addPlayerToTeam(event.getEntity().getUniqueId(), PlayerState.SPECTATORS);
+                playerScoreBoard.addPlayerToTeam(event.getEntity().getUniqueId(), Team.SPECTATORS);
                 WallsPlayer deadWallsPlayer = getPlayer(event.getEntity().getUniqueId());
                 deadWallsPlayer.deaths = 1;
                 deadWallsPlayer.minutes = (this.clock.getSecondsRemaining() / 60);
@@ -639,7 +663,7 @@ public class Walls extends JavaPlugin implements Listener {
                     Notifier.broadcast("You can now eat again!");
                 }
                 WallsPlayer wallsPlayer = getPlayer(player.getUniqueId());
-                wallsPlayer.playerState = PlayerState.SPECTATORS;
+                wallsPlayer.playerState = Team.SPECTATORS;
                 player.closeInventory();
                 player.getInventory().clear();
                 getPlayers().put(player.getUniqueId(), wallsPlayer);
@@ -700,7 +724,7 @@ public class Walls extends JavaPlugin implements Listener {
                             foodDisabled = false;
                             Notifier.broadcast("You can now eat again!");
                         }
-                        wallsPlayer.playerState = PlayerState.SPECTATORS;
+                        wallsPlayer.playerState = Team.SPECTATORS;
                         wallsPlayer.deaths = wallsPlayer.deaths + 5;
                         wallsPlayer.kills = 0;
                         wallsPlayer.wins = 0;
@@ -708,7 +732,7 @@ public class Walls extends JavaPlugin implements Listener {
                         player.getInventory().clear();
                         getPlayers().put(player.getUniqueId(), wallsPlayer);
                         playerScoreBoard.removePlayerFromTeam(player.getUniqueId());
-                        playerScoreBoard.addPlayerToTeam(player.getUniqueId(), PlayerState.SPECTATORS);
+                        playerScoreBoard.addPlayerToTeam(player.getUniqueId(), Team.SPECTATORS);
                         playerScoreBoard.updateScoreboardScores();
                         if (calculateTeamsLeft() < 2) {
                             setGameState(GameState.FINISHED);
@@ -731,7 +755,7 @@ public class Walls extends JavaPlugin implements Listener {
                         quitterTasks.put(player.getUniqueId(), Bukkit.getScheduler().runTaskLater(this, () -> {
                             if (!quitters.contains(player.getUniqueId())) return;
                             playerScoreBoard.removePlayerFromTeam(player.getUniqueId());
-                            playerScoreBoard.addPlayerToTeam(player.getUniqueId(), PlayerState.SPECTATORS);
+                            playerScoreBoard.addPlayerToTeam(player.getUniqueId(), Team.SPECTATORS);
                             quitters.remove(player.getUniqueId());
                             if (!Bukkit.getOfflinePlayer(player.getUniqueId()).isOnline()) {
                                 for (ItemStack item : inventory.get(player.getUniqueId())) {
@@ -750,7 +774,7 @@ public class Walls extends JavaPlugin implements Listener {
                                 Notifier.broadcast("You can now eat again!");
                             }
                             WallsPlayer updatedPlayer = getPlayer(player.getUniqueId());
-                            updatedPlayer.playerState = PlayerState.SPECTATORS;
+                            updatedPlayer.playerState = Team.SPECTATORS;
                             player.closeInventory();
                             player.getInventory().clear();
                             getPlayers().put(player.getUniqueId(), updatedPlayer);
@@ -1173,15 +1197,15 @@ public class Walls extends JavaPlugin implements Listener {
             case PREGAME:
                 if (event.getPlayer().getItemInHand().getType() == Material.WOOL) {
                     final String itemName = ChatColor.stripColor(event.getPlayer().getItemInHand().getItemMeta().getDisplayName());
-                    PlayerState tps = PlayerState.SPECTATORS;
-                    if (itemName.equals(ChatColor.stripColor(teamsNames[1]))) {
-                        tps = PlayerState.RED;
-                    } else if (itemName.equals(ChatColor.stripColor(teamsNames[2]))) {
-                        tps = PlayerState.YELLOW;
-                    } else if (itemName.equals(ChatColor.stripColor(teamsNames[3]))) {
-                        tps = PlayerState.GREEN;
-                    } else if (itemName.equals(ChatColor.stripColor(teamsNames[4]))) {
-                        tps = PlayerState.BLUE;
+                    Team tps = Team.SPECTATORS;
+                    if (itemName.equals(ChatColor.stripColor(teamNames[1]))) {
+                        tps = Team.RED;
+                    } else if (itemName.equals(ChatColor.stripColor(teamNames[2]))) {
+                        tps = Team.YELLOW;
+                    } else if (itemName.equals(ChatColor.stripColor(teamNames[3]))) {
+                        tps = Team.GREEN;
+                    } else if (itemName.equals(ChatColor.stripColor(teamNames[4]))) {
+                        tps = Team.BLUE;
                     }
 
                     if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
@@ -1193,12 +1217,12 @@ public class Walls extends JavaPlugin implements Listener {
                                 event.setCancelled(true);
                                 return;
                             }
-                            Notifier.team(this, twp.playerState, event.getPlayer().getName() + " joined " + teamsNames[tps.ordinal()]);
+                            Notifier.team(this, twp.playerState, event.getPlayer().getName() + " joined " + teamNames[tps.ordinal()]);
                             playerScoreBoard.addPlayerToTeam(event.getPlayer().getUniqueId(), tps);
                             twp.playerState = tps;
                             event.setCancelled(true);
                         } else {
-                            Notifier.error(event.getPlayer(), teamsNames[tps.ordinal()] + ChatColor.WHITE + " is full :(");
+                            Notifier.error(event.getPlayer(), teamNames[tps.ordinal()] + ChatColor.WHITE + " is full :(");
                         }
                     } else printTeamMates(event.getPlayer(), tps);
                 } else if (event.getPlayer().getItemInHand().getType() == Material.SNOW_BALL) {
@@ -1288,7 +1312,7 @@ public class Walls extends JavaPlugin implements Listener {
         if (event.getAction() == Action.PHYSICAL) {
             if ((block != null) && (block.getType() == Material.STONE_PLATE)
                     && (block.getRelative(0, -1, 0).getType() == Material.GRAVEL)) {
-                final PlayerState team = this.boom.get(block.getLocation());
+                final Team team = this.boom.get(block.getLocation());
                 if ((team != null) && team != getPlayer(player.getUniqueId()).playerState) {
                     block.getWorld().createExplosion(block.getLocation(), 3F);
                     this.boom.remove(block.getLocation());
@@ -1423,10 +1447,8 @@ public class Walls extends JavaPlugin implements Listener {
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
         if (!event.getPlayer().isOp()) {
             final String[] split = event.getMessage().split(" ");
-            if (split.length < 1) {
-                return;
-            }
-            final String cmd = split[0].trim().substring(1).toLowerCase();
+            if (split.length < 1) return;
+            String cmd = split[0].trim().substring(1).toLowerCase();
             if ((cmd.equals("tell") || cmd.equals("msg") || cmd.equals("w")) && this.mutedPlayers.containsKey(event.getPlayer().getUniqueId())) {
                 Notifier.error(event.getPlayer(), "You are muted." + ChatColor.BOLD + " Please use chat responsibly.");
                 event.setCancelled(true);
@@ -1765,7 +1787,7 @@ public class Walls extends JavaPlugin implements Listener {
         return getTeamList(getPlayer(uid).playerState);
     }
 
-    public List<UUID> getTeamList(PlayerState playerState) {
+    public List<UUID> getTeamList(Team playerState) {
         List<UUID> teamList = new ArrayList<>();
         for (UUID uuid : getPlayers().keySet()) {
             if (getPlayer(uuid).playerState == playerState) {
@@ -1775,16 +1797,16 @@ public class Walls extends JavaPlugin implements Listener {
         return teamList;
     }
 
-    public void printTeamMates(Player player, PlayerState ps) {
+    public void printTeamMates(Player player, Team ps) {
         List<UUID> teamUIDS = this.getTeamList(ps);
         if (!teamUIDS.isEmpty()) {
             List<String> names = new ArrayList<>();
             for (UUID uuid : teamUIDS) names.add(Bukkit.getOfflinePlayer(uuid).getName());
             Notifier.notify(player, teamChatColors[ps.ordinal()] + String.join("§7, " + teamChatColors[ps.ordinal()], names));
-        } else Notifier.notify(player, "§cTeam " + teamsNames[ps.ordinal()] + "§c is empty");
+        } else Notifier.notify(player, "§cTeam " + teamNames[ps.ordinal()] + "§c is empty");
     }
 
-    public int getTeamSize(PlayerState state) {
+    public int getTeamSize(Team state) {
         int teamCounter = 0;
         for (WallsPlayer player : getPlayers().values()) {
             if (player.playerState.equals(state)) teamCounter++;
@@ -1795,7 +1817,7 @@ public class Walls extends JavaPlugin implements Listener {
     public boolean isSpectator(Entity entity) {
         if (entity == null) return false;
         WallsPlayer wallsPlayer = getPlayer(entity.getUniqueId());
-        return wallsPlayer != null && wallsPlayer.playerState.equals(PlayerState.SPECTATORS);
+        return wallsPlayer != null && wallsPlayer.playerState.equals(Team.SPECTATORS);
     }
 
     public boolean sameTeam(UUID a, UUID b) {
@@ -1862,10 +1884,10 @@ public class Walls extends JavaPlugin implements Listener {
                     winningTeam = 4;
                 }
                 Notifier.broadcast("---------------------------------------------");
-                Notifier.broadcast("  Congratulations to " + teamsNames[winningTeam] + ChatColor.WHITE + " for winning!");
+                Notifier.broadcast("  Congratulations to " + teamNames[winningTeam] + ChatColor.WHITE + " for winning!");
                 Notifier.broadcast("---------------------------------------------");
                 Fireworks.spawnFireworksForPlayers(this);
-                for (UUID winner : this.getTeamList(PlayerState.values()[winningTeam])) {
+                for (UUID winner : this.getTeamList(Team.values()[winningTeam])) {
                     WallsPlayer wallsWinner = this.getPlayer(winner);
                     wallsWinner.wins = 1;
                     wallsWinner.minutes = (this.clock.getSecondsRemaining() / 60);
@@ -2176,6 +2198,34 @@ public class Walls extends JavaPlugin implements Listener {
     public boolean checkEnoughSpaceInTeam(int teamNumber) {
         if (tournamentMode) return true;
         int extraTeamAllowance = 2;
-        return (this.getTeamSize(PlayerState.values()[teamNumber]) < ((this.getPlayers().size() / 4) + extraTeamAllowance));
+        return (this.getTeamSize(Team.values()[teamNumber]) < ((this.getPlayers().size() / 4) + extraTeamAllowance));
+    }
+
+    public static void updateStatSigns() {
+    }
+
+    public static void updateBiomeSigns() {
+        World world = Bukkit.getWorlds().get(0);
+        Iterator<BiomeSign> iterator = BIOME_SIGNS.getRoot().getSigns().iterator();
+        while (iterator.hasNext()) {
+            BiomeSign sign = iterator.next();
+            Position position = sign.getPosition();
+            if (position.getWorld().equals(world.getName())) BIOMES.forEach((team, biome) -> {
+                if (!sign.getTeam().equals(team)) return;
+                Block block = world.getBlockAt(position.getX(), position.getY(), position.getZ());
+                if (!updateBiomeSign(block, sign, biome)) iterator.remove();
+            });
+        }
+    }
+
+    public static boolean updateBiomeSign(Block block, BiomeSign sign, String biome) {
+        BlockState state = block.getState();
+        if (!(state instanceof Sign)) return false;
+        ((Sign) state).setLine(0, "");
+        ((Sign) state).setLine(1, teamNames[sign.getTeam().ordinal()]);
+        ((Sign) state).setLine(2, teamChatColors[sign.getTeam().ordinal()] + biome);
+        ((Sign) state).setLine(3, "");
+        state.update();
+        return true;
     }
 }

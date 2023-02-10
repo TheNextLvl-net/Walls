@@ -2,11 +2,11 @@ package net.nonswag.fvr.walls.commands;
 
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.Walls.PlayerJoinType;
-import net.nonswag.fvr.walls.Walls.PlayerState;
+import net.nonswag.fvr.walls.Walls.Team;
 import net.nonswag.fvr.walls.Walls.WallsPlayer;
-import net.nonswag.fvr.walls.utils.GameStarter;
-import net.nonswag.fvr.walls.utils.Notifier;
-import net.nonswag.fvr.walls.utils.PlayerVisibility;
+import net.nonswag.fvr.walls.api.GameStarter;
+import net.nonswag.fvr.walls.api.Notifier;
+import net.nonswag.fvr.walls.api.PlayerVisibility;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static net.nonswag.fvr.walls.utils.Notifier.*;
+import static net.nonswag.fvr.walls.api.Notifier.*;
 
 public class WallsCommand implements CommandExecutor {
     private final Walls walls;
@@ -190,7 +190,7 @@ public class WallsCommand implements CommandExecutor {
                 }
                 WallsPlayer twp = walls.getPlayer(player.getUniqueId());
 
-                twp.playerState = PlayerState.values()[teamNumber];
+                twp.playerState = Team.values()[teamNumber];
                 walls.getPlayers().put(player.getUniqueId(), twp);
                 player.setAllowFlight(false);
                 player.getInventory().clear();
@@ -200,8 +200,8 @@ public class WallsCommand implements CommandExecutor {
                 PlayerVisibility.makeInVisPlayerNowVisible(player);
                 player.setHealth(20);
                 player.setFoodLevel(20);
-                success(player, "Gratz! You've been added to " + Walls.teamsNames[twp.playerState.ordinal()]);
-                success(sender, "Success! " + player.getName() + " been added to " + Walls.teamsNames[twp.playerState.ordinal()]);
+                success(player, "Gratz! You've been added to " + Walls.teamNames[twp.playerState.ordinal()]);
+                success(sender, "Success! " + player.getName() + " been added to " + Walls.teamNames[twp.playerState.ordinal()]);
             } else sender.sendMessage("§cThis player is not online");
         } else error(sender, "You have no rights to do this");
     }

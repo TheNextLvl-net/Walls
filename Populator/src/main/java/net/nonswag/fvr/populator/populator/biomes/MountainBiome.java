@@ -1,5 +1,6 @@
 package net.nonswag.fvr.populator.populator.biomes;
 
+import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.populator.blocks.Populator_Lake_And_Creek;
 import net.nonswag.fvr.populator.populator.blocks.Populator_Mushrooms;
@@ -12,8 +13,6 @@ import org.bukkit.entity.MushroomCow;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
-
-import java.util.Random;
 
 public class MountainBiome extends WorldFiller {
 
@@ -40,9 +39,8 @@ public class MountainBiome extends WorldFiller {
 
     @Override
     public void generate() {
-        Random seed = this.random;
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(seed, 8);
-        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(seed, 8);
+        SimplexOctaveGenerator g = new SimplexOctaveGenerator(Populator.RANDOM, 8);
+        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(Populator.RANDOM, 8);
         g.setScale(0.0022D);
         gg.setScale(0.01625D);
         for (int x = minX; x < maxX; x++) {

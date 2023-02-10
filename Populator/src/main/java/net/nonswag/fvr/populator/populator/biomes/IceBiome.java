@@ -1,5 +1,6 @@
 package net.nonswag.fvr.populator.populator.biomes;
 
+import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.populator.blocks.Populator_Lava_Lakes;
 import net.nonswag.fvr.populator.populator.structures.IceTreePopulator;
@@ -11,8 +12,6 @@ import org.bukkit.entity.Snowman;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
-
-import java.util.Random;
 
 public class IceBiome extends WorldFiller {
 
@@ -53,9 +52,8 @@ public class IceBiome extends WorldFiller {
     @SuppressWarnings("deprecation")
     public void generate() {
 
-        Random seed = this.random;
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(seed, 8);
-        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(seed, 8);
+        SimplexOctaveGenerator g = new SimplexOctaveGenerator(Populator.RANDOM, 8);
+        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(Populator.RANDOM, 8);
         g.setScale(0.0062D);
         gg.setScale(0.11625D);
 

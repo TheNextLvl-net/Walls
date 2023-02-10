@@ -1,7 +1,7 @@
 package net.nonswag.fvr.walls.commands;
 
 import net.nonswag.fvr.walls.Walls;
-import net.nonswag.fvr.walls.utils.Notifier;
+import net.nonswag.fvr.walls.api.Notifier;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;

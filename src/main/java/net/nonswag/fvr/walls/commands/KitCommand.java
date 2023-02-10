@@ -1,7 +1,7 @@
 package net.nonswag.fvr.walls.commands;
 
 import net.nonswag.fvr.walls.Walls;
-import net.nonswag.fvr.walls.utils.Notifier;
+import net.nonswag.fvr.walls.api.Notifier;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.Command;

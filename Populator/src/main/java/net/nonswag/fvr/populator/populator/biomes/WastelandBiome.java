@@ -1,5 +1,6 @@
 package net.nonswag.fvr.populator.populator.biomes;
 
+import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.populator.blocks.Populator_Bush;
 import net.nonswag.fvr.populator.populator.structures.*;
@@ -10,8 +11,6 @@ import org.bukkit.block.Block;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
-
-import java.util.Random;
 
 public class WastelandBiome extends WorldFiller {
 
@@ -37,9 +36,8 @@ public class WastelandBiome extends WorldFiller {
 
     @Override
     public void generate() {
-        Random seed = this.random;
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(seed, 8);
-        PerlinOctaveGenerator g2 = new PerlinOctaveGenerator(seed, 8);
+        SimplexOctaveGenerator g = new SimplexOctaveGenerator(Populator.RANDOM, 8);
+        PerlinOctaveGenerator g2 = new PerlinOctaveGenerator(Populator.RANDOM, 8);
         g.setScale(1/32d);
         g2.setScale(1/32d);
         for (int x = minX; x < maxX; x++) {
@@ -61,15 +59,15 @@ public class WastelandBiome extends WorldFiller {
                 }
                 double n2 = g2.noise(x, z, 0.5D, 0.5D);
                 if(n2 > 0 && n2 < .05)
-                    highest += random.nextInt(2) + 2;
+                    highest += Populator.RANDOM.nextInt(2) + 2;
                 else if(n2 >= .05 && n2 < .1)
-                    highest += random.nextInt(2) + 5;
+                    highest += Populator.RANDOM.nextInt(2) + 5;
                 else if(n2 >= .1 && n2 < .15)
-                    highest += random.nextInt(2) + 8;
+                    highest += Populator.RANDOM.nextInt(2) + 8;
                 else if(n2 >= .15 && n2 < .2)
-                    highest += random.nextInt(2) + 4;
+                    highest += Populator.RANDOM.nextInt(2) + 4;
                 else if(n2 >= .2 && n2 < .25)
-                    highest += random.nextInt(2) + 3;
+                    highest += Populator.RANDOM.nextInt(2) + 3;
                 
                 for (int y = startY; y < highest - 3 && y < world.getMaxHeight(); y++) {
                     world.getBlockAt(x, y, z).setType(Material.STONE);

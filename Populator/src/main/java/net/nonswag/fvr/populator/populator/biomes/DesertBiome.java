@@ -1,5 +1,6 @@
 package net.nonswag.fvr.populator.populator.biomes;
 
+import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.populator.structures.*;
 import org.bukkit.Material;
@@ -31,7 +32,7 @@ public class DesertBiome extends WorldFiller {
 
     @Override
     public void generate() {
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(this.random, 8);
+        SimplexOctaveGenerator g = new SimplexOctaveGenerator(Populator.RANDOM, 8);
         g.setScale(1 / 48d);
         for (int x = minX; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {

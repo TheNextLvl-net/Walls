@@ -1,5 +1,6 @@
 package net.nonswag.fvr.populator.populator.biomes;
 
+import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.populator.blocks.Populator_Lake_And_Creek;
 import net.nonswag.fvr.populator.populator.structures.FlowerPopulator;
@@ -13,8 +14,6 @@ import org.bukkit.block.Block;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
-
-import java.util.Random;
 
 public class CanyonBiome extends WorldFiller {
 
@@ -39,9 +38,8 @@ public class CanyonBiome extends WorldFiller {
 
     @Override
     public void generate() {
-        Random seed = this.random;
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(seed, 8);
-        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(seed, 8);
+        SimplexOctaveGenerator g = new SimplexOctaveGenerator(Populator.RANDOM, 8);
+        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(Populator.RANDOM, 8);
         g.setScale(1 / 48d);
         gg.setScale(1 / 24d);
         for (int x = minX; x < maxX; x++) {

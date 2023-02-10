@@ -1,6 +1,6 @@
 package net.nonswag.fvr.populator.populator.biomes;
 
-import net.nonswag.fvr.populator.Walls;
+import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.populator.structures.GravelStack;
 import net.nonswag.fvr.populator.populator.structures.TreePopulator;
@@ -17,7 +17,6 @@ import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
 
 import java.util.List;
-import java.util.Random;
 
 public class RuinCityBiome extends WorldFiller {
 
@@ -36,9 +35,8 @@ public class RuinCityBiome extends WorldFiller {
 
     @Override
     public void generate() {
-        Random seed = this.random;
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(seed, 8);
-        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(seed, 8);
+        SimplexOctaveGenerator g = new SimplexOctaveGenerator(Populator.RANDOM, 8);
+        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(Populator.RANDOM, 8);
         g.setScale(1 / 188d);
         gg.setScale(1 / 15d);
         for (int x = minX; x < maxX; x++) {
@@ -101,14 +99,14 @@ public class RuinCityBiome extends WorldFiller {
         int z = this.minZ + (zSize/4);
         int y = world.getHighestBlockAt(x, z).getY()-5;
                 
-        String chosen = options.get(Walls.GLOBAL_RANDOM.nextInt(options.size()));
+        String chosen = options.get(Populator.RANDOM.nextInt(options.size()));
         Bukkit.getLogger().info("1chosen - "+chosen+" at x:"+x+" y:"+y+" z:"+z);
         Location loc = new Location(Bukkit.getWorlds().get(0), x,y,z);
         loader.paste(chosen, loc);
 
         
         
-        chosen = options.get(Walls.GLOBAL_RANDOM.nextInt(options.size()));
+        chosen = options.get(Populator.RANDOM.nextInt(options.size()));
         x = this.maxX - (xSize/4);
         z = this.maxZ - (zSize/4);
         y = world.getHighestBlockAt(x, z).getY()-5;

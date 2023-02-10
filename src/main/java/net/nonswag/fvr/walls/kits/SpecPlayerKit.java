@@ -2,9 +2,9 @@ package net.nonswag.fvr.walls.kits;
 
 
 import net.nonswag.fvr.walls.Walls;
-import net.nonswag.fvr.walls.utils.ItemStackTools;
-import net.nonswag.fvr.walls.utils.Notifier;
-import net.nonswag.fvr.walls.utils.TitleManager;
+import net.nonswag.fvr.walls.api.ItemStackTools;
+import net.nonswag.fvr.walls.api.Notifier;
+import net.nonswag.fvr.walls.api.TitleManager;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -52,10 +52,10 @@ public class SpecPlayerKit {
         this.snowBallMeta = Bukkit.getItemFactory().getItemMeta(Material.SNOW_BALL);
         this.skullMeta = Bukkit.getItemFactory().getItemMeta(Material.SKULL_ITEM);
 
-        this.redWoolMeta.setDisplayName(Walls.teamsNames[1]);
-        this.yellowWoolMeta.setDisplayName(Walls.teamsNames[2]);
-        this.greenWoolMeta.setDisplayName(Walls.teamsNames[3]);
-        this.blueWoolMeta.setDisplayName(Walls.teamsNames[4]);
+        this.redWoolMeta.setDisplayName(Walls.teamNames[1]);
+        this.yellowWoolMeta.setDisplayName(Walls.teamNames[2]);
+        this.greenWoolMeta.setDisplayName(Walls.teamNames[3]);
+        this.blueWoolMeta.setDisplayName(Walls.teamNames[4]);
         this.snowBallMeta.setDisplayName(ChatColor.DARK_GREEN + "Hold THIS to fight! :)");
         this.skullMeta.setDisplayName("Click me to TP to players in game!");
 
