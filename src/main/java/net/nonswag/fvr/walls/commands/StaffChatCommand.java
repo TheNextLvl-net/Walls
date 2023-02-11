@@ -24,7 +24,7 @@ public class StaffChatCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         final String messageToSend = StringUtils.join(args, " ");
-        if (!(sender instanceof Player) || !walls.getPlayer(((Player) sender).getUniqueId()).rank.staff()) {
+        if (!(sender instanceof Player) || !walls.getPlayer(((Player) sender).getUniqueId()).getRank().staff()) {
             Notifier.error(sender, "You can't use this command");
             return true;
         }

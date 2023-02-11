@@ -6,6 +6,7 @@ import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.api.Notifier;
 import net.nonswag.fvr.walls.api.Position;
 import net.nonswag.fvr.walls.api.signs.BiomeSign;
+import net.nonswag.fvr.walls.api.signs.StatSign;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -30,6 +31,21 @@ public class SignListener implements Listener {
     }
 
     private void statSign(SignChangeEvent event) {
+        String statName = event.getLine(1).replace(" ", "_");
+        try {
+            Walls.Sort stat = Walls.Sort.valueOf(statName.toUpperCase());
+            Position position = Position.of(event.getBlock().getLocation());
+            Walls.STAT_SIGNS.getRoot().getSigns().removeIf(sign -> sign.getPosition().equals(position));
+            Walls.STAT_SIGNS.getRoot().getSigns().add(new StatSign(position, stat));
+            Notifier.success(event.getPlayer(), "Added a new stat sign for §6" + stat.name().replace("_", " ").toLowerCase());
+            Bukkit.getScheduler().runTaskLater(walls, Walls::updateStatSigns, 1);
+        } catch (IllegalArgumentException e) {
+            if (!statName.isEmpty()) {
+                Notifier.error(event.getPlayer(), String.format("§4%s§c is not a valid option", statName));
+                List<String> stats = Arrays.stream(Walls.Sort.values()).map(stat -> stat.name().replace("_", " ").toLowerCase()).collect(Collectors.toList());
+                Notifier.notify(event.getPlayer(), "§7Options§8: §a" + String.join("§8, §a", stats));
+            } else Notifier.error(event.getPlayer(), "Please enter the corresponding stat in line 2");
+        }
     }
 
     private void biomeSign(SignChangeEvent event) {

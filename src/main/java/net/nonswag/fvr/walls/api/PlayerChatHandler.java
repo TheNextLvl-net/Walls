@@ -13,15 +13,15 @@ import java.util.UUID;
 public class PlayerChatHandler {
 
     public static void playerChat(AsyncPlayerChatEvent event, Walls walls) {
-        if (Walls.shhhhh && (!event.getPlayer().isOp() && !walls.getPlayer(event.getPlayer().getUniqueId()).rank.mgm()) && !Walls.teamCaptains.contains(event.getPlayer().getUniqueId())) {
+        if (Walls.shhhhh && (!event.getPlayer().isOp() && !walls.getPlayer(event.getPlayer().getUniqueId()).getRank().mgm()) && !Walls.teamCaptains.contains(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
         }
         if (event.isCancelled()) return;
         WallsPlayer twp = walls.getPlayer(event.getPlayer().getUniqueId());
-        String rank = twp.rank.display();
+        String rank = twp.getRank().display();
         String clan = "";
-        if (twp.clan != null) {
-            clan = ChatColor.DARK_RED + "" + ChatColor.BOLD + ChatColor.translateAlternateColorCodes('&', twp.clan) + ChatColor.WHITE + "◊";
+        if (twp.getClan() != null) {
+            clan = ChatColor.DARK_RED + "" + ChatColor.BOLD + ChatColor.translateAlternateColorCodes('&', twp.getClan()) + ChatColor.WHITE + "◊";
         }
         switch (walls.getGameState()) {
             case PREGAME:
@@ -30,7 +30,7 @@ public class PlayerChatHandler {
             case PEACETIME:
             case FIGHTING:
             case FINISHED:
-                event.setFormat(rank + clan + Walls.teamChatColors[twp.playerState.ordinal()] + "%s: " + ChatColor.GRAY + "%s");
+                event.setFormat(rank + clan + Walls.teamChatColors[twp.getPlayerState().ordinal()] + "%s: " + ChatColor.GRAY + "%s");
                 if (!walls.staffListSnooper.contains(event.getPlayer().getUniqueId())) {
                     event.getRecipients().clear();
                     for (UUID uuid : walls.getTeamList(event.getPlayer().getUniqueId())) {

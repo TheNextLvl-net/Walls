@@ -15,9 +15,6 @@ playerJoinRestriction: ANYONE
 allowPickTeams: true
 # --------------------------------------
 # --------------------------------------
-debugMode: false
-# --------------------------------------
-# --------------------------------------
 # fullDiamond = random diamond, iron, chain games (usually 3 mins peace time)
 fullDiamond: false
 # --------------------------------------

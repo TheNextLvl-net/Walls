@@ -28,13 +28,13 @@ public class CornerCommand implements CommandExecutor {
             return true;
         }
         Player player = (Player) sender;
-        if (!walls.getPlayer(player.getUniqueId()).rank.vip() && !sender.isOp()) {
+        if (!walls.getPlayer(player.getUniqueId()).getRank().vip() && !sender.isOp()) {
             Notifier.error(player, "You need a rank to be able to /corner! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " + Walls.DISCORD);
             return true;
         }
         WallsPlayer twp = walls.getPlayer(player.getUniqueId());
         Location corner;
-        corner = Walls.corners.get(twp.playerState.ordinal());
+        corner = Walls.corners.get(twp.getPlayerState().ordinal());
         final Location loc = new Location(
                 Bukkit.getWorld(Walls.levelName), corner.getBlockX(),
                 Bukkit.getWorld(Walls.levelName).getHighestBlockYAt(corner.getBlockX(), corner.getBlockZ()),

@@ -107,7 +107,7 @@ public class WallsCommand implements CommandExecutor {
     }
 
     private void stop(CommandSender sender) {
-        if (sender.isOp() || (sender instanceof Player && (walls.getPlayer(((Player) sender).getUniqueId()).rank.staff()))) {
+        if (sender.isOp() || (sender instanceof Player && (walls.getPlayer(((Player) sender).getUniqueId()).getRank().staff()))) {
             if (walls.getGameState() != Walls.GameState.PREGAME && walls.getGameState() != Walls.GameState.FINISHED) {
                 walls.setGameState(Walls.GameState.FINISHED);
                 broadcast("§cThe game was force closed");
@@ -119,21 +119,16 @@ public class WallsCommand implements CommandExecutor {
     private void stats(CommandSender sender) {
         if (sender instanceof Player) {
             WallsPlayer player = walls.getPlayer((Player) sender);
-            int kills = player.statsKills + player.kills;
-            int deaths = player.statsDeaths + player.deaths;
-            Notifier.notify(sender, "§7Kills: " + kills);
-            Notifier.notify(sender, "§7Deaths: " + deaths);
-            if (kills + deaths != 0) {
-                Notifier.notify(sender, "§7KD: " + (double) kills / deaths);
-                Notifier.notify(sender, "§7KD ratio: " + ((double) kills / kills + deaths) * 100 + "%");
-            } else Notifier.notify(sender, "§7KD: 0");
-            Notifier.notify(sender, "§7Wins: " + player.statsWins);
+            Notifier.notify(sender, "§7Kills: " + player.getStatsKills() + player.getKills());
+            Notifier.notify(sender, "§7Deaths: " + player.getStatsDeaths() + player.getDeaths());
+            Notifier.notify(sender, "§7KD: " + player.getKD());
+            Notifier.notify(sender, "§7Wins: " + player.getStatsWins());
         } else error(sender, "This is a player command");
     }
 
     private void chatListener(CommandSender sender) {
         if (sender instanceof Player) {
-            if (walls.getPlayer(((Player) sender).getUniqueId()).rank.staff() || sender.isOp()) {
+            if (walls.getPlayer(((Player) sender).getUniqueId()).getRank().staff() || sender.isOp()) {
                 if (walls.staffListSnooper.contains(((Player) sender).getUniqueId())) {
                     walls.staffListSnooper.remove((((Player) sender).getUniqueId()));
                     success(sender, "You are no longer listening to all-chat.");
@@ -147,7 +142,7 @@ public class WallsCommand implements CommandExecutor {
 
     private void noStaffChat(CommandSender sender) {
         if (sender instanceof Player) {
-            if (walls.getPlayer(((Player) sender).getUniqueId()).rank.staff() || sender.isOp()) {
+            if (walls.getPlayer(((Player) sender).getUniqueId()).getRank().staff() || sender.isOp()) {
                 if (walls.noStaffChat.contains(((Player) sender).getUniqueId())) {
                     walls.noStaffChat.remove(((Player) sender).getUniqueId());
                     Notifier.notify(sender, "You are now receiving staff chat messages again!");
@@ -160,7 +155,7 @@ public class WallsCommand implements CommandExecutor {
     }
 
     private void startWalls(CommandSender sender) {
-        if (sender.isOp() || (sender instanceof Player && (walls.getPlayer(((Player) sender).getUniqueId())).rank.mgm())) {
+        if (sender.isOp() || (sender instanceof Player && (walls.getPlayer(((Player) sender).getUniqueId())).getRank().mgm())) {
             if (!walls.starting) {
                 broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + "30" + ChatColor.WHITE + " seconds!");
                 walls.clock.setClock(30, () -> GameStarter.startGame(walls.getPlayers(), walls));
@@ -170,7 +165,7 @@ public class WallsCommand implements CommandExecutor {
     }
 
     private void addPlayer(CommandSender sender, String[] args) {
-        if (sender.isOp() || (sender instanceof Player && walls.getPlayer(((Player) sender).getUniqueId()).rank.mgm())) {
+        if (sender.isOp() || (sender instanceof Player && walls.getPlayer(((Player) sender).getUniqueId()).getRank().mgm())) {
             if (args.length < 3) {
                 error(sender, "Command is /walls addplayer <IGN> <teamNumber>");
                 return;
@@ -188,20 +183,19 @@ public class WallsCommand implements CommandExecutor {
                     error(sender, "Invalid team, please use a number between 1 and 4.");
                     return;
                 }
-                WallsPlayer twp = walls.getPlayer(player.getUniqueId());
-
-                twp.playerState = Team.values()[teamNumber];
-                walls.getPlayers().put(player.getUniqueId(), twp);
+                WallsPlayer wallsPlayer = walls.getPlayer(player.getUniqueId());
+                wallsPlayer.setPlayerState(Team.values()[teamNumber]);
+                walls.getPlayers().put(player.getUniqueId(), wallsPlayer);
                 player.setAllowFlight(false);
                 player.getInventory().clear();
-                player.teleport(Walls.spawns.get(twp.playerState.ordinal()));
-                walls.playerScoreBoard.addPlayerToTeam(player.getUniqueId(), twp.playerState);
+                player.teleport(Walls.spawns.get(wallsPlayer.getPlayerState().ordinal()));
+                walls.playerScoreBoard.addPlayerToTeam(player.getUniqueId(), wallsPlayer.getPlayerState());
                 PlayerVisibility.hideAllSpecs(walls, player);
                 PlayerVisibility.makeInVisPlayerNowVisible(player);
                 player.setHealth(20);
                 player.setFoodLevel(20);
-                success(player, "Gratz! You've been added to " + Walls.teamNames[twp.playerState.ordinal()]);
-                success(sender, "Success! " + player.getName() + " been added to " + Walls.teamNames[twp.playerState.ordinal()]);
+                success(player, "Gratz! You've been added to " + Walls.teamNames[wallsPlayer.getPlayerState().ordinal()]);
+                success(sender, "Success! " + player.getName() + " been added to " + Walls.teamNames[wallsPlayer.getPlayerState().ordinal()]);
             } else sender.sendMessage("§cThis player is not online");
         } else error(sender, "You have no rights to do this");
     }
@@ -214,16 +208,16 @@ public class WallsCommand implements CommandExecutor {
             }
             Player player = Bukkit.getPlayerExact(args[1]);
             if (args.length >= 3 && player != null) {
-                if (walls.myDB.setClanName(player.getUniqueId(), args[2])) {
+                if (walls.database.setClanName(player.getUniqueId(), args[2])) {
                     UUID pUID = player.getUniqueId();
                     WallsPlayer twp = walls.getPlayer(pUID);
-                    twp.clan = ChatColor.translateAlternateColorCodes('&', args[2]);
+                    twp.setClan(ChatColor.translateAlternateColorCodes('&', args[2]));
                     sender.sendMessage(ChatColor.GREEN + args[1] + " is now part of [" + ChatColor.translateAlternateColorCodes('&', args[2]) + "] clan!");
                 } else error(sender, "Database error");
             } else if (args.length == 2 && player != null) {
-                if (walls.myDB.setClanName(player.getUniqueId(), null)) {
+                if (walls.database.setClanName(player.getUniqueId(), null)) {
                     WallsPlayer wallsPlayer = walls.getPlayer(player);
-                    wallsPlayer.clan = null;
+                    wallsPlayer.setClan(null);
                     success(sender, player.getName() + " had their clan removed!");
                 } else error(sender, "Database error");
             } else {
@@ -233,7 +227,7 @@ public class WallsCommand implements CommandExecutor {
     }
 
     private void silenceComand(CommandSender sender) {
-        if (sender.isOp() || (sender instanceof Player && walls.getPlayer(((Player) sender).getUniqueId()).rank.mgm())) {
+        if (sender.isOp() || (sender instanceof Player && walls.getPlayer(((Player) sender).getUniqueId()).getRank().mgm())) {
             if (Walls.shhhhh = !Walls.shhhhh) broadcast("§cEVERYONE JUST GOT SHHHHH'D!!");
             else broadcast("§aYou are Free. To speak. (ish)");
         } else error(sender, "You have no rights to do this");
@@ -284,8 +278,8 @@ public class WallsCommand implements CommandExecutor {
             Walls.Rank rank;
             if (args.length > 1 && (player = Bukkit.getPlayer(args[1])) != null) {
                 if (args.length > 2 && (rank = Walls.Rank.parse(args[2])) != null) {
-                    walls.getPlayer(player.getUniqueId()).rank = rank;
-                    walls.myDB.setRank(player.getUniqueId(), rank.ordinal());
+                    walls.getPlayer(player.getUniqueId()).setRank(rank);
+                    walls.database.setRank(player.getUniqueId(), rank.ordinal());
                     success(sender, player.getName() + "'s new rank is now " + rank.name().toLowerCase());
                 } else error(sender, "/walls rank " + player.getName() + " <none,vip,pro,gm,mgm,admin>");
             } else error(sender, "/walls rank <player> <none,vip,pro,gm,mgm,admin>");

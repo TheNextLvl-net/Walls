@@ -185,7 +185,7 @@ public class KitCommand implements CommandExecutor {
                 Notifier.error(player, "Enjoy FREE kit " + choice);
                 this.used.add(player.getUniqueId());
             } else if (this.paid.containsKey(choice)) {
-                if (walls.getPlayer(player.getUniqueId()).rank.pro()) {
+                if (walls.getPlayer(player.getUniqueId()).getRank().pro()) {
                     if (choice.equalsIgnoreCase("thor")) {
                         walls.thorOwners.put(player.getUniqueId(), 3);
                     } else if (choice.equalsIgnoreCase("leprechaun")) {
@@ -194,16 +194,6 @@ public class KitCommand implements CommandExecutor {
                     player.getInventory().addItem(this.paid.get(choice).toArray(new ItemStack[]{}));
                     Notifier.error(player, "Enjoy PRO kit " + choice);
                     this.used.add(player.getUniqueId());
-                } else if (walls.getPlayer(player.getUniqueId()).paidKits != null && walls.getPlayer(player.getUniqueId()).paidKits.contains(choice)) {
-                    if (choice.equalsIgnoreCase("thor")) {
-                        walls.thorOwners.put(player.getUniqueId(), 3);
-                    } else if (choice.equalsIgnoreCase("leprechaun")) {
-                        walls.leprechaunOwners.put(player.getUniqueId(), 3);
-                    }
-                    player.getInventory().addItem(this.paid.get(choice).toArray(new ItemStack[]{}));
-                    Notifier.error(player, "Enjoy PRO kit " + choice);
-                    this.used.add(player.getUniqueId());
-
                 } else {
                     Notifier.error(player, "This is a PRO kit - you need to upgrade to get this one :-/");
                 }

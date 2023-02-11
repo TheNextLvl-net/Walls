@@ -36,15 +36,15 @@ public class ShoutCommand implements CommandExecutor{
         }
         Player player = (Player) sender;
         WallsPlayer wallsPlayer = walls.getPlayer(player.getUniqueId());
-        if (this.walls.isSpectator(player) && !wallsPlayer.rank.staff()) {
+        if (this.walls.isSpectator(player) && !wallsPlayer.getRank().staff()) {
             Notifier.error(sender, "Need to be in the fight to use this command :-/");
             return true;
         }
-        if (!this.yells.containsKey(player.getUniqueId()) && wallsPlayer.rank.vip()) {
+        if (!this.yells.containsKey(player.getUniqueId()) && wallsPlayer.getRank().vip()) {
             this.yells.put(player.getUniqueId(), 0);
         } else {
-            if (!walls.getPlayer(player.getUniqueId()).rank.staff() && !sender.isOp()) {
-                if (wallsPlayer.rank.pro()) {
+            if (!walls.getPlayer(player.getUniqueId()).getRank().staff() && !sender.isOp()) {
+                if (wallsPlayer.getRank().pro()) {
                     int num = this.yells.get(player.getUniqueId());
                     num = num + 1;
                     this.yells.put(player.getUniqueId(), num);
@@ -52,7 +52,7 @@ public class ShoutCommand implements CommandExecutor{
                         Notifier.error(player, "You have already yelled out " + ShoutCommand.NUMBER_OF_PRO_YELLS + " times this game!");
                         return true;
                     }
-                } else if (wallsPlayer.rank.vip()) {
+                } else if (wallsPlayer.getRank().vip()) {
                     int num = this.yells.get(player.getUniqueId());
                     num = num + 1;
                     this.yells.put(player.getUniqueId(), num);
@@ -69,9 +69,9 @@ public class ShoutCommand implements CommandExecutor{
         }
         String clan = "";
         final String arguments = StringUtils.join(args, " ");
-        if (wallsPlayer.clan != null)
-            clan = ChatColor.DARK_RED + "" + ChatColor.BOLD + ChatColor.translateAlternateColorCodes('&', wallsPlayer.clan) + ChatColor.WHITE + "◊";
-        String message = wallsPlayer.rank.display() + clan + "" + Walls.teamChatColors[wallsPlayer.playerState.ordinal()] + player.getDisplayName() + ChatColor.GOLD + " YELLS out " + ChatColor.WHITE + arguments;
+        if (wallsPlayer.getClan() != null)
+            clan = ChatColor.DARK_RED + "" + ChatColor.BOLD + ChatColor.translateAlternateColorCodes('&', wallsPlayer.getClan()) + ChatColor.WHITE + "◊";
+        String message = wallsPlayer.getRank().display() + clan + "" + Walls.teamChatColors[wallsPlayer.getPlayerState().ordinal()] + player.getDisplayName() + ChatColor.GOLD + " YELLS out " + ChatColor.WHITE + arguments;
         Bukkit.getOnlinePlayers().forEach(all -> all.sendMessage(message));
         return true;
     }

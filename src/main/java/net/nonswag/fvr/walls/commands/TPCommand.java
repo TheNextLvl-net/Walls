@@ -26,7 +26,7 @@ public class TPCommand implements CommandExecutor {
             return true;
         }
 
-        if (sender instanceof Player && !walls.getPlayer(((Player) sender).getUniqueId()).rank.vip()) {
+        if (sender instanceof Player && !walls.getPlayer(((Player) sender).getUniqueId()).getRank().vip()) {
             Notifier.error(sender, "Sorry only VIP and above can use this command.");
             return true;
         }

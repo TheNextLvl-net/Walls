@@ -47,7 +47,7 @@ public class GameStarter {
 
                 WallsPlayer tempWallsPlayer = walls.getPlayer(all);
 
-                switch (tempWallsPlayer.playerState) {
+                switch (tempWallsPlayer.getPlayerState()) {
                     case SPECTATORS:
                         int rand = GameStarter.getSmallestTeam(walls);
                         if (Walls.debugMode) walls.getLogger().info("creating random for team " + rand);
@@ -81,11 +81,11 @@ public class GameStarter {
 
                 }
 
-                if (walls.getPlayer(all).rank.pro()) {
+                if (walls.getPlayer(all).getRank().pro()) {
                     proPerks.givePlayerKit(p);
                     if (Walls.debugMode)
                         walls.getLogger().info("Gave PRO + stuff to player " + all.toString());
-                } else if (walls.getPlayer(all).rank.vip()) {
+                } else if (walls.getPlayer(all).getRank().vip()) {
                     vipPerks.givePlayerKit(p);
                     if (Walls.debugMode)
                         walls.getLogger().info("Gave VIP + stuff to player " + all.toString());
@@ -95,10 +95,10 @@ public class GameStarter {
             }
 
             for (UUID uuid : assignedPlayers.keySet()) {
-                WallsPlayer twp = walls.getPlayer(uuid);
-                twp.playerState = assignedPlayers.get(uuid);
-                players.put(uuid, twp);
-                walls.playerScoreBoard.addPlayerToTeam(uuid, twp.playerState);
+                WallsPlayer player = walls.getPlayer(uuid);
+                player.setPlayerState(assignedPlayers.get(uuid));
+                players.put(uuid, player);
+                walls.playerScoreBoard.addPlayerToTeam(uuid, player.getPlayerState());
             }
         }
 

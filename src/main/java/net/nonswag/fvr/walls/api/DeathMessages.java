@@ -66,7 +66,7 @@ public class DeathMessages {
         }
     }
 
-    public static void getDeathMessage(PlayerDeathEvent event, Walls myWalls) {
+    public static void getDeathMessage(PlayerDeathEvent event, Walls walls) {
         final EntityDamageEvent ev = event.getEntity().getLastDamageCause();
 
         if (ev == null) {
@@ -74,7 +74,7 @@ public class DeathMessages {
         }
 
         Player player = event.getEntity();
-        WallsPlayer deadPlayer = myWalls.getPlayer(player.getUniqueId());
+        WallsPlayer deadPlayer = walls.getPlayer(player.getUniqueId());
 
         DamageCause damageCause = player.getLastDamageCause().getCause();
         DeathCause deathCause = DeathCause.getByDamageCause(damageCause);
@@ -89,7 +89,7 @@ public class DeathMessages {
             case PVP:
                 killer = player.getKiller();
                 if (killer != null) {
-                    wallsKiller = myWalls.getPlayer(killer.getUniqueId());
+                    wallsKiller = walls.getPlayer(killer.getUniqueId());
                     StringBuilder wielding = new StringBuilder("Unknown");
                     ItemStack killedByItem = null;
                     if (killer.getItemInHand() != null) {
@@ -101,34 +101,34 @@ public class DeathMessages {
                             wielding.append(" ").append(itemName[i].substring(0, 1).concat(itemName[i].substring(1).toLowerCase()));
                         }
                     }
-                    message = DeathMessages.deathMessages.get("messages.pvp").replace("<killer>", Walls.teamChatColors[wallsKiller.playerState.ordinal()]
-                            + killer.getName()).replace("<wielding>", wielding.toString()).replace("<killerteam>", Walls.teamNames[wallsKiller.playerState.ordinal()]);
-                    message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.playerState.ordinal()]
-                            + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.playerState.ordinal()]);
+                    message = DeathMessages.deathMessages.get("messages.pvp").replace("<killer>", Walls.teamChatColors[wallsKiller.getPlayerState().ordinal()]
+                            + killer.getName()).replace("<wielding>", wielding.toString()).replace("<killerteam>", Walls.teamNames[wallsKiller.getPlayerState().ordinal()]);
+                    message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.getPlayerState().ordinal()]
+                            + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.getPlayerState().ordinal()]);
                     if (killedByItem != null && killedByItem.getType() != Material.AIR) {
-                        Hologram hologram = HolographicDisplaysAPI.get(myWalls).createHologram(player.getLocation().add(0, 2.2, 0));
+                        Hologram hologram = HolographicDisplaysAPI.get(walls).createHologram(player.getLocation().add(0, 2.2, 0));
                         hologram.getLines().appendItem(killedByItem);
-                        hologram.getLines().appendText(Walls.teamChatColors[deadPlayer.playerState.ordinal()] + player.getDisplayName());
+                        hologram.getLines().appendText(Walls.teamChatColors[deadPlayer.getPlayerState().ordinal()] + player.getDisplayName());
                         hologram.getLines().appendText(ChatColor.WHITE + " died here at the hand of ");
-                        hologram.getLines().appendText(Walls.teamChatColors[wallsKiller.playerState.ordinal()] + killer.getDisplayName());
+                        hologram.getLines().appendText(Walls.teamChatColors[wallsKiller.getPlayerState().ordinal()] + killer.getDisplayName());
                     }
                 } else {
                     if (ev instanceof EntityDamageByEntityEvent) {
                         Entity killerMob = ((EntityDamageByEntityEvent) ev).getDamager();
                         message = message.replace("<killer>", killerMob.getType().name().toLowerCase().replace('_', ' '));
                     }
-                    message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.playerState.ordinal()]
-                            + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.playerState.ordinal()]);
+                    message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.getPlayerState().ordinal()]
+                            + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.getPlayerState().ordinal()]);
                 }
                 break;
             case PROJECTILE:
                 if (player.getKiller() != null) {
                     killer = player.getKiller();
-                    wallsKiller = myWalls.getPlayer(killer.getUniqueId());
-                    message = message.replace("<killer>", Walls.teamChatColors[wallsKiller.playerState.ordinal()]
-                            + killer.getName()).replace("<killerteam>", Walls.teamNames[wallsKiller.playerState.ordinal()]);
-                    message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.playerState.ordinal()]
-                            + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.playerState.ordinal()]);
+                    wallsKiller = walls.getPlayer(killer.getUniqueId());
+                    message = message.replace("<killer>", Walls.teamChatColors[wallsKiller.getPlayerState().ordinal()]
+                            + killer.getName()).replace("<killerteam>", Walls.teamNames[wallsKiller.getPlayerState().ordinal()]);
+                    message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.getPlayerState().ordinal()]
+                            + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.getPlayerState().ordinal()]);
                     double distance = killer.getLocation().distance(event.getEntity().getLocation());
                     message = message.replace("<blocks>", String.valueOf((int) distance));
 
@@ -138,8 +138,8 @@ public class DeathMessages {
                         final ProjectileSource shooter = ((Projectile) killerMob).getShooter();
                         if (shooter instanceof Skeleton) {
                             message = DeathMessages.deathMessages.get("messages.skeleton");
-                            message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.playerState.ordinal()]
-                                    + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.playerState.ordinal()]);
+                            message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.getPlayerState().ordinal()]
+                                    + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.getPlayerState().ordinal()]);
                         }
                     }
                 }
@@ -164,14 +164,14 @@ public class DeathMessages {
                 message = null;
                 break;
         }
-        if (deadPlayer.playerState != null) {
-            message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.playerState.ordinal()]
-                    + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.playerState.ordinal()]);
-        } else message = deadPlayer.username + " died suspiciously! O_o";
+        if (deadPlayer.getPlayerState() != null) {
+            message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.getPlayerState().ordinal()]
+                    + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.getPlayerState().ordinal()]);
+        } else message = deadPlayer.getName() + " died suspiciously! O_o";
         Notifier.broadcast(ChatColor.translateAlternateColorCodes('&', message));
         if (wallsKiller != null) {
-            wallsKiller.kills++;
-            myWalls.getPlayers().put(killer.getUniqueId(), wallsKiller);
+            wallsKiller.setKills(wallsKiller.getKills() + 1);
+            walls.getPlayers().put(killer.getUniqueId(), wallsKiller);
         }
     }
 }
