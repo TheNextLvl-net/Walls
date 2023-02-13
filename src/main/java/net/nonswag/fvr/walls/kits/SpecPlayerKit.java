@@ -67,10 +67,10 @@ public class SpecPlayerKit {
         player.getInventory().clear();
         player.setFallDistance(0f);
         player.setFoodLevel(20);
-        player.teleport(Walls.gameSpawn);
-        ItemStack newbook = new ItemStack(Material.WRITTEN_BOOK);
-        newbook.setItemMeta(SpecPlayerKit.book);
-        player.getInventory().setItem(0, newbook);
+        player.teleport(walls.getGameSpawn());
+        ItemStack book = new ItemStack(Material.WRITTEN_BOOK);
+        book.setItemMeta(SpecPlayerKit.book);
+        player.getInventory().setItem(0, book);
         switch (walls.getGameState()) {
             case PREGAME:
                 ItemStack snowBall = new ItemStack(Material.SNOW_BALL);

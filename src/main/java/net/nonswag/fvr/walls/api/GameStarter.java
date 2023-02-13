@@ -34,72 +34,51 @@ public class GameStarter {
 
 
         for (UUID all : players.keySet()) {
-
-            Player p = Bukkit.getPlayer(all);
-            if (p != null) {
-
-                p.closeInventory();
-                p.getInventory().clear();
-
-                basicKit.givePlayerKit(p);
-
-                p.setFallDistance(0f);
-
-                WallsPlayer tempWallsPlayer = walls.getPlayer(all);
-
-                switch (tempWallsPlayer.getPlayerState()) {
-                    case SPECTATORS:
-                        int rand = GameStarter.getSmallestTeam(walls);
-                        if (Walls.debugMode) walls.getLogger().info("creating random for team " + rand);
-                        assignedPlayers.put(all, Team.values()[rand]);
-                        p.teleport(Walls.spawns.get(rand));
-                        Notifier.notify(p, "You have been assigned to " + Walls.teamNames[rand]);
-                        break;
-                    case RED:
-                        p.teleport(Walls.team1Spawn);
-                        walls.playerScoreBoard.addPlayerToTeam(all, Team.RED);
-
-                        break;
-                    case YELLOW:
-                        p.teleport(Walls.team2Spawn);
-                        walls.playerScoreBoard.addPlayerToTeam(all, Team.YELLOW);
-
-                        break;
-                    case GREEN:
-                        p.teleport(Walls.team3Spawn);
-                        walls.playerScoreBoard.addPlayerToTeam(all, Team.GREEN);
-
-                        break;
-                    case BLUE:
-                        p.teleport(Walls.team4Spawn);
-                        walls.playerScoreBoard.addPlayerToTeam(all, Team.BLUE);
-
-                        break;
-
-                    default:
-                        break;
-
-                }
-
-                if (walls.getPlayer(all).getRank().pro()) {
-                    proPerks.givePlayerKit(p);
-                    if (Walls.debugMode)
-                        walls.getLogger().info("Gave PRO + stuff to player " + all.toString());
-                } else if (walls.getPlayer(all).getRank().vip()) {
-                    vipPerks.givePlayerKit(p);
-                    if (Walls.debugMode)
-                        walls.getLogger().info("Gave VIP + stuff to player " + all.toString());
-                }
-
-                walls.playerScoreBoard.setScoreBoard(all);
+            Player player = Bukkit.getPlayer(all);
+            if (player == null) continue;
+            player.closeInventory();
+            player.getInventory().clear();
+            basicKit.givePlayerKit(player);
+            player.setFallDistance(0f);
+            WallsPlayer tempWallsPlayer = walls.getPlayer(all);
+            switch (tempWallsPlayer.getPlayerState()) {
+                case SPECTATORS:
+                    int rand = GameStarter.getSmallestTeam(walls);
+                    if (Walls.debugMode) walls.getLogger().info("creating random for team " + rand);
+                    assignedPlayers.put(all, Team.values()[rand]);
+                    player.teleport(walls.getSpawns().get(rand));
+                    Notifier.notify(player, "You have been assigned to " + Walls.teamNames[rand]);
+                    break;
+                case RED:
+                    player.teleport(walls.getTeam1Spawn());
+                    walls.getPlayerScoreBoard().addPlayerToTeam(all, Team.RED);
+                    break;
+                case YELLOW:
+                    player.teleport(walls.getTeam2Spawn());
+                    walls.getPlayerScoreBoard().addPlayerToTeam(all, Team.YELLOW);
+                    break;
+                case GREEN:
+                    player.teleport(walls.getTeam3Spawn());
+                    walls.getPlayerScoreBoard().addPlayerToTeam(all, Team.GREEN);
+                    break;
+                case BLUE:
+                    player.teleport(walls.getTeam4Spawn());
+                    walls.getPlayerScoreBoard().addPlayerToTeam(all, Team.BLUE);
+                    break;
+                default:
+                    break;
             }
+            if (walls.getPlayer(all).getRank().pro()) proPerks.givePlayerKit(player);
+            else if (walls.getPlayer(all).getRank().vip()) vipPerks.givePlayerKit(player);
+            walls.getPlayerScoreBoard().setScoreBoard(all);
+        }
 
-            for (UUID uuid : assignedPlayers.keySet()) {
-                WallsPlayer player = walls.getPlayer(uuid);
-                player.setPlayerState(assignedPlayers.get(uuid));
-                players.put(uuid, player);
-                walls.playerScoreBoard.addPlayerToTeam(uuid, player.getPlayerState());
-            }
+        for (UUID uuid : assignedPlayers.keySet()) {
+            WallsPlayer wallsPlayer = walls.getPlayer(uuid);
+            if (wallsPlayer == null) continue;
+            wallsPlayer.setPlayerState(assignedPlayers.get(uuid));
+            players.put(uuid, wallsPlayer);
+            walls.getPlayerScoreBoard().addPlayerToTeam(uuid, wallsPlayer.getPlayerState());
         }
 
         walls.setGameState(GameState.PEACETIME);
@@ -131,15 +110,13 @@ public class GameStarter {
             }
         }
         walls.clock.setClock(Walls.peaceTimeMins * 60, walls::dropWalls);
-        walls.playerScoreBoard.updateScoreboardScores();
+        walls.getPlayerScoreBoard().updateScoreboardScores();
     }
 
 
     private static int getSmallestTeam(Walls myWalls) {
-
         int smallestTeam = 100;
         int teamWithLowestNumberOfPlayers = 0;
-
         for (int i = 1; i < 5; i++) {
             if ((myWalls.getTeamSize(Team.values()[i]) + numberAddedToTeam[i]) < smallestTeam) {
                 teamWithLowestNumberOfPlayers = i;

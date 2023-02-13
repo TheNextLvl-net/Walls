@@ -1,5 +1,6 @@
 package net.nonswag.fvr.walls.commands;
 
+import lombok.RequiredArgsConstructor;
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.api.Notifier;
 import org.bukkit.Bukkit;
@@ -11,35 +12,37 @@ import org.bukkit.entity.Player;
 
 import java.util.logging.Level;
 
-public class WhisperReplyCommand implements CommandExecutor {
-
+@RequiredArgsConstructor
+public class MSGCommand implements CommandExecutor {
     private final Walls walls;
-
-    public WhisperReplyCommand(Walls walls) {
-        this.walls = walls;
-    }
 
     private final String whisperFormat = ChatColor.GOLD + "" + ChatColor.BOLD + "{" + ChatColor.RESET + "PM: " + ChatColor.GRAY + "<sender>" + ChatColor.RESET + "" + ChatColor.GOLD + "}" + ChatColor.RESET + " <message>";
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
-        if (Walls.shhhhh && !sender.isOp()) return true;
-        if (args.length < 1) return false;
-        else if (!walls.whispers.containsKey(((Player) sender).getUniqueId())) {
-            Notifier.error(sender, "Someone needs to whisper for you to be able to reply :)");
+        if (Walls.shhhhh && !sender.isOp()) {
+            Notifier.error(sender, "You can't chat right now");
             return true;
+        }
+        if (args.length < 2) {
+            Notifier.error(sender, "/" + commandLabel + " <player> <message>");
+            return false;
         } else {
-            Player p = Bukkit.getPlayer(walls.whispers.get(((Player) sender).getUniqueId()));
+            Player p = Bukkit.getPlayer(args[0]);
             if (p != null) {
                 final StringBuilder whisper = new StringBuilder();
-                for (String arg : args) whisper.append(arg).append(" ");
+                for (int x = 1; x < args.length; x++) {
+                    whisper.append(args[x]).append(" ");
+                }
                 whisper.setLength(whisper.length() - 1);
                 String messageToSend = this.whisperFormat.replace("<sender>", sender.getName()).replace("<message>", whisper);
                 p.sendMessage(messageToSend);
-                sender.sendMessage(" SENT!  " + messageToSend);
+                sender.sendMessage(" SENT to " + p.getName() + ": " + whisper);
                 walls.getLogger().log(Level.INFO, ChatColor.GRAY + sender.getName() + " whispers to " + p.getName() + " --> " + whisper);
                 walls.whispers.put(p.getUniqueId(), ((Player) sender).getUniqueId());
-            } else sender.sendMessage(ChatColor.RED + "Looks like they left the building - Player not found online :(");
+            } else {
+                sender.sendMessage(ChatColor.RED + "Player not found online :(");
+            }
             return true;
         }
     }

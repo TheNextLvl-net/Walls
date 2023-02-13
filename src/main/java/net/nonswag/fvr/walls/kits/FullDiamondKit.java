@@ -1,18 +1,15 @@
 package net.nonswag.fvr.walls.kits;
 
+import lombok.RequiredArgsConstructor;
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.api.Notifier;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+@RequiredArgsConstructor
 public class FullDiamondKit {
-
     private final Walls walls;
-
-    public FullDiamondKit(Walls walls) {
-        this.walls = walls;
-    }
 
     public void givePlayerKit(Player player) {
         switch (walls.getGameState()) {
@@ -38,6 +35,7 @@ public class FullDiamondKit {
                 player.getInventory().addItem(new ItemStack(Material.QUARTZ_BLOCK, 64, (short) 1));
                 player.getInventory().addItem(new ItemStack(Material.GOLDEN_APPLE, 10));
                 player.getInventory().addItem(new ItemStack(Material.ARROW, 64));
+                player.getInventory().addItem(new ItemStack(Material.INK_SACK, 64, (short) 4));
                 player.getInventory().setBoots(new ItemStack(Material.DIAMOND_BOOTS, 1));
                 player.getInventory().setChestplate(new ItemStack(Material.DIAMOND_CHESTPLATE, 1));
                 player.getInventory().setHelmet(new ItemStack(Material.DIAMOND_HELMET, 1));

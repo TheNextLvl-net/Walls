@@ -38,7 +38,7 @@ public class Clock extends Thread {
                         Bukkit.getScheduler().runTask(this.plugin, this.runner);
                         this.abort();
                     }
-                    this.plugin.playerScoreBoard.updateClock(seconds);
+                    this.plugin.getPlayerScoreBoard().updateClock(seconds);
                     break;
                 case PEACETIME:
                     this.seconds--;
@@ -55,11 +55,11 @@ public class Clock extends Thread {
                         Bukkit.getScheduler().runTask(this.plugin, this.runner);
                         this.abort();
                     }
-                    this.plugin.playerScoreBoard.updateClock(seconds);
+                    this.plugin.getPlayerScoreBoard().updateClock(seconds);
                     break;
                 case FIGHTING:
                     this.seconds++;
-                    this.plugin.playerScoreBoard.updateClock(seconds);
+                    this.plugin.getPlayerScoreBoard().updateClock(seconds);
                     break;
                 default:
                     break;

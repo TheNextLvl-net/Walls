@@ -1,23 +1,27 @@
-package net.nonswag.fvr.walls.api;
+package net.nonswag.fvr.walls.listeners;
 
+import lombok.RequiredArgsConstructor;
 import net.nonswag.fvr.walls.Walls;
-import net.nonswag.fvr.walls.Walls.WallsPlayer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.UUID;
 
+@RequiredArgsConstructor
+public class ChatListener implements Listener {
+    private final Walls walls;
 
-public class PlayerChatHandler {
-
-    public static void playerChat(AsyncPlayerChatEvent event, Walls walls) {
+    @EventHandler
+    public void onPlayerChat(AsyncPlayerChatEvent event) {
         if (Walls.shhhhh && (!event.getPlayer().isOp() && !walls.getPlayer(event.getPlayer().getUniqueId()).getRank().mgm()) && !Walls.teamCaptains.contains(event.getPlayer().getUniqueId())) {
             event.setCancelled(true);
         }
         if (event.isCancelled()) return;
-        WallsPlayer twp = walls.getPlayer(event.getPlayer().getUniqueId());
+        Walls.WallsPlayer twp = walls.getPlayer(event.getPlayer().getUniqueId());
         String rank = twp.getRank().display();
         String clan = "";
         if (twp.getClan() != null) {
@@ -48,4 +52,3 @@ public class PlayerChatHandler {
         }
     }
 }
-     

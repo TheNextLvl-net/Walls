@@ -11,11 +11,4 @@ public class ItemStackTools {
         item.setItemMeta(meta);
         return item;
     }
-
-    public static ItemStack changeItemName(ItemStack item, String name) {
-        final ItemMeta meta = item.getItemMeta();
-        meta.setDisplayName(name);
-        item.setItemMeta(meta);
-        return item;
-    }
 }

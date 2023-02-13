@@ -32,10 +32,10 @@ public class WallsCommand implements CommandExecutor {
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (args.length < 1) {
             if (sender instanceof Player) {
-                error(sender, "usage: /walls votestart | stats");
+                error(sender, "usage: /walls votestart");
             }
             if (sender.isOp()) {
-                error(sender, "usage: /walls dropwalls | rank | autostartplayers | peacetimemins | clanrename | clanbattle | captain | restricted | diamondonly | irononly | fixdb");
+                error(sender, "usage: /walls drop | rank | autostartplayers | peacetimemins | clanrename | clanbattle | captain | restricted | diamondonly | irononly | fixdb");
             }
         } else if (args[0].equalsIgnoreCase("diamondonly")) {
             if (sender.isOp()) broadcast("Set diamond only to " + (Walls.diamondONLY = !Walls.diamondONLY));
@@ -46,7 +46,6 @@ public class WallsCommand implements CommandExecutor {
         } else if (args[0].equalsIgnoreCase("stop")) stop(sender);
         else if (args[0].equalsIgnoreCase("fixdb")) fixdb(sender);
         else if (args[0].equalsIgnoreCase("votestart")) votestart(sender);
-        else if (args[0].equalsIgnoreCase("stats")) stats(sender);
         else if (args[0].equalsIgnoreCase("chat")) chatListener(sender);
         else if (args[0].equalsIgnoreCase("nostaffchat")) noStaffChat(sender);
         else if (args[0].equalsIgnoreCase("start")) startWalls(sender);
@@ -54,7 +53,7 @@ public class WallsCommand implements CommandExecutor {
         else if (args[0].equalsIgnoreCase("silence")) silenceComand(sender);
         else if (args[0].equalsIgnoreCase("debug")) switchDebug(sender);
         else if (args[0].equalsIgnoreCase("clanrename")) setClanName(sender, args);
-        else if (args[0].equalsIgnoreCase("dropwalls")) dropWalls(sender);
+        else if (args[0].equalsIgnoreCase("drop")) drop(sender);
         else if (args[0].equalsIgnoreCase("rank")) setRank(sender, args);
         else if (args[0].equalsIgnoreCase("autostartplayers")) setAutoStartPlayers(sender, args);
         else if (args[0].equalsIgnoreCase("peacetimemins")) setPeaceTimeMins(sender, args);
@@ -114,16 +113,6 @@ public class WallsCommand implements CommandExecutor {
                 Bukkit.getScheduler().runTaskLater(walls, () -> System.exit(0), 60);
             } else error(sender, "The game is not running!");
         } else error(sender, "You have no rights to do this");
-    }
-
-    private void stats(CommandSender sender) {
-        if (sender instanceof Player) {
-            WallsPlayer player = walls.getPlayer((Player) sender);
-            Notifier.notify(sender, "§7Kills: " + player.getStatsKills() + player.getKills());
-            Notifier.notify(sender, "§7Deaths: " + player.getStatsDeaths() + player.getDeaths());
-            Notifier.notify(sender, "§7KD: " + player.getKD());
-            Notifier.notify(sender, "§7Wins: " + player.getStatsWins());
-        } else error(sender, "This is a player command");
     }
 
     private void chatListener(CommandSender sender) {
@@ -188,8 +177,8 @@ public class WallsCommand implements CommandExecutor {
                 walls.getPlayers().put(player.getUniqueId(), wallsPlayer);
                 player.setAllowFlight(false);
                 player.getInventory().clear();
-                player.teleport(Walls.spawns.get(wallsPlayer.getPlayerState().ordinal()));
-                walls.playerScoreBoard.addPlayerToTeam(player.getUniqueId(), wallsPlayer.getPlayerState());
+                player.teleport(walls.getSpawns().get(wallsPlayer.getPlayerState().ordinal()));
+                walls.getPlayerScoreBoard().addPlayerToTeam(player.getUniqueId(), wallsPlayer.getPlayerState());
                 PlayerVisibility.hideAllSpecs(walls, player);
                 PlayerVisibility.makeInVisPlayerNowVisible(player);
                 player.setHealth(20);
@@ -239,11 +228,10 @@ public class WallsCommand implements CommandExecutor {
         } else error(sender, "You have no rights to do this");
     }
 
-    private void dropWalls(CommandSender sender) {
+    private void drop(CommandSender sender) {
         if (sender.isOp()) {
-            if (walls.getGameState() == Walls.GameState.PEACETIME) {
-                walls.dropWalls();
-            } else sender.sendMessage("§cNot in peacetime anymore");
+            if (walls.getGameState() == Walls.GameState.PEACETIME) walls.dropWalls();
+            else error(sender, "Not in peacetime anymore");
         } else error(sender, "You have no rights to do this");
     }
 
