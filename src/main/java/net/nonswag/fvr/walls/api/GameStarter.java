@@ -44,7 +44,6 @@ public class GameStarter {
             switch (tempWallsPlayer.getPlayerState()) {
                 case SPECTATORS:
                     int rand = GameStarter.getSmallestTeam(walls);
-                    if (Walls.debugMode) walls.getLogger().info("creating random for team " + rand);
                     assignedPlayers.put(all, Team.values()[rand]);
                     player.teleport(walls.getSpawns().get(rand));
                     Notifier.notify(player, "You have been assigned to " + Walls.teamNames[rand]);

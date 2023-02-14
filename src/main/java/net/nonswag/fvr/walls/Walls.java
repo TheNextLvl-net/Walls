@@ -173,9 +173,9 @@ public class Walls extends JavaPlugin implements Listener {
     private final List<Location> corners = new ArrayList<>();
 
     @Getter
-    private final SpecPlayerKit spectatorKit;
+    private SpecPlayerKit spectatorKit;
     @Getter
-    private final PlayerScoreBoard playerScoreBoard;
+    private PlayerScoreBoard playerScoreBoard;
 
     @Getter
     private final Map<Location, Team> boom = new HashMap<>();
@@ -221,7 +221,6 @@ public class Walls extends JavaPlugin implements Listener {
     private GameState gameState = GameState.PREGAME;
     @Getter
     private final Map<UUID, PlayerInventory> inventory = new HashMap<>();
-    public static boolean debugMode = false;
     public static boolean UHC = false;
     public static int peaceTimeMins = 15;
     public static int preGameAutoStartPlayers = 4;
@@ -252,13 +251,10 @@ public class Walls extends JavaPlugin implements Listener {
     public static final int buildHeight = 180;
     public static final int liquidBuildHeight = 170;
 
-    public Walls() {
-        spectatorKit = new SpecPlayerKit(this);
-        playerScoreBoard = new PlayerScoreBoard(this);
-    }
-
     @Override
     public void onEnable() {
+        spectatorKit = new SpecPlayerKit(this);
+        playerScoreBoard = new PlayerScoreBoard(this);
         Populator.selectBiomes().forEach((ordinal, biome) -> BIOMES.put(Team.values()[ordinal], biome));
         WorldEdit.getInstance().getConfiguration().navigationWand = -1;
 
@@ -347,6 +343,7 @@ public class Walls extends JavaPlugin implements Listener {
     }
 
     private void registerListeners() {
+        Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(new PingListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SignListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ChatListener(this), this);
@@ -961,7 +958,7 @@ public class Walls extends JavaPlugin implements Listener {
                 checkForContainerProtection(event);
                 checkForKitButtonPressed(event);
                 checkForCompassSwitch(event);
-
+                if (event.getItem() == null) return;
                 if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getItem().getType() == Material.FLINT_AND_STEEL) {
                     event.setCancelled(true);
                     Notifier.error(event.getPlayer(), "You can't use flint & steel while the walls are up!");
@@ -1665,19 +1662,11 @@ public class Walls extends JavaPlugin implements Listener {
                 if (!isSpectator(player)) fightingPlayers.add(player);
             }
             for (Player player : Bukkit.getOnlinePlayers()) {
-                if (fightingPlayers.size() > 0 && player != null) {
-                    try {
-                        processCompass(player, fightingPlayers);
-                    } catch (Exception e) {
-                        getLogger().info("Could not process compass so skipping it..");
-                    }
-                } else {
-                    if (debugMode) {
-                        getLogger().info("Processing compass - fightingPlayersSize = " + fightingPlayers.size());
-                        if (player == null) {
-                            getLogger().info("Processing compass - player = null");
-                        }
-                    }
+                if (fightingPlayers.size() == 0 || player == null) continue;
+                try {
+                    processCompass(player, fightingPlayers);
+                } catch (Exception e) {
+                    getLogger().info("Could not process compass so skipping it..");
                 }
             }
         }, 20L * 2, 20L * 5);
@@ -1687,7 +1676,6 @@ public class Walls extends JavaPlugin implements Listener {
     private void processCompass(Player player, List<Player> playerList) {
         Location target = null;
         if (this.assassinTargets.containsKey(player.getUniqueId())) {
-
             final Player targetPlayer = Bukkit.getPlayerExact(this.assassinTargets.get(player.getUniqueId()));
             if ((targetPlayer != null) && (this.sameTeam(player.getUniqueId(), player.getUniqueId()) && !this.isSpectator(targetPlayer))) {
                 target = targetPlayer.getLocation();
@@ -1698,11 +1686,8 @@ public class Walls extends JavaPlugin implements Listener {
             double closestdis = 0xFFFFFF;
 
             for (final Player potentialEnemy : playerList) {
-
                 if (!potentialEnemy.equals(player)) {
-
                     if (getPlayers().containsKey(potentialEnemy.getUniqueId())) {
-
                         if (this.getPlayer(player.getUniqueId()).compassPointsToEnemy) {
                             if (!this.isSpectator(potentialEnemy) && !this.sameTeam(player.getUniqueId(), potentialEnemy.getUniqueId())) {
                                 final Location temploc = potentialEnemy.getLocation();
@@ -1711,38 +1696,23 @@ public class Walls extends JavaPlugin implements Listener {
                                     closestdis = tempdis;
                                     closestloc = temploc;
                                 }
-
                             }
                         } else {
                             if (!this.isSpectator(potentialEnemy) && this.sameTeam(player.getUniqueId(), potentialEnemy.getUniqueId())) {
-
                                 final Location temploc = potentialEnemy.getLocation();
                                 final double tempdis = location.distanceSquared(temploc);
                                 if (tempdis < closestdis) {
                                     closestdis = tempdis;
                                     closestloc = temploc;
                                 }
-
                             }
                         }
                     }
                 }
             }
-
             target = closestloc;
         }
-        if (target != null) {
-            player.setCompassTarget(target);
-            if (debugMode) {
-                getLogger().info("Target found and set for player " + player.getName());
-            }
-        } else {
-            if (debugMode) {
-                getLogger().info("Target for compass was NULL ??!?");
-            }
-
-        }
-
+        if (target != null) player.setCompassTarget(target);
     }
 
     private void startHungerChecker() {

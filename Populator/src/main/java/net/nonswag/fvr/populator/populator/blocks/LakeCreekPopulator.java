@@ -11,7 +11,7 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 
-public class Populator_Lake_And_Creek extends BlockPopulator {
+public class LakeCreekPopulator extends BlockPopulator {
 
     private static final int MIN_BLOCK_COUNT = 300;
     private static final int MAX_BLOCK_COUNT = 850;
@@ -21,42 +21,24 @@ public class Populator_Lake_And_Creek extends BlockPopulator {
 
     @Override
     public void populate(World world, Random random, Chunk source) {
-        if (random.nextInt(100) >= LAKE_CHANCE) {
-            return;
-        }
-
+        if (random.nextInt(100) >= LAKE_CHANCE) return;
         int start_x = random.nextInt(16);
         int start_z = random.nextInt(16);
-
         Block lake_start = world.getHighestBlockAt(source.getX() * 16 + start_x, source.getZ() * 16 + start_z);
-
-        if (lake_start.getY() - 1 <= 60 || lake_start.getY() > 95) {
-            return;
-        }
-
+        if (lake_start.getY() - 1 <= 60 || lake_start.getY() > 95) return;
         Set<Block> lake_form = collectLakeLayout(world, lake_start, random);
         Set<Block>[] form_result = startLakeBuildProcess(world, lake_form);
-        if (form_result == null) {
-            return;
-        }
+        if (form_result == null) return;
         Block creek_start = buildLake(form_result[0], random);
         buildAirAndWaterfall(form_result[0], form_result[1], random);
-
-        if (creek_start == null || random.nextInt(100) >= CREEK_CHANCE) {
-            return;
-        }
-
+        if (creek_start == null || random.nextInt(100) >= CREEK_CHANCE) return;
         List<Block> creekblocks = collectCreekBlocks(world, creek_start, random);
-        if (creekblocks != null) {
-            buildCreek(world, creekblocks);
-        }
-        System.gc();
+        if (creekblocks != null) buildCreek(world, creekblocks);
     }
 
     private List<Block> collectCreekBlocks(World world, Block creekStart, Random random) {
         int check_radius = 7;
         Vector main_dir = null;
-
         int highest_diff = 0;
         for (int mod_x = -check_radius; mod_x <= check_radius; mod_x++) {
             for (int mod_z = -check_radius; mod_z <= check_radius; mod_z++) {
@@ -89,11 +71,9 @@ public class Populator_Lake_And_Creek extends BlockPopulator {
     private void buildCreek(World world, List<Block> center_blocks) {
         Set<Block> collected_blocks_air = new HashSet<>();
         Set<Block> collected_blocks_water = new HashSet<>();
-
         int radius = 3;
         int radius_squared = 9;
         int last_y = world.getMaxHeight();
-
         Set<Block> circle = new HashSet<>();
         for (Block center : center_blocks) {
             circle.clear();
@@ -107,22 +87,14 @@ public class Populator_Lake_And_Creek extends BlockPopulator {
             int lowest = world.getMaxHeight();
             int highest = 0;
             for (Block block : circle) {
-
                 int x = block.getX();
                 int z = block.getZ();
                 int compare = world.getHighestBlockYAt(x, z);
-
-                if (compare < lowest) {
-                    lowest = compare;
-                }
-                if (compare > highest) {
-                    highest = compare;
-                }
+                if (compare < lowest) lowest = compare;
+                if (compare > highest) highest = compare;
             }
-
-            if (lowest > last_y) {
-                lowest = last_y;
-            } else {
+            if (lowest > last_y) lowest = last_y;
+            else {
                 last_y = lowest;
                 if (last_y < 60) {
                     last_y = 60;
@@ -136,8 +108,6 @@ public class Populator_Lake_And_Creek extends BlockPopulator {
                 }
             }
         }
-
-        //actually build it
         for (Block toWater : collected_blocks_water) {
             toWater.setType(Material.WATER);
         }
@@ -334,11 +304,7 @@ public class Populator_Lake_And_Creek extends BlockPopulator {
     }
 
     private boolean sliceHasBorder(Set<Block> slice) {
-        for (Block block : slice) {
-            if (!hasNeighbors(block)) {
-                return false;
-            }
-        }
+        for (Block block : slice) if (!hasNeighbors(block)) return false;
         return true;
     }
 
@@ -351,9 +317,7 @@ public class Populator_Lake_And_Creek extends BlockPopulator {
         for (BlockFace f : faces) {
             Block r = block.getRelative(f);
             if (!r.isEmpty() && !r.getRelative(BlockFace.UP).isEmpty()) {
-                if (r.getType().equals(Material.DIRT) || r.getType().equals(Material.STONE)) {
-                    return true;
-                }
+                if (r.getType().equals(Material.DIRT) || r.getType().equals(Material.STONE)) return true;
             }
         }
         return false;

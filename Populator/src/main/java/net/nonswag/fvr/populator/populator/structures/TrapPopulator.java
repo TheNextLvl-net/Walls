@@ -1,65 +1,49 @@
 package net.nonswag.fvr.populator.populator.structures;
 
+import lombok.RequiredArgsConstructor;
 import net.nonswag.fvr.populator.Utils;
 import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.schematic.SchematicLoader;
-import org.bukkit.*;
+import org.bukkit.Chunk;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.generator.BlockPopulator;
-import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 import java.util.Random;
 
+@RequiredArgsConstructor
 public class TrapPopulator extends BlockPopulator {
-
-    public JavaPlugin walls;
-
-    public int chance = 27;
-
-    public WorldFiller filler;
-
-    public TrapPopulator(WorldFiller filler) {
-        this.walls = (JavaPlugin) Bukkit.getPluginManager().getPlugin("WallsPopulator");
-        this.filler = filler;
-    }
+    private final WorldFiller filler;
+    private final SchematicLoader loader = new SchematicLoader();
+    private final List<String> options = loader.getSchematics("trap");
 
     @Override
     public void populate(World world, Random rand, Chunk chunk) {
-        if (rand.nextInt(100) < chance) {
-            return;
-        }
-        if (!contains(chunk)) {
-            return;
-        }
-
+        if (!contains(chunk)) return;
+        if (rand.nextInt(100) < 27) return;
         int x = 6 + rand.nextInt(4);
         int z = 6 + rand.nextInt(4);
         int depth = 20 + rand.nextInt(30);
         Block highest = Utils.getHighestBlock(chunk, x, z);
-        if (highest.getY() > 40) {
-            // prevent crazy pasting
-            if (highest.getY() > filler.groundLevel) {
-                highest = chunk.getBlock(x, filler.groundLevel - 3, z);
-            }
-
-            Block start = highest.getRelative(0, -depth, 0);
-            if (start.getType() != Material.AIR && start.getType() != Material.BEDROCK) {
-                paste(start.getLocation(), rand);
-            }
+        if (highest.getY() <= 40) return;
+        if (highest.getY() > filler.groundLevel) {
+            highest = chunk.getBlock(x, filler.groundLevel - 3, z);
+        }
+        Block start = highest.getRelative(0, -depth, 0);
+        if (start.getType() != Material.AIR && start.getType() != Material.BEDROCK) {
+            paste(start.getLocation(), rand);
         }
     }
 
     public void paste(Location loc, Random rand) {
-        SchematicLoader loader = new SchematicLoader(walls);
-        // choose a random schematic
-        List<String> options = loader.getSchematics("trap");
         if (options.isEmpty()) return;
         String chosen = options.get(rand.nextInt(options.size()));
         loader.paste(chosen, loc);
     }
 
-    // stricter conditions
     public boolean contains(Chunk chunk) {
         if (filler.contains(chunk.getX() * 16, chunk.getZ() * 16)) {
             if (filler.contains(chunk.getX() * 16 + 32, chunk.getZ() * 16 + 32)) {

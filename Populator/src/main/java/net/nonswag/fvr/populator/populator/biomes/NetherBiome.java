@@ -2,7 +2,7 @@ package net.nonswag.fvr.populator.populator.biomes;
 
 import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
-import net.nonswag.fvr.populator.populator.structures.LapisRing;
+import net.nonswag.fvr.populator.populator.structures.LapisRingPopulator;
 import net.nonswag.fvr.populator.populator.structures.NetherHutPopulator;
 import net.nonswag.fvr.populator.populator.structures.NetherPopulator;
 import net.nonswag.fvr.populator.populator.structures.NetherTreePopulator;
@@ -26,7 +26,7 @@ public class NetherBiome extends WorldFiller {
 
         BlockPopulator treepop = new NetherTreePopulator(NetherTreePopulator.Type.SAVANNA);
         BlockPopulator netherBrick = new NetherPopulator();
-        BlockPopulator ring = new LapisRing();
+        BlockPopulator ring = new LapisRingPopulator();
         BlockPopulator hut = new NetherHutPopulator();
 
         

@@ -1,47 +1,28 @@
 package net.nonswag.fvr.populator.populator.structures;
 
-import java.util.Random;
-
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import net.nonswag.fvr.populator.Container;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.generator.BlockPopulator;
 
-import net.nonswag.fvr.populator.Container;
-/**
- * Populates the world with ores.
- * 
- * @author Nightgunner5
- * @author Markus Persson
- */
-public class OrePopulator extends BlockPopulator {
-    /**
-     * @see org.bukkit.generator.BlockPopulator#populate(org.bukkit.World, Random, org.bukkit.Chunk)
-     */
-    public Container filler;
-    boolean wasteland;
+import java.util.Random;
 
-    public OrePopulator(Container filler) {
-        this(filler, false);
-    }
-    
-    public OrePopulator(Container filler, boolean wasteland) {
-        this.filler = filler;
-        this.wasteland = wasteland;
-    }
+@AllArgsConstructor
+@RequiredArgsConstructor
+public class OrePopulator extends BlockPopulator {
+    private final Container filler;
+    private boolean wasteland;
 
     public void populate(World world, Random random, Chunk source) {
-
         int[] iterations = new int[] { 20, 20, 30, 45, 4, 16, 2, 3, 10 };
-        if(wasteland)
-            iterations[3] = 30;
-        //int[] amount = new int[] { 32, 32, 31, 16, 8, 8, 7, 7, 6 };
+        if (wasteland) iterations[3] = 30;
         int[] amount = new int[] { 32, 16, 8, 7, 8, 6, 2, 7, 6 };
         Material[] type = new Material[] { Material.DIRT, Material.GRAVEL, Material.COAL_ORE, Material.IRON_ORE, Material.REDSTONE_ORE, Material.GOLD_ORE, Material.DIAMOND_ORE, Material.LAPIS_ORE, Material.DIRT };
-
         int[] maxHeight = new int[] { 256, 128, 128, 64, 64, 48, 32, 32, 16 };
-
         for (int i = 0; i < type.length; i++) {
             for (int j = 0; j < iterations[i]; j++) {
                 internal(world, random, source.getX() * 16 + random.nextInt(16), random.nextInt(maxHeight[i]), source.getZ() * 16 + random.nextInt(16), amount[i], type[i]);

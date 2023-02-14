@@ -10,36 +10,24 @@ import org.bukkit.util.BlockVector;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
-/**
- * BlockPopulator that generates lava lakes.
- * 
- * @author codename_B
- */
-public class Populator_Lava_Lakes extends BlockPopulator {
-    /**
-     * @see org.bukkit.generator.BlockPopulator#populate(org.bukkit.World, Random, org.bukkit.Chunk)
-     */
+public class LavaLakePopulator extends BlockPopulator {
+
     @Override
     public void populate(World world, Random random, Chunk source) {
-        if (!(random.nextInt(100) < 5)) {
-            return;
-        }
+        if (!(random.nextInt(100) < 5)) return;
         ChunkSnapshot snapshot = source.getChunkSnapshot();
-
         int rx16 = random.nextInt(16);
         int rx = (source.getX() << 4) + rx16;
         int rz16 = random.nextInt(16);
         int rz = (source.getZ() << 4) + rz16;
-        if (snapshot.getHighestBlockYAt(rx16, rz16) < 4)
-            return;
+        if (snapshot.getHighestBlockYAt(rx16, rz16) < 4) return;
         int ry = random.nextInt(40) + 20;
         int radius = 2 + random.nextInt(4);
-
         Material solidMaterial = Material.STATIONARY_LAVA;
-
-        ArrayList<Block> lakeBlocks = new ArrayList<>();
+        List<Block> lakeBlocks = new ArrayList<>();
         for (int i = -1; i < 4; i++) {
             Vector center = new BlockVector(rx, ry - i, rz);
             for (int x = -radius; x <= radius; x++) {
@@ -51,15 +39,10 @@ public class Populator_Lava_Lakes extends BlockPopulator {
                 }
             }
         }
-
         for (Block block : lakeBlocks) {
-            // Ensure it's not air or liquid already
             if (!block.isEmpty() && !block.isLiquid()) {
-                if (block.getY() >= ry) {
-                    block.setType(Material.AIR);
-                } else {
-                    block.setType(solidMaterial);
-                }
+                if (block.getY() >= ry) block.setType(Material.AIR);
+                else block.setType(solidMaterial);
             }
         }
     }

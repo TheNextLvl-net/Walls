@@ -31,9 +31,7 @@ public class WallsCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (args.length < 1) {
-            if (sender instanceof Player) {
-                error(sender, "usage: /walls votestart");
-            }
+            if (sender instanceof Player) error(sender, "usage: /walls votestart");
             if (sender.isOp()) {
                 error(sender, "usage: /walls drop | rank | autostartplayers | peacetimemins | clanrename | clanbattle | captain | restricted | diamondonly | irononly | fixdb");
             }
@@ -51,7 +49,6 @@ public class WallsCommand implements CommandExecutor {
         else if (args[0].equalsIgnoreCase("start")) startWalls(sender);
         else if (args[0].equalsIgnoreCase("addplayer")) addPlayer(sender, args);
         else if (args[0].equalsIgnoreCase("silence")) silenceComand(sender);
-        else if (args[0].equalsIgnoreCase("debug")) switchDebug(sender);
         else if (args[0].equalsIgnoreCase("clanrename")) setClanName(sender, args);
         else if (args[0].equalsIgnoreCase("drop")) drop(sender);
         else if (args[0].equalsIgnoreCase("rank")) setRank(sender, args);
@@ -219,12 +216,6 @@ public class WallsCommand implements CommandExecutor {
         if (sender.isOp() || (sender instanceof Player && walls.getPlayer(((Player) sender).getUniqueId()).getRank().mgm())) {
             if (Walls.shhhhh = !Walls.shhhhh) broadcast("§cEVERYONE JUST GOT SHHHHH'D!!");
             else broadcast("§aYou are Free. To speak. (ish)");
-        } else error(sender, "You have no rights to do this");
-    }
-
-    private void switchDebug(CommandSender sender) {
-        if (sender.isOp()) {
-            sender.sendMessage("Done. debug set to " + (Walls.debugMode = !Walls.debugMode));
         } else error(sender, "You have no rights to do this");
     }
 

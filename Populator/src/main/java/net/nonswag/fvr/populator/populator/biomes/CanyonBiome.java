@@ -2,16 +2,15 @@ package net.nonswag.fvr.populator.populator.biomes;
 
 import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
-import net.nonswag.fvr.populator.populator.blocks.Populator_Lake_And_Creek;
+import net.nonswag.fvr.populator.populator.blocks.LakeCreekPopulator;
 import net.nonswag.fvr.populator.populator.structures.FlowerPopulator;
-import net.nonswag.fvr.populator.populator.structures.GravelStack;
+import net.nonswag.fvr.populator.populator.structures.GravelStackPopulator;
 import net.nonswag.fvr.populator.populator.structures.TreePopulator;
 import net.nonswag.fvr.populator.populator.structures.WildGrassPopulator;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
-import org.bukkit.generator.BlockPopulator;
 import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
 
@@ -24,24 +23,19 @@ public class CanyonBiome extends WorldFiller {
 
     public CanyonBiome(World world, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         super(world, Biome.SMALL_MOUNTAINS, minX, minZ, maxX, maxZ, startY, groundLevel);
-        BlockPopulator treepop = new TreePopulator(TreePopulator.Type.SEASONAL_FOREST);
-        BlockPopulator wildgrass = new WildGrassPopulator((byte) 1);
-        BlockPopulator flowers = new FlowerPopulator();
-        BlockPopulator gravel = new GravelStack();
-        BlockPopulator lake = new Populator_Lake_And_Creek();
-        this.addPopulator(treepop);
-        this.addPopulator(wildgrass);
-        this.addPopulator(flowers);
-        this.addPopulator(gravel);
-        this.addPopulator(lake);
+        addPopulator(new TreePopulator(TreePopulator.Type.SEASONAL_FOREST));
+        addPopulator(new WildGrassPopulator((byte) 1));
+        addPopulator(new FlowerPopulator());
+        addPopulator(new GravelStackPopulator());
+        addPopulator(new LakeCreekPopulator());
     }
 
     @Override
     public void generate() {
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(Populator.RANDOM, 8);
-        PerlinOctaveGenerator gg = new PerlinOctaveGenerator(Populator.RANDOM, 8);
-        g.setScale(1 / 48d);
-        gg.setScale(1 / 24d);
+        SimplexOctaveGenerator simplex = new SimplexOctaveGenerator(Populator.RANDOM, 8);
+        PerlinOctaveGenerator perlin = new PerlinOctaveGenerator(Populator.RANDOM, 8);
+        simplex.setScale(1 / 48d);
+        perlin.setScale(1 / 24d);
         for (int x = minX; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 double abs = 10.0 + (Math.abs(centerX - x) + Math.abs(centerZ - z)) / 2d;
@@ -49,8 +43,8 @@ public class CanyonBiome extends WorldFiller {
                 else if (abs < 30) abs = 20;
                 else abs -= 10;
                 if (abs < 5) abs = 5;
-                double n1 = g.noise(x, z, 0.45D, 0.7D) * 3.3D;
-                double n2 = gg.noise(x, z, 0.75D, 0.6D) * 6.5D;
+                double n1 = simplex.noise(x, z, 0.45D, 0.7D) * 3.3D;
+                double n2 = perlin.noise(x, z, 0.75D, 0.6D) * 6.5D;
                 double noise = (Math.abs(n1 - n2) * groundLevel / 4);
                 int highest = (int) (groundLevel / 2 + noise);
                 for (int i = 0; i < abs; i++) highest = (highest * 9 + groundLevel) / 10;

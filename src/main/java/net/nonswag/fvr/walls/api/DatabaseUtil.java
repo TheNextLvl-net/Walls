@@ -173,18 +173,13 @@ public class DatabaseUtil {
         try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `guilds` WHERE `plain` = ?", ClanCommand.stripAllClanCharacters(newClanName))) {
             if (resultSet == null) return false;
             if (resultSet.first() && !ClanCommand.stripAllClanCharacters(oldClanName).equalsIgnoreCase(newClanName)) {
-                Bukkit.getLogger().info("StaffRenameClan: found same name clan - Cannot override.");
                 return false;
             }
             try (ResultSet set = Database.getConnection().executeQuery("SELECT * FROM `guilds` WHERE `plain` = ?", ClanCommand.stripAllClanCharacters(oldClanName))) {
                 if (set == null) return false;
-                if (!set.first()) {
-                    Bukkit.getLogger().info("StaffRenameClan: could not find this clan in the guilds. ");
-                    return false;
-                }
+                if (!set.first()) return false;
                 String oldFancyName = set.getString("name");
                 Database.getConnection().executeUpdate("UPDATE `guilds` SET `name` = ?, `plain` = ? where `plain` = ?", newClanName, ClanCommand.stripAllClanCharacters(newClanName), ClanCommand.stripAllClanCharacters(oldClanName));
-                if (Walls.debugMode) Bukkit.getLogger().info("Staff Rename Clan - old Name - " + oldFancyName);
                 if (oldFancyName != null) {
                     Database.getConnection().executeUpdate("UPDATE `accounts` SET  `guild` = ? where `guild` = ?", newClanName, oldFancyName);
                 }

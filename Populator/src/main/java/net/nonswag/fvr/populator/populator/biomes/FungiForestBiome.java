@@ -2,78 +2,55 @@ package net.nonswag.fvr.populator.populator.biomes;
 
 import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
-import net.nonswag.fvr.populator.populator.blocks.Populator_Bush;
-import net.nonswag.fvr.populator.populator.blocks.Populator_Water_Lily;
+import net.nonswag.fvr.populator.populator.blocks.BushPopulator;
+import net.nonswag.fvr.populator.populator.blocks.WaterLilyPopulator;
 import net.nonswag.fvr.populator.populator.structures.*;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
 import org.bukkit.entity.MushroomCow;
-import org.bukkit.generator.BlockPopulator;
 import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
 
 public class FungiForestBiome extends WorldFiller {
     public FungiForestBiome(World world, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         super(world, Biome.SWAMPLAND, minX, minZ, maxX, maxZ, startY, groundLevel);
-
-        BlockPopulator tree1 = new FungiTreePopulator();
-        BlockPopulator mushroom = new MushroomPopulator();
-        BlockPopulator bush = new Populator_Bush(5);
-        BlockPopulator hugeMushroom = new HugeMushroomPopulator();
-        BlockPopulator shallowLake = new ShallowLakePopulator(this);
-        BlockPopulator lily = new Populator_Water_Lily();
-        mobs.mobs.add(MushroomCow.class);
-
-        BlockPopulator grass1 = new WildGrassPopulator((byte) 1);
-        BlockPopulator grass2 = new WildGrassPopulator((byte) 2);
-
-        this.addPopulator(shallowLake, true);
-        this.addPopulator(lily);
-        this.addPopulator(mushroom);
-        this.addPopulator(hugeMushroom);
-        this.addPopulator(bush);
-        this.addPopulator(bush);
-        this.addPopulator(tree1);
-        this.addPopulator(tree1);
-        this.addPopulator(grass1);
-        this.addPopulator(grass1);
-        this.addPopulator(grass1);
-        this.addPopulator(grass1);
-        this.addPopulator(grass2);
+        getMobPopulator().getMobs().add(MushroomCow.class);
+        this.addPopulator(new ShallowLakePopulator(this), true);
+        this.addPopulator(new WaterLilyPopulator());
+        this.addPopulator(new MushroomPopulator());
+        this.addPopulator(new HugeMushroomPopulator());
+        this.addPopulator(new BushPopulator(5));
+        this.addPopulator(new FungiTreePopulator());
+        this.addPopulator(new WildGrassPopulator((byte) 1));
+        this.addPopulator(new WildGrassPopulator((byte) 2));
     }
 
     @Override
     public void generate() {
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(Populator.RANDOM, 8);
-        PerlinOctaveGenerator g2 = new PerlinOctaveGenerator(Populator.RANDOM, 8);
-        g.setScale(1 / 24d);
-        g2.setScale(1 / 24d);
+        SimplexOctaveGenerator simplex = new SimplexOctaveGenerator(Populator.RANDOM, 8);
+        PerlinOctaveGenerator perlin = new PerlinOctaveGenerator(Populator.RANDOM, 8);
+        simplex.setScale(1 / 24d);
+        perlin.setScale(1 / 24d);
         for (int x = minX; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 double abs = (Math.abs(centerX - x) + Math.abs(centerZ - z)) / 2d;
-                if (abs < 20)
-                    abs = 0;
-                else
-                    abs -= 20;
-
-                double noise = g.noise(x, z, 0.35D, 0.65D) * 2D;
-
+                if (abs < 20) abs = 0;
+                else abs -= 20;
+                double noise = simplex.noise(x, z, 0.35D, 0.65D) * 2D;
                 int highest = (int) (groundLevel + noise);
                 for (int i = 0; i < abs; i++) {
                     highest = (highest * 9 + groundLevel) / 10;
                 }
-
                 for (int y = startY; y < highest - 3 && y < world.getMaxHeight(); y++) {
                     world.getBlockAt(x, y, z).setType(Material.STONE);
                 }
                 for (int y = highest - 3; y < highest && y < world.getMaxHeight(); y++) {
                     world.getBlockAt(x, y, z).setType(Material.DIRT);
                 }
-
                 Block b = world.getBlockAt(x, highest, z);
-                if (g2.noise(x, z, 0.5D, 0.5D) > .5) b.setType(Material.MYCEL);
+                if (perlin.noise(x, z, 0.5D, 0.5D) > .5) b.setType(Material.MYCEL);
                 else b.setType(Material.GRASS);
             }
         }

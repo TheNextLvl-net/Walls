@@ -7,38 +7,29 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
-import org.bukkit.generator.BlockPopulator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
 
 public class DesertBiome extends WorldFiller {
 
     public DesertBiome(World world, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         super(world, Biome.DESERT, minX, minZ, maxX, maxZ, startY, groundLevel);
-
-        OasisPopulator oasis = new OasisPopulator(this);
-        BlockPopulator treepop = new TreePopulator(TreePopulator.Type.SAVANNA);
-        BlockPopulator wildgrass = new WildGrassPopulator((byte) 0);
-        BlockPopulator flowers = new FlowerPopulator();
-        BlockPopulator gravel = new GravelStack();
-        BlockPopulator desert = new DesertPopulator();
-
-        this.addPopulator(treepop);
-        this.addPopulator(wildgrass);
-        this.addPopulator(flowers);
-        this.addPopulator(gravel);
-        this.addPopulator(desert);
-        this.addPopulator(oasis);
+        addPopulator(new TreePopulator(TreePopulator.Type.SAVANNA));
+        addPopulator(new WildGrassPopulator((byte) 0));
+        addPopulator(new FlowerPopulator());
+        addPopulator(new GravelStackPopulator());
+        addPopulator(new DesertPopulator());
+        addPopulator(new OasisPopulator(this));
     }
 
     @Override
     public void generate() {
-        SimplexOctaveGenerator g = new SimplexOctaveGenerator(Populator.RANDOM, 8);
-        g.setScale(1 / 48d);
+        SimplexOctaveGenerator simplex = new SimplexOctaveGenerator(Populator.RANDOM, 8);
+        simplex.setScale(1 / 48d);
         for (int x = minX; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 double abs = (Math.abs(centerX - x) + Math.abs(centerZ - z)) / 2d;
                 abs = abs < 20 ? 0 : abs - 20;
-                double noise = g.noise(x, z, 0.35D, 0.65D) * 4.5D;
+                double noise = simplex.noise(x, z, 0.35D, 0.65D) * 4.5D;
                 int highest = (int) (groundLevel + noise);
                 for (int i = 0; i < abs; i++) {
                     highest = (highest * 9 + groundLevel) / 10;

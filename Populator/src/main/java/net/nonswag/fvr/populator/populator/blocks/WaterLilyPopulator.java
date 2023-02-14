@@ -8,7 +8,7 @@ import org.bukkit.generator.BlockPopulator;
 
 import java.util.Random;
 
-public class Populator_Water_Lily extends BlockPopulator {
+public class WaterLilyPopulator extends BlockPopulator {
 
     @Override
     public void populate(World w, Random rnd, Chunk c) {

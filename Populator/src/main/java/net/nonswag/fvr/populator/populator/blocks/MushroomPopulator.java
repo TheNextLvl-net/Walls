@@ -9,29 +9,24 @@ import org.bukkit.generator.BlockPopulator;
 
 import java.util.Random;
 
-public class Populator_Mushrooms extends BlockPopulator {
+public class MushroomPopulator extends BlockPopulator {
 
     @Override
     public void populate(World world, Random random, Chunk source) {
         int chance = random.nextInt(100);
         if (chance < 10) {
             int type = random.nextInt(100);
-            Material mushroom;
-            if (type < 33) {
-                mushroom = Material.BROWN_MUSHROOM;
-            } else {
-                mushroom = Material.BROWN_MUSHROOM;
-            }
-            int mushroomcount = random.nextInt(3) + 2;
+            Material mushroom = type < 33 ? Material.BROWN_MUSHROOM : Material.RED_MUSHROOM;
+            int mushrooms = random.nextInt(3) + 2;
             int placed = 0;
-            for (int t = 0; t <= mushroomcount; t++) {
+            for (int t = 0; t <= mushrooms; t++) {
                 for (int flower_x = 0; flower_x < 16; flower_x++) {
                     for (int flower_z = 0; flower_z < 16; flower_z++) {
                         Block handle = world.getBlockAt(flower_x + source.getX() * 16, getHighestEmptyBlockYAtIgnoreTreesAndFoliage(world, flower_x + source.getX() * 16, flower_z + source.getZ() * 16), flower_z + source.getZ() * 16);
                         if (handle.getRelative(BlockFace.DOWN).getType().equals(Material.GRASS) && isRelativeTo(handle) && handle.isEmpty()) {
                             handle.setType(mushroom);
                             placed++;
-                            if (placed >= mushroomcount) {
+                            if (placed >= mushrooms) {
                                 return;
                             }
                         }

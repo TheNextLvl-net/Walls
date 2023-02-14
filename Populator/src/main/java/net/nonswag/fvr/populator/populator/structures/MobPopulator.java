@@ -1,7 +1,8 @@
 package net.nonswag.fvr.populator.populator.structures;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.nonswag.fvr.populator.Container;
-import net.nonswag.fvr.populator.Utils;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -12,39 +13,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+@Getter
+@RequiredArgsConstructor
 public class MobPopulator extends BlockPopulator {
+    private final List<Class<? extends LivingEntity>> mobs = new ArrayList<>();
+    private final Container filler;
 
-    public List<Class<? extends LivingEntity>> mobs = new ArrayList<>();
-    public Container filler;
-
-    public MobPopulator(Container filler) {
-        this.filler = filler;
-        mobs.add(Chicken.class);
-        mobs.add(Chicken.class);
+    {
         mobs.add(Chicken.class);
         mobs.add(Cow.class);
-        mobs.add(Cow.class);
         mobs.add(Pig.class);
-        mobs.add(Pig.class);
-        mobs.add(Pig.class);
-        mobs.add(Sheep.class);
         mobs.add(Sheep.class);
     }
 
     @Override
     public void populate(World world, Random random, Chunk chunk) {
-        int number = 1;
-        for (int i = 0; i < number; i++) {
-            int x = random.nextInt(16);
-            int z = random.nextInt(16);
-
-            Location loc = Utils.getHighestBlock(chunk, x, z).getLocation();
-            loc.setY(loc.getY() + 2);
-
-            if (filler.contains(loc.getBlockX(), loc.getBlockZ())) {
-                world.spawn(loc, mobs.get(random.nextInt(mobs.size())));
-            }
-
+        if (random.nextInt(100) > 10) return;
+        for (int i = 0; i < random.nextInt(3); i++) {
+            int x = chunk.getX() * 16 + random.nextInt(16);
+            int z = chunk.getZ() * 16 + random.nextInt(16);
+            Location location = chunk.getWorld().getHighestBlockAt(x, z).getLocation();
+            if (!filler.contains(location.getBlockX(), location.getBlockZ())) return;
+            world.spawn(location.clone().add(0, 1, 0), mobs.get(random.nextInt(mobs.size())));
         }
     }
 }

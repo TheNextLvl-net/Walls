@@ -1,5 +1,7 @@
 package net.nonswag.fvr.populator;
 
+import lombok.Getter;
+import net.nonswag.fvr.populator.populator.biomes.WastelandBiome;
 import net.nonswag.fvr.populator.populator.structures.*;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
@@ -9,7 +11,6 @@ import org.bukkit.generator.BlockPopulator;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
 
 public abstract class WorldFiller implements Container {
 
@@ -27,7 +28,8 @@ public abstract class WorldFiller implements Container {
 
     private final List<BlockPopulator> populators = new ArrayList<>();
 
-    protected MobPopulator mobs;
+    @Getter
+    private final MobPopulator mobPopulator = new MobPopulator(this);
 
     public WorldFiller(World world, Biome biome, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         this.world = world;
@@ -42,32 +44,24 @@ public abstract class WorldFiller implements Container {
         this.centerX = (minX + maxX) / 2;
         this.centerZ = (minZ + maxZ) / 2;
 
-        addPopulator(new OrePopulator(this));
+        addPopulator(new OrePopulator(this, getClass().equals(WastelandBiome.class)));
         addPopulator(new CavePopulator(this));
         addPopulator(new MineShaftPopulator(this));
         addPopulator(new DungeonPopulator());
         addPopulator(new TrapPopulator(this));
-        mobs = new MobPopulator(this);
-        addPopulator(mobs);
+        addPopulator(getMobPopulator());
     }
 
     public boolean contains(int x, int z) {
-        return x >= minX && x < maxX + 1 && z >= minZ && z < maxZ + 1;
+        return x >= minX && x <= maxX && z >= minZ && z <= maxZ;
     }
 
     public void addPopulator(BlockPopulator pop) {
         addPopulator(pop, false);
     }
 
-    public void removePopulator(Class<? extends BlockPopulator> populatorClass) {
-        Stack<BlockPopulator> toRemove = new Stack<>();
-        for (BlockPopulator populator : populators) {
-            if (populator.getClass().equals(populatorClass)) toRemove.push(populator);
-        }
-        populators.removeAll(toRemove);
-    }
-
     public void addPopulator(BlockPopulator pop, boolean front) {
+        if (populators.contains(pop)) new Exception().printStackTrace();
         if (front) populators.add(0, pop);
         else populators.add(pop);
     }
