@@ -30,7 +30,7 @@ public class ClanChatCommand implements CommandExecutor {
             if (player == null) continue;
             Walls.WallsPlayer anotherWP = walls.getPlayer(uuid);
             if ((anotherWP.getClan() != null && anotherWP.getClan().equals(wallsPlayer.getClan())) || (player.isOp() && walls.staffListSnooper.contains(uuid))) {
-                player.sendMessage(Walls.CLANCHAT_PREFIX.replace("??", ChatColor.translateAlternateColorCodes('&', wallsPlayer.getClan())) + Walls.teamChatColors[wallsPlayer.getPlayerState().ordinal()] + sender.getName() + ChatColor.WHITE + ": " + message);
+                player.sendMessage(Walls.CLANCHAT_PREFIX.replace("??", ChatColor.translateAlternateColorCodes('&', wallsPlayer.getClan())) + Walls.teamChatColors[wallsPlayer.getTeam().ordinal()] + sender.getName() + ChatColor.WHITE + ": " + message);
             }
         }
         return true;

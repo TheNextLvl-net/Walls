@@ -123,13 +123,14 @@ public class WorldListener implements Listener {
                     return;
                 }
                 walls.checkForProtectedPlacement(event);
-                final ItemStack stack = event.getPlayer().getItemInHand();
-                if (walls.loreMatch(stack, "BOOOM")) {
-                    walls.getBoom().put(event.getBlock().getLocation(), walls.getPlayer(event.getPlayer().getUniqueId()).getPlayerState());
-                }
                 break;
             default:
                 break;
+        }
+        if (event.isCancelled()) return;
+        ItemStack stack = event.getPlayer().getItemInHand();
+        if (walls.loreMatch(stack, "BOOOM")) {
+            walls.getBoom().put(event.getBlock().getLocation(), walls.getPlayer(event.getPlayer().getUniqueId()).getTeam());
         }
     }
 

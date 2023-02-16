@@ -70,7 +70,7 @@ public class ShoutCommand implements CommandExecutor{
         String arguments = String.join(" ", args);
         if (wallsPlayer.getClan() != null)
             clan = ChatColor.DARK_RED + "" + ChatColor.BOLD + ChatColor.translateAlternateColorCodes('&', wallsPlayer.getClan()) + ChatColor.WHITE + "◊";
-        String message = wallsPlayer.getRank().display() + clan + "" + Walls.teamChatColors[wallsPlayer.getPlayerState().ordinal()] + player.getDisplayName() + ChatColor.GOLD + " YELLS out " + ChatColor.WHITE + arguments;
+        String message = wallsPlayer.getRank().display() + clan + "" + Walls.teamChatColors[wallsPlayer.getTeam().ordinal()] + player.getDisplayName() + ChatColor.GOLD + " YELLS out " + ChatColor.WHITE + arguments;
         Bukkit.getOnlinePlayers().forEach(all -> all.sendMessage(message));
         return true;
     }

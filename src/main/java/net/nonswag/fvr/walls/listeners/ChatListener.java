@@ -34,7 +34,7 @@ public class ChatListener implements Listener {
             case PEACETIME:
             case FIGHTING:
             case FINISHED:
-                event.setFormat(rank + clan + Walls.teamChatColors[twp.getPlayerState().ordinal()] + "%s: " + ChatColor.GRAY + "%s");
+                event.setFormat(rank + clan + Walls.teamChatColors[twp.getTeam().ordinal()] + "%s: " + ChatColor.GRAY + "%s");
                 if (!walls.staffListSnooper.contains(event.getPlayer().getUniqueId())) {
                     event.getRecipients().clear();
                     for (UUID uuid : walls.getTeamList(event.getPlayer().getUniqueId())) {

@@ -120,7 +120,7 @@ public class Walls extends JavaPlugin implements Listener {
         private int deaths = 0;
         private int wins = 0;
         private int minutes = 0;
-        private Team playerState = Team.SPECTATORS;
+        private Team team = Team.SPECTATORS;
 
         public WallsPlayer(OfflinePlayer player) {
             this(player.getUniqueId(), player.getName());
@@ -497,7 +497,7 @@ public class Walls extends JavaPlugin implements Listener {
                     this.foodDisabled = false;
                     Notifier.broadcast("You can now eat again!");
                 }
-                getPlayer(player).setPlayerState(Team.SPECTATORS);
+                getPlayer(player).setTeam(Team.SPECTATORS);
                 player.closeInventory();
                 player.getInventory().clear();
                 if (calculateTeamsLeft() < 2) {
@@ -750,24 +750,6 @@ public class Walls extends JavaPlugin implements Listener {
 
     }
 
-
-    private void checkForSpecBlocking(PlayerInteractEvent event) {
-        if (event.getAction() == Action.RIGHT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_AIR) {
-            if (event.isBlockInHand()) {
-                for (Entity entity : event.getPlayer().getNearbyEntities(2, 2, 2)) {
-                    if (entity instanceof Player) {
-                        Player spectator = (Player) entity;
-                        if (this.isSpectator(entity)) {
-                            spectator.setFlying(true);
-                            spectator.teleport(entity.getLocation().add(0, 5, 0));
-                            return;
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     private void checkForCompassSwitch(PlayerInteractEvent event) {
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_AIR) {
             if (event.getPlayer().getItemInHand().getType() == Material.COMPASS) {
@@ -935,13 +917,13 @@ public class Walls extends JavaPlugin implements Listener {
                     if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
                         WallsPlayer player = getPlayer(event.getPlayer().getUniqueId());
                         if (this.checkEnoughSpaceInTeam(team.ordinal())) {
-                            if (player.playerState.compareTo(team) == 0) {
+                            if (player.team.compareTo(team) == 0) {
                                 event.setCancelled(true);
                                 return;
                             }
-                            Notifier.team(this, player.playerState, event.getPlayer().getName() + " joined " + teamNames[team.ordinal()]);
+                            Notifier.team(this, player.team, event.getPlayer().getName() + " joined " + teamNames[team.ordinal()]);
                             getPlayerScoreBoard().addPlayerToTeam(event.getPlayer(), team);
-                            player.playerState = team;
+                            player.team = team;
                             event.setCancelled(true);
                         } else {
                             Notifier.error(event.getPlayer(), teamNames[team.ordinal()] + ChatColor.WHITE + " is full :(");
@@ -957,7 +939,6 @@ public class Walls extends JavaPlugin implements Listener {
                 break;
             case PEACETIME:
                 checkSpecPlayerFinder(event);
-                checkForSpecBlocking(event);
                 if (isSpectator(event.getPlayer())) {
                     event.setCancelled(true);
                     return;
@@ -976,7 +957,6 @@ public class Walls extends JavaPlugin implements Listener {
                 break;
             case FIGHTING:
                 checkSpecPlayerFinder(event);
-                checkForSpecBlocking(event);
                 if (isSpectator(event.getPlayer())) {
                     event.setCancelled(true);
                     return;
@@ -1010,11 +990,10 @@ public class Walls extends JavaPlugin implements Listener {
         Block block = event.getClickedBlock();
         ItemStack stack = player.getItemInHand();
         if (event.getAction() == Action.PHYSICAL) {
-            if ((block != null) && (block.getType() == Material.STONE_PLATE)
-                    && (block.getRelative(0, -1, 0).getType() == Material.GRAVEL)) {
-                final Team team = getBoom().get(block.getLocation());
-                if (team != null && team != getPlayer(player).getPlayerState()) {
-                    block.getWorld().createExplosion(block.getLocation(), 3F);
+            if ((block != null) && (block.getType() == Material.STONE_PLATE)) {
+                Team team = getBoom().get(block.getLocation());
+                if (team != null && team != getPlayer(player).getTeam()) {
+                    block.getWorld().createExplosion(block.getLocation(), 3);
                     getBoom().remove(block.getLocation());
                 }
             }
@@ -1386,13 +1365,13 @@ public class Walls extends JavaPlugin implements Listener {
     }
 
     public List<UUID> getTeamList(UUID uid) {
-        return getTeamList(getPlayer(uid).playerState);
+        return getTeamList(getPlayer(uid).team);
     }
 
     public List<UUID> getTeamList(Team playerState) {
         List<UUID> teamList = new ArrayList<>();
         for (UUID uuid : getPlayers().keySet()) {
-            if (getPlayer(uuid).playerState == playerState) {
+            if (getPlayer(uuid).team == playerState) {
                 teamList.add(uuid);
             }
         }
@@ -1411,7 +1390,7 @@ public class Walls extends JavaPlugin implements Listener {
     public int getTeamSize(Team state) {
         int teamCounter = 0;
         for (WallsPlayer player : getPlayers().values()) {
-            if (player.playerState.equals(state)) teamCounter++;
+            if (player.team.equals(state)) teamCounter++;
         }
         return teamCounter;
     }
@@ -1419,11 +1398,11 @@ public class Walls extends JavaPlugin implements Listener {
     public boolean isSpectator(Entity entity) {
         if (entity == null) return false;
         WallsPlayer wallsPlayer = getPlayer(entity.getUniqueId());
-        return wallsPlayer != null && wallsPlayer.playerState.equals(Team.SPECTATORS);
+        return wallsPlayer != null && wallsPlayer.team.equals(Team.SPECTATORS);
     }
 
     public boolean sameTeam(UUID a, UUID b) {
-        return getPlayer(a).playerState.compareTo(getPlayer(b).playerState) == 0;
+        return getPlayer(a).team.compareTo(getPlayer(b).team) == 0;
     }
 
     public void setGameState(GameState gameState) {
@@ -1441,7 +1420,7 @@ public class Walls extends JavaPlugin implements Listener {
         int t3 = 0;
         int t4 = 0;
         for (WallsPlayer wp : getPlayers().values()) {
-            switch (wp.playerState) {
+            switch (wp.team) {
                 case RED:
                     t1++;
                     break;

@@ -34,7 +34,7 @@ public class CornerCommand implements CommandExecutor {
         }
         WallsPlayer twp = walls.getPlayer(player);
         Location corner;
-        corner = walls.getCorners().get(twp.getPlayerState().ordinal());
+        corner = walls.getCorners().get(twp.getTeam().ordinal());
         final Location loc = new Location(
                 Bukkit.getWorld(Walls.levelName), corner.getBlockX(),
                 Bukkit.getWorld(Walls.levelName).getHighestBlockYAt(corner.getBlockX(), corner.getBlockZ()),

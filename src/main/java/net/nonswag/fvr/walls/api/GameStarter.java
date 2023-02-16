@@ -41,7 +41,7 @@ public class GameStarter {
             basicKit.givePlayerKit(player);
             player.setFallDistance(0f);
             WallsPlayer tempWallsPlayer = walls.getPlayer(all);
-            switch (tempWallsPlayer.getPlayerState()) {
+            switch (tempWallsPlayer.getTeam()) {
                 case SPECTATORS:
                     int rand = GameStarter.getSmallestTeam(walls);
                     assignedPlayers.put(all, Team.values()[rand]);
@@ -75,7 +75,7 @@ public class GameStarter {
         assignedPlayers.forEach((uuid, team) -> {
             WallsPlayer wallsPlayer = walls.getPlayer(uuid);
             if (wallsPlayer == null) return;
-            wallsPlayer.setPlayerState(team);
+            wallsPlayer.setTeam(team);
             players.put(uuid, wallsPlayer);
             Player player = Bukkit.getPlayer(uuid);
             if (player != null) walls.getPlayerScoreBoard().addPlayerToTeam(player, team);

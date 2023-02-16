@@ -37,7 +37,7 @@ public class ConnectionListener implements Listener {
         wallsJoinMessage(event);
         switch (walls.getGameState()) {
             case PREGAME:
-                player.setPlayerState(Walls.Team.SPECTATORS);
+                player.setTeam(Walls.Team.SPECTATORS);
                 walls.getSpectatorKit().givePlayerKit(event.getPlayer());
                 event.getPlayer().setHealth(20);
                 event.getPlayer().setFoodLevel(20);
@@ -120,6 +120,7 @@ public class ConnectionListener implements Listener {
                 player.getInventory().clear();
                 walls.getPlayers().remove(player.getUniqueId());
                 walls.getPlayerScoreBoard().removePlayerFromTeam(player);
+                walls.getPlayerScoreBoard().updateScoreboardScores();
                 WallsCommand.VOTES.remove(player.getUniqueId());
                 break;
             case PEACETIME:
@@ -139,7 +140,7 @@ public class ConnectionListener implements Listener {
                         }
                         HolographicDisplaysAPI.get(walls).createHologram(player.getLocation().add(0, 2.5, 0)).getLines().appendItem(new ItemStack(Material.RAW_CHICKEN));
                         Hologram tempHologram = HolographicDisplaysAPI.get(walls).createHologram(player.getLocation().add(0, 2, 0));
-                        tempHologram.getLines().appendText(Walls.teamChatColors[wallsPlayer.getPlayerState().ordinal()] + player.getDisplayName());
+                        tempHologram.getLines().appendText(Walls.teamChatColors[wallsPlayer.getTeam().ordinal()] + player.getDisplayName());
                         tempHologram.getLines().appendText("§4COMBAT LOGGED HERE");
                         tempHologram.getLines().appendText("Chicken.");
                         walls.getInCombat().remove(player.getUniqueId());
@@ -148,7 +149,7 @@ public class ConnectionListener implements Listener {
                             walls.foodDisabled = false;
                             Notifier.broadcast("You can now eat again!");
                         }
-                        wallsPlayer.setPlayerState(Walls.Team.SPECTATORS);
+                        wallsPlayer.setTeam(Walls.Team.SPECTATORS);
                         wallsPlayer.setDeaths(wallsPlayer.getDeaths() + 5);
                         wallsPlayer.setKills(0);
                         wallsPlayer.setWins(0);
@@ -189,7 +190,7 @@ public class ConnectionListener implements Listener {
                                 walls.foodDisabled = false;
                                 Notifier.broadcast("You can now eat again!");
                             }
-                            walls.getPlayer(player).setPlayerState(Walls.Team.SPECTATORS);
+                            walls.getPlayer(player).setTeam(Walls.Team.SPECTATORS);
                             player.closeInventory();
                             player.getInventory().clear();
                             if (walls.calculateTeamsLeft() > 1) return;

@@ -73,22 +73,14 @@ public class KitCommand implements CommandExecutor {
                 Notifier.error(player, "Specs can fly! You don't need a kit :)");
                 return true;
             }
-            switch (walls.getGameState()) {
-                case PEACETIME:
-                    if (args.length == 0) {
-                        Notifier.error(player, "You need to say which kit :) /kit <kitname>");
-                        break;
-                    }
-                    final String choice = args[0].toLowerCase();
-                    playerChoice(walls, player, choice);
-                    break;
-                case FIGHTING:
-                case FINISHED:
-                    Notifier.error(player, "Kits are only available during Peace time :)");
-                    break;
-                default:
-                    break;
-            }
+            if (walls.getGameState() == Walls.GameState.PEACETIME) {
+                if (args.length == 0) {
+                    Notifier.error(player, "You need to say which kit :) /kit <kitname>");
+                    return true;
+                }
+                final String choice = args[0].toLowerCase();
+                playerChoice(walls, player, choice);
+            } else Notifier.error(player, "Kits are only available during Peace time :)");
         } else Notifier.error(sender, "This is a player command");
         return true;
     }

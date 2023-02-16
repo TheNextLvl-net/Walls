@@ -31,7 +31,7 @@ public class SpawnCommand implements CommandExecutor {
             return true;
         }
         WallsPlayer twp = walls.getPlayer(player);
-        switch (twp.getPlayerState()) {
+        switch (twp.getTeam()) {
             case RED:
                 player.teleport(walls.getTeam1Spawn());
                 break;

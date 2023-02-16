@@ -36,10 +36,10 @@ public class WallsCommand implements CommandExecutor {
                 error(sender, "usage: /walls drop | rank | autostartplayers | peacetimemins | clanrename | clanbattle | captain | restricted | diamondwalls | ironwalls | fixdb");
             }
         } else if (args[0].equalsIgnoreCase("diamondwalls")) {
-            if (sender.isOp()) broadcast("Set diamond only to " + (Walls.diamondONLY = !Walls.diamondONLY));
+            if (sender.isOp()) broadcast("Set diamondwalls to " + (Walls.diamondONLY = !Walls.diamondONLY));
             else error(sender, "You have no rights to do this");
         } else if (args[0].equalsIgnoreCase("ironwalls")) {
-            if (sender.isOp()) broadcast("Set iron only to " + (Walls.ironONLY = !Walls.ironONLY));
+            if (sender.isOp()) broadcast("Set ironwalls to " + (Walls.ironONLY = !Walls.ironONLY));
             else error(sender, "You have no rights to do this");
         } else if (args[0].equalsIgnoreCase("stop")) stop(sender);
         else if (args[0].equalsIgnoreCase("fixdb")) fixdb(sender);
@@ -170,17 +170,17 @@ public class WallsCommand implements CommandExecutor {
                     return;
                 }
                 WallsPlayer wallsPlayer = walls.getPlayer(player);
-                wallsPlayer.setPlayerState(Team.values()[teamNumber]);
+                wallsPlayer.setTeam(Team.values()[teamNumber]);
                 player.setAllowFlight(false);
                 player.getInventory().clear();
-                player.teleport(walls.getSpawns().get(wallsPlayer.getPlayerState().ordinal()));
-                walls.getPlayerScoreBoard().addPlayerToTeam(player, wallsPlayer.getPlayerState());
+                player.teleport(walls.getSpawns().get(wallsPlayer.getTeam().ordinal()));
+                walls.getPlayerScoreBoard().addPlayerToTeam(player, wallsPlayer.getTeam());
                 PlayerVisibility.hideAllSpecs(walls, player);
                 PlayerVisibility.makeInVisPlayerNowVisible(player);
                 player.setHealth(20);
                 player.setFoodLevel(20);
-                success(player, "Gratz! You've been added to " + Walls.teamNames[wallsPlayer.getPlayerState().ordinal()]);
-                success(sender, "Success! " + player.getName() + " been added to " + Walls.teamNames[wallsPlayer.getPlayerState().ordinal()]);
+                success(player, "Gratz! You've been added to " + Walls.teamNames[wallsPlayer.getTeam().ordinal()]);
+                success(sender, "Success! " + player.getName() + " been added to " + Walls.teamNames[wallsPlayer.getTeam().ordinal()]);
             } else sender.sendMessage("§cThis player is not online");
         } else error(sender, "You have no rights to do this");
     }

@@ -23,8 +23,8 @@ public class FullIronKit extends BasicPlayerKit {
                 super.givePlayerKit(player);
                 player.getInventory().addItem(new ItemStack(Material.IRON_AXE, 1));
                 player.getInventory().addItem(new ItemStack(Material.IRON_PICKAXE, 1));
-                player.getInventory().addItem(new ItemStack(Material.TNT, 16));
                 player.getInventory().addItem(new ItemStack(Material.IRON_SWORD, 1));
+                player.getInventory().addItem(new ItemStack(Material.TNT, 16));
                 player.getInventory().addItem(new ItemStack(Material.COOKED_BEEF, 8));
                 player.getInventory().addItem(new ItemStack(Material.BUCKET, 2));
                 player.getInventory().addItem(new ItemStack(Material.BOW, 1));
