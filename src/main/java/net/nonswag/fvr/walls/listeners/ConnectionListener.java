@@ -106,12 +106,6 @@ public class ConnectionListener implements Listener {
                     return;
                 }
             }
-            if (walls.getGameState() != Walls.GameState.PREGAME) {
-                if (walls.isSpectator(event.getPlayer()) && !player.getRank().vip()) {
-                    event.getPlayer().kickPlayer("§cSorry, the game is already in progress, you need VIP and up to spectate - " + Walls.DISCORD + " !");
-                    return;
-                }
-            }
         }
         Notifier.broadcast(ChatColor.GRAY + event.getPlayer().getName() + " joined the server.");
     }
@@ -119,6 +113,7 @@ public class ConnectionListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
+        Bukkit.getScheduler().runTaskAsynchronously(walls, () -> walls.database.save(player));
         WallsCommand.VOTES.remove(player.getUniqueId());
         Walls.WallsPlayer wallsPlayer = walls.getPlayer(player);
         switch (walls.getGameState()) {

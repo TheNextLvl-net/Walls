@@ -7,6 +7,8 @@ website: "https://www.thenextlvl.net"
 softdepend: ["WorldEdit", "WallsPopulator"]
 loadbefore: ["WallsPopulator"]
 commands:
+  find:
+    usage: /find <player>
   stats:
     usage: /stats <player>
   ping:

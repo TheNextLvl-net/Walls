@@ -8,7 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 @RequiredArgsConstructor
-public class FullDiamondKit {
+public class FullDiamondKit extends BasicPlayerKit {
     private final Walls walls;
 
     public void givePlayerKit(Player player) {
@@ -20,6 +20,7 @@ public class FullDiamondKit {
             case FIGHTING:
                 player.setLevel(64);
                 player.getInventory().clear();
+                super.givePlayerKit(player);
                 player.getInventory().addItem(new ItemStack(Material.DIAMOND_AXE, 1));
                 player.getInventory().addItem(new ItemStack(Material.DIAMOND_PICKAXE, 1));
                 player.getInventory().addItem(new ItemStack(Material.DIAMOND_SWORD, 1));

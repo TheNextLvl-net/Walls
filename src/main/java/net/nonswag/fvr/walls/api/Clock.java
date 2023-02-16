@@ -23,12 +23,13 @@ public class Clock extends Thread {
     }
 
     @Override
+    @SuppressWarnings("BusyWait")
     public void run() {
         while (!Thread.interrupted()) {
             try {
-                //noinspection BusyWait
                 Thread.sleep(1000);
             } catch (final InterruptedException e) {
+                Thread.currentThread().interrupt();
                 break;
             }
             switch (plugin.getGameState()) {

@@ -145,7 +145,7 @@ public class MineShaftPopulator extends BlockPopulator {
     }
 
     public boolean canPlace(Block block) {
-        return filler.contains(block.getX(), block.getZ()) && (block.getType() == Material.COBBLESTONE || block.getType() == Material.STONE || block.getType() == Material.COBBLESTONE);
+        return filler.contains(block.getX(), block.getZ()) && (block.getType() == Material.COBBLESTONE || block.getType() == Material.STONE);
     }
 
 }

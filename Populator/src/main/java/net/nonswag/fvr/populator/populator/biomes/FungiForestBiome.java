@@ -14,17 +14,18 @@ import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
 
 public class FungiForestBiome extends WorldFiller {
+
     public FungiForestBiome(World world, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         super(world, Biome.SWAMPLAND, minX, minZ, maxX, maxZ, startY, groundLevel);
         getMobPopulator().getMobs().add(MushroomCow.class);
-        this.addPopulator(new ShallowLakePopulator(this), true);
-        this.addPopulator(new WaterLilyPopulator());
-        this.addPopulator(new MushroomPopulator());
-        this.addPopulator(new HugeMushroomPopulator());
-        this.addPopulator(new BushPopulator(5));
-        this.addPopulator(new FungiTreePopulator());
-        this.addPopulator(new WildGrassPopulator((byte) 1));
-        this.addPopulator(new WildGrassPopulator((byte) 2));
+        addPopulator(new ShallowLakePopulator(this), true);
+        addPopulator(new WaterLilyPopulator());
+        addPopulator(new MushroomPopulator());
+        addPopulator(new HugeMushroomPopulator());
+        addPopulator(new BushPopulator(5));
+        addPopulator(new FungiTreePopulator(this));
+        addPopulator(new WildGrassPopulator((byte) 1));
+        addPopulator(new WildGrassPopulator((byte) 2));
     }
 
     @Override

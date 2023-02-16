@@ -72,13 +72,13 @@ public class GameStarter {
             walls.getPlayerScoreBoard().setScoreBoard(all);
         }
 
-        for (UUID uuid : assignedPlayers.keySet()) {
+        assignedPlayers.forEach((uuid, team) -> {
             WallsPlayer wallsPlayer = walls.getPlayer(uuid);
-            if (wallsPlayer == null) continue;
-            wallsPlayer.setPlayerState(assignedPlayers.get(uuid));
+            if (wallsPlayer == null) return;
+            wallsPlayer.setPlayerState(team);
             players.put(uuid, wallsPlayer);
-            walls.getPlayerScoreBoard().addPlayerToTeam(uuid, wallsPlayer.getPlayerState());
-        }
+            walls.getPlayerScoreBoard().addPlayerToTeam(uuid, team);
+        });
 
         walls.setGameState(GameState.PEACETIME);
         Bukkit.getWorlds().forEach(world -> world.setGameRuleValue("doDaylightCycle", "true"));

@@ -1,18 +1,15 @@
 package net.nonswag.fvr.walls.kits;
 
+import lombok.RequiredArgsConstructor;
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.api.Notifier;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-public class FullIronKit {
-
+@RequiredArgsConstructor
+public class FullIronKit extends BasicPlayerKit {
     private final Walls walls;
-
-    public FullIronKit(Walls walls) {
-        this.walls = walls;
-    }
 
     public void givePlayerKit(Player player) {
         switch (walls.getGameState()) {
@@ -23,6 +20,7 @@ public class FullIronKit {
             case FIGHTING:
                 player.setLevel(6);
                 player.getInventory().clear();
+                super.givePlayerKit(player);
                 player.getInventory().addItem(new ItemStack(Material.IRON_AXE, 1));
                 player.getInventory().addItem(new ItemStack(Material.IRON_PICKAXE, 1));
                 player.getInventory().addItem(new ItemStack(Material.TNT, 16));
@@ -33,6 +31,7 @@ public class FullIronKit {
                 player.getInventory().addItem(new ItemStack(Material.LEAVES, 64, (short) 1));
                 player.getInventory().addItem(new ItemStack(Material.FLINT_AND_STEEL, 1));
                 player.getInventory().addItem(new ItemStack(Material.ARROW, 16));
+                player.getInventory().addItem(new ItemStack(Material.INK_SACK, 8, (short) 4));
                 player.getInventory().setBoots(new ItemStack(Material.IRON_BOOTS, 1));
                 player.getInventory().setChestplate(new ItemStack(Material.IRON_CHESTPLATE, 1));
                 player.getInventory().setHelmet(new ItemStack(Material.IRON_HELMET, 1));

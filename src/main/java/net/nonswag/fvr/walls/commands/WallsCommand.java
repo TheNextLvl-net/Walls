@@ -33,12 +33,12 @@ public class WallsCommand implements CommandExecutor {
         if (args.length < 1) {
             if (sender instanceof Player) error(sender, "usage: /walls votestart");
             if (sender.isOp()) {
-                error(sender, "usage: /walls drop | rank | autostartplayers | peacetimemins | clanrename | clanbattle | captain | restricted | diamondonly | irononly | fixdb");
+                error(sender, "usage: /walls drop | rank | autostartplayers | peacetimemins | clanrename | clanbattle | captain | restricted | diamondwalls | ironwalls | fixdb");
             }
-        } else if (args[0].equalsIgnoreCase("diamondonly")) {
+        } else if (args[0].equalsIgnoreCase("diamondwalls")) {
             if (sender.isOp()) broadcast("Set diamond only to " + (Walls.diamondONLY = !Walls.diamondONLY));
             else error(sender, "You have no rights to do this");
-        } else if (args[0].equalsIgnoreCase("irononly")) {
+        } else if (args[0].equalsIgnoreCase("ironwalls")) {
             if (sender.isOp()) broadcast("Set iron only to " + (Walls.ironONLY = !Walls.ironONLY));
             else error(sender, "You have no rights to do this");
         } else if (args[0].equalsIgnoreCase("stop")) stop(sender);

@@ -1,10 +1,13 @@
 package net.nonswag.fvr.walls.api;
 
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.nonswag.core.api.sql.Database;
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.commands.ClanCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,6 +21,7 @@ public class DatabaseUtil {
     public DatabaseUtil(Walls walls) {
         this.walls = walls;
         try {
+            Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `profiles` (uuid varchar(255), name varchar(255), lastSeen long)");
             Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `accounts` (uuid varchar(255), rank int, guild varchar(255))");
             Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `guilds` (plain varchar(255), name varchar(255), uuid varchar(255))");
             Database.getConnection().executeUpdate("CREATE TABLE IF NOT EXISTS `stats` (uuid varchar(255), kills int, deaths int, wins int, kd double)");
@@ -85,7 +89,7 @@ public class DatabaseUtil {
             if (result == null || !result.first()) return null;
             UUID uuid = UUID.fromString(result.getString("uuid"));
             Walls.WallsPlayer player = new Walls.WallsPlayer(Bukkit.getOfflinePlayer(uuid));
-            player.setStatsKD(result.getInt("kd"));
+            player.setStatsKD(result.getDouble("kd"));
             return player;
         } catch (SQLException e) {
             e.printStackTrace();
@@ -247,5 +251,34 @@ public class DatabaseUtil {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public void save(Player player) {
+        try (ResultSet set = Database.getConnection().executeQuery("SELECT * FROM `profiles` WHERE `uuid` = ?", player.getUniqueId().toString())) {
+            if (set != null && set.next()) {
+                Database.getConnection().executeUpdate("UPDATE `profiles` SET `name` = ?, `lastSeen` = ? WHERE `uuid` = ?", player.getName(), System.currentTimeMillis(), player.getUniqueId().toString());
+            } else {
+                Database.getConnection().executeUpdate("INSERT INTO `profiles` (`uuid`, `name`, `lastSeen`) VALUES (?,?,?)", player.getUniqueId().toString(), player.getName(), System.currentTimeMillis());
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Profile lookup(String user) {
+        try (ResultSet resultSet = Database.getConnection().executeQuery("SELECT * FROM `profiles` WHERE UPPER(`name`) = ?", user.toUpperCase())) {
+            return resultSet != null && resultSet.next() ? new Profile(resultSet.getString("name"), UUID.fromString(resultSet.getString("uuid")), resultSet.getLong("lastSeen")) : null;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Getter
+    @RequiredArgsConstructor
+    public static class Profile {
+        private final String name;
+        private final UUID uniqueId;
+        private final long lastSeen;
     }
 }

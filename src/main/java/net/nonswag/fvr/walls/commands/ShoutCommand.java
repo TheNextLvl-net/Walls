@@ -3,7 +3,6 @@ package net.nonswag.fvr.walls.commands;
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.Walls.WallsPlayer;
 import net.nonswag.fvr.walls.api.Notifier;
-import org.apache.commons.lang.StringUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -68,7 +67,7 @@ public class ShoutCommand implements CommandExecutor{
             }
         }
         String clan = "";
-        final String arguments = StringUtils.join(args, " ");
+        String arguments = String.join(" ", args);
         if (wallsPlayer.getClan() != null)
             clan = ChatColor.DARK_RED + "" + ChatColor.BOLD + ChatColor.translateAlternateColorCodes('&', wallsPlayer.getClan()) + ChatColor.WHITE + "◊";
         String message = wallsPlayer.getRank().display() + clan + "" + Walls.teamChatColors[wallsPlayer.getPlayerState().ordinal()] + player.getDisplayName() + ChatColor.GOLD + " YELLS out " + ChatColor.WHITE + arguments;

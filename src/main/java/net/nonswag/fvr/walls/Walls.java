@@ -22,6 +22,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
@@ -114,7 +115,7 @@ public class Walls extends JavaPlugin implements Listener {
         private int statsKills = 0;
         private int statsDeaths = 0;
         private int statsWins = 0;
-        private int statsKD = 0;
+        private double statsKD = 0;
         private int kills = 0;
         private int deaths = 0;
         private int wins = 0;
@@ -134,7 +135,7 @@ public class Walls extends JavaPlugin implements Listener {
     public static final String STAFFCHATT_PREFIX = "§c[§bStaffChat§c] ";
     public static final String CLANCHAT_PREFIX = "§c[§3??§c] ";
     public static final String OPCHAT_PREFIX = "§c[§cOPCHAT§c] ";
-    public static String[] teamNames = {"§dSpecs", "§cRed", "§eYellow", "§aGreen", "§9Blue"};
+    public static String[] teamNames = {"§dSpecs", "§cTeam 1", "§eTeam 2", "§aTeam 3", "§9Team 4"};
     public static ChatColor[] teamChatColors = {ChatColor.LIGHT_PURPLE, ChatColor.RED, ChatColor.YELLOW, ChatColor.GREEN, ChatColor.BLUE};
 
     private final Map<UUID, Integer> mutedPlayers = new HashMap<>();
@@ -191,8 +192,16 @@ public class Walls extends JavaPlugin implements Listener {
         KILLS, WINS, KD_RATIO
     }
 
+    @Getter
+    @RequiredArgsConstructor
     public enum Team {
-        SPECTATORS, RED, YELLOW, GREEN, BLUE
+        SPECTATORS("Specs"),
+        RED("Team 1"),
+        YELLOW("Team 2"),
+        GREEN("Team 3"),
+        BLUE("Team 4");
+
+        private final String name;
     }
 
     public enum PlayerJoinType {
@@ -371,6 +380,10 @@ public class Walls extends JavaPlugin implements Listener {
         getCommand("cc").setExecutor(new ClanChatCommand(this));
         getCommand("share").setExecutor(new ShareCommand(this));
         getCommand("clan").setExecutor(new ClanCommand(this));
+        PluginCommand find = getCommand("find");
+        FindCommand findCommand = new FindCommand(this);
+        find.setExecutor(findCommand);
+        find.setTabCompleter(findCommand);
     }
 
     @Override
@@ -416,10 +429,10 @@ public class Walls extends JavaPlugin implements Listener {
 
     private void fixDatabase() {
         try {
+            Database.getConnection().executeUpdate("DROP TABLE `profiles`");
             Database.getConnection().executeUpdate("DROP TABLE `accounts`");
             Database.getConnection().executeUpdate("DROP TABLE `guilds`");
             Database.getConnection().executeUpdate("DROP TABLE `stats`");
-            Database.getConnection().executeUpdate("DROP TABLE `paidkits` AND `player_stats`");
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -1005,10 +1018,10 @@ public class Walls extends JavaPlugin implements Listener {
         if (event.getAction() == Action.PHYSICAL) {
             if ((block != null) && (block.getType() == Material.STONE_PLATE)
                     && (block.getRelative(0, -1, 0).getType() == Material.GRAVEL)) {
-                final Team team = this.boom.get(block.getLocation());
+                final Team team = getBoom().get(block.getLocation());
                 if (team != null && team != getPlayer(player.getUniqueId()).getPlayerState()) {
                     block.getWorld().createExplosion(block.getLocation(), 3F);
-                    this.boom.remove(block.getLocation());
+                    getBoom().remove(block.getLocation());
                 }
             }
         }
@@ -1770,8 +1783,8 @@ public class Walls extends JavaPlugin implements Listener {
         BlockState state = block.getState();
         if (!(state instanceof Sign)) return false;
         ((Sign) state).setLine(0, "");
-        ((Sign) state).setLine(1, teamNames[sign.getTeam().ordinal()]);
-        ((Sign) state).setLine(2, teamChatColors[sign.getTeam().ordinal()] + biome);
+        ((Sign) state).setLine(1, sign.getTeam().getName());
+        ((Sign) state).setLine(2, biome);
         ((Sign) state).setLine(3, "");
         state.update();
         return true;

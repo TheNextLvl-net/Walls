@@ -1,12 +1,10 @@
 package net.nonswag.fvr.walls.kits;
 
-
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
-
 
 public class BasicPlayerKit {
     private final ItemMeta compass;
