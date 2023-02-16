@@ -30,19 +30,18 @@ public class ConnectionListener implements Listener {
     private final Walls walls;
 
     @EventHandler(priority = EventPriority.NORMAL)
-    public void onPlayerJoin(final PlayerJoinEvent event) {
-        Walls.WallsPlayer wallsPlayer = walls.getPlayers().getOrDefault(event.getPlayer().getUniqueId(), new Walls.WallsPlayer(event.getPlayer()));
+    public void onPlayerJoin(PlayerJoinEvent event) {
         walls.database.loadPlayer(event.getPlayer());
         walls.database.loadStats(event.getPlayer());
-        walls.getPlayers().put(event.getPlayer().getUniqueId(), wallsPlayer);
+        Walls.WallsPlayer player = walls.getPlayer(event.getPlayer());
         wallsJoinMessage(event);
         switch (walls.getGameState()) {
             case PREGAME:
-                wallsPlayer.setPlayerState(Walls.Team.SPECTATORS);
+                player.setPlayerState(Walls.Team.SPECTATORS);
                 walls.getSpectatorKit().givePlayerKit(event.getPlayer());
                 event.getPlayer().setHealth(20);
                 event.getPlayer().setFoodLevel(20);
-                walls.getPlayerScoreBoard().setScoreBoard(event.getPlayer().getUniqueId());
+                walls.getPlayerScoreBoard().setScoreBoard(event.getPlayer());
                 walls.getPlayerScoreBoard().updateScoreboardScores();
                 if (!walls.starting && walls.getPlayers().size() >= Walls.preGameAutoStartPlayers && !Walls.clanBattle && !Walls.tournamentMode) {
                     Notifier.broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + Walls.preGameAutoStartSeconds + ChatColor.WHITE + " seconds!!");
@@ -55,7 +54,7 @@ public class ConnectionListener implements Listener {
             case FINISHED:
                 if (!quitters.contains(event.getPlayer().getUniqueId())) {
                     walls.getSpectatorKit().givePlayerKit(event.getPlayer());
-                    walls.getPlayerScoreBoard().addPlayerToTeam(event.getPlayer().getUniqueId(), Walls.Team.SPECTATORS);
+                    walls.getPlayerScoreBoard().addPlayerToTeam(event.getPlayer(), Walls.Team.SPECTATORS);
                     event.getPlayer().setHealth(20);
                     event.getPlayer().setFoodLevel(20);
                     PlayerVisibility.makeSpecInvisible(walls, event.getPlayer());
@@ -66,7 +65,7 @@ public class ConnectionListener implements Listener {
                     quitterTasks.get(event.getPlayer().getUniqueId()).cancel();
                     PlayerVisibility.hideAllSpecs(walls, event.getPlayer());
                 }
-                walls.getPlayerScoreBoard().setScoreBoard(event.getPlayer().getUniqueId());
+                walls.getPlayerScoreBoard().setScoreBoard(event.getPlayer());
                 break;
             default:
                 break;
@@ -120,7 +119,7 @@ public class ConnectionListener implements Listener {
             case PREGAME:
                 player.getInventory().clear();
                 walls.getPlayers().remove(player.getUniqueId());
-                walls.getPlayerScoreBoard().removePlayerFromTeam(player.getUniqueId());
+                walls.getPlayerScoreBoard().removePlayerFromTeam(player);
                 WallsCommand.VOTES.remove(player.getUniqueId());
                 break;
             case PEACETIME:
@@ -155,9 +154,8 @@ public class ConnectionListener implements Listener {
                         wallsPlayer.setWins(0);
                         player.closeInventory();
                         player.getInventory().clear();
-                        walls.getPlayers().put(player.getUniqueId(), wallsPlayer);
-                        walls.getPlayerScoreBoard().removePlayerFromTeam(player.getUniqueId());
-                        walls.getPlayerScoreBoard().addPlayerToTeam(player.getUniqueId(), Walls.Team.SPECTATORS);
+                        walls.getPlayerScoreBoard().removePlayerFromTeam(player);
+                        walls.getPlayerScoreBoard().addPlayerToTeam(player, Walls.Team.SPECTATORS);
                         walls.getPlayerScoreBoard().updateScoreboardScores();
                         if (walls.calculateTeamsLeft() < 2) {
                             walls.setGameState(Walls.GameState.FINISHED);
@@ -172,8 +170,8 @@ public class ConnectionListener implements Listener {
                         quitters.add(player.getUniqueId());
                         quitterTasks.put(player.getUniqueId(), Bukkit.getScheduler().runTaskLater(walls, () -> {
                             if (!quitters.contains(player.getUniqueId())) return;
-                            walls.getPlayerScoreBoard().removePlayerFromTeam(player.getUniqueId());
-                            walls.getPlayerScoreBoard().addPlayerToTeam(player.getUniqueId(), Walls.Team.SPECTATORS);
+                            walls.getPlayerScoreBoard().removePlayerFromTeam(player);
+                            walls.getPlayerScoreBoard().addPlayerToTeam(player, Walls.Team.SPECTATORS);
                             quitters.remove(player.getUniqueId());
                             if (!Bukkit.getOfflinePlayer(player.getUniqueId()).isOnline()) {
                                 for (ItemStack item : walls.getInventory().get(player.getUniqueId())) {
@@ -191,11 +189,9 @@ public class ConnectionListener implements Listener {
                                 walls.foodDisabled = false;
                                 Notifier.broadcast("You can now eat again!");
                             }
-                            Walls.WallsPlayer updatedPlayer = walls.getPlayer(player.getUniqueId());
-                            updatedPlayer.setPlayerState(Walls.Team.SPECTATORS);
+                            walls.getPlayer(player).setPlayerState(Walls.Team.SPECTATORS);
                             player.closeInventory();
                             player.getInventory().clear();
-                            walls.getPlayers().put(player.getUniqueId(), updatedPlayer);
                             if (walls.calculateTeamsLeft() > 1) return;
                             walls.setGameState(Walls.GameState.FINISHED);
                             Notifier.broadcast("Server restarting in " + walls.restartTimer + " seconds!");

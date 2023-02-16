@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Cow;
 import org.bukkit.entity.MushroomCow;
 import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
@@ -17,6 +18,7 @@ public class FungiForestBiome extends WorldFiller {
 
     public FungiForestBiome(World world, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         super(world, Biome.SWAMPLAND, minX, minZ, maxX, maxZ, startY, groundLevel);
+        getMobPopulator().getMobs().remove(Cow.class);
         getMobPopulator().getMobs().add(MushroomCow.class);
         addPopulator(new ShallowLakePopulator(this), true);
         addPopulator(new WaterLilyPopulator());

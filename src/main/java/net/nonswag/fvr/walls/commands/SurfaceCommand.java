@@ -27,7 +27,7 @@ public class SurfaceCommand implements CommandExecutor {
             return true;
         }
         final Player player = (Player) sender;
-        if (walls.getPlayer(player.getUniqueId()).getRank().vip() || player.isOp()) {
+        if (walls.getPlayer(player).getRank().vip() || player.isOp()) {
             final Location loc = new Location(Bukkit.getWorld(Walls.levelName), player.getLocation().getBlockX(),
                     Bukkit.getWorld(Walls.levelName).getHighestBlockYAt(player.getLocation().getBlockX(),
                             player.getLocation().getBlockZ()), player.getLocation().getBlockZ());

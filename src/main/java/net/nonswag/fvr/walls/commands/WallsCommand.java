@@ -169,13 +169,12 @@ public class WallsCommand implements CommandExecutor {
                     error(sender, "Invalid team, please use a number between 1 and 4.");
                     return;
                 }
-                WallsPlayer wallsPlayer = walls.getPlayer(player.getUniqueId());
+                WallsPlayer wallsPlayer = walls.getPlayer(player);
                 wallsPlayer.setPlayerState(Team.values()[teamNumber]);
-                walls.getPlayers().put(player.getUniqueId(), wallsPlayer);
                 player.setAllowFlight(false);
                 player.getInventory().clear();
                 player.teleport(walls.getSpawns().get(wallsPlayer.getPlayerState().ordinal()));
-                walls.getPlayerScoreBoard().addPlayerToTeam(player.getUniqueId(), wallsPlayer.getPlayerState());
+                walls.getPlayerScoreBoard().addPlayerToTeam(player, wallsPlayer.getPlayerState());
                 PlayerVisibility.hideAllSpecs(walls, player);
                 PlayerVisibility.makeInVisPlayerNowVisible(player);
                 player.setHealth(20);
@@ -257,7 +256,7 @@ public class WallsCommand implements CommandExecutor {
             Walls.Rank rank;
             if (args.length > 1 && (player = Bukkit.getPlayer(args[1])) != null) {
                 if (args.length > 2 && (rank = Walls.Rank.parse(args[2])) != null) {
-                    walls.getPlayer(player.getUniqueId()).setRank(rank);
+                    walls.getPlayer(player).setRank(rank);
                     walls.database.setRank(player.getUniqueId(), rank.ordinal());
                     success(sender, player.getName() + "'s new rank is now " + rank.name().toLowerCase());
                 } else error(sender, "/walls rank " + player.getName() + " <none,vip,pro,gm,mgm,admin>");

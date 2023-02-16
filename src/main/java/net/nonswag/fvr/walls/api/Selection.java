@@ -2,7 +2,6 @@ package net.nonswag.fvr.walls.api;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import net.nonswag.fvr.walls.Walls;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -13,12 +12,11 @@ import org.json.simple.JSONObject;
 public class Selection {
     private int minX, minY, minZ;
     private int maxX, maxY, maxZ;
-    @Setter
-    private int type;
     private boolean aValid, bValid;
     private final String world;
+    private final boolean walls;
 
-    public void setPointA(int x, int y, int z) {
+    public void setMinPoint(int x, int y, int z) {
         this.minX = x;
         this.minY = y;
         this.minZ = z;
@@ -26,7 +24,7 @@ public class Selection {
         this.process();
     }
 
-    public void setPointB(int x, int y, int z) {
+    public void setMaxPoint(int x, int y, int z) {
         this.maxX = x;
         this.maxY = y;
         this.maxZ = z;
@@ -35,7 +33,7 @@ public class Selection {
     }
 
     private void process() {
-        if (isValid()) return;
+        if (!isValid()) return;
         if (this.minX > this.maxX) {
             final int min = this.minX;
             this.minX = this.maxX;
@@ -58,18 +56,18 @@ public class Selection {
     }
 
     public boolean contains(int x, int y, int z) {
-        return (x >= this.minX) && (x < (this.maxX + 1)) && (y >= this.minY) && (y < (this.maxY + 1)) && (z >= this.minZ) && (z < (this.maxZ + 1));
+        return x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ;
     }
 
-    public boolean contains(int x, int y, int z, int type) {
-        return this.type == type && contains(x, y, z);
+    public boolean contains(int x, int y, int z, boolean walls) {
+        return this.walls == walls && contains(x, y, z);
     }
 
-    public void remove(World the_world) {
-        for (int x_operate = this.minX; x_operate <= this.maxX; x_operate++) {
-            for (int y_operate = this.minY; y_operate <= this.maxY; y_operate++) {
-                for (int z_operate = this.minZ; z_operate <= this.maxZ; z_operate++) {
-                    the_world.getBlockAt(x_operate, y_operate, z_operate).setType(Material.AIR);
+    public void remove(World world) {
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    world.getBlockAt(x, y, z).setType(Material.AIR);
                 }
             }
         }

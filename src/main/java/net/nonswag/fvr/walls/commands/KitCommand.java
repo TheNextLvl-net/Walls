@@ -102,7 +102,7 @@ public class KitCommand implements CommandExecutor {
                 Notifier.error(player, "Enjoy FREE kit " + choice);
                 used.add(player.getUniqueId());
             } else if (paid.containsKey(choice)) {
-                if (walls.getPlayer(player.getUniqueId()).getRank().pro()) {
+                if (walls.getPlayer(player).getRank().pro()) {
                     if (choice.equalsIgnoreCase("thor")) {
                         walls.thorOwners.put(player.getUniqueId(), 3);
                     } else if (choice.equalsIgnoreCase("leprechaun")) {

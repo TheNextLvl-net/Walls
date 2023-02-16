@@ -26,9 +26,10 @@ public class FindCommand implements TabExecutor {
             if (target == null) {
                 DatabaseUtil.Profile profile = walls.database.lookup(args[0]);
                 if (profile != null) {
-                    SimpleDateFormat format = new SimpleDateFormat("MM/dd/yyyy (hh:mm:ss a)", Locale.ENGLISH);
+                    SimpleDateFormat format = new SimpleDateFormat("MM/dd/yy (hh:mm a)", Locale.ENGLISH);
+                    format.setTimeZone(TimeZone.getTimeZone("EST"));
                     String seen = format.format(new Date(profile.getLastSeen()));
-                    Notifier.notify(sender, "§7" + profile.getName() + " was last seen on the §b" + seen);
+                    Notifier.notify(sender, "§7" + profile.getName() + " was last seen on §b" + seen);
                 } else Notifier.error(sender, args[0] + " is unknown to us");
             } else Notifier.notify(sender, "§7" + target.getName() + " is§a online");
         });

@@ -1,14 +1,16 @@
 package net.nonswag.fvr.walls.api;
 
+import net.nonswag.core.utils.StringUtil;
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.Walls.GameState;
 import net.nonswag.fvr.walls.Walls.Team;
-import net.nonswag.core.utils.StringUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.scoreboard.*;
-
-import java.util.UUID;
+import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.ScoreboardManager;
 
 
 public class PlayerScoreBoard {
@@ -61,9 +63,8 @@ public class PlayerScoreBoard {
 
 
     public void updateNumberOfPlayers() {
-        if (walls.getGameState() == GameState.PREGAME && !walls.starting) {
-            teamNumbersObjective.setDisplayName((Walls.preGameAutoStartPlayers - walls.getNumberOfPlayers()) + " more players");
-        }
+        if (walls.getGameState() != GameState.PREGAME || walls.starting) return;
+        teamNumbersObjective.setDisplayName((Walls.preGameAutoStartPlayers - walls.getNumberOfPlayers()) + " more players");
     }
 
     public void updateClock(int time) {
@@ -104,34 +105,33 @@ public class PlayerScoreBoard {
         teamNumbersObjective.getScore(Walls.teamNames[4]).setScore(this.team4.getSize());
     }
 
-    public void addPlayerToTeam(UUID pUID, Team ps) {
-        switch (ps) {
+    public void addPlayerToTeam(Player player, Team team) {
+        switch (team) {
             case SPECTATORS:
-                this.teamSpecs.addEntry(Bukkit.getOfflinePlayer(pUID).getName());
+                this.teamSpecs.addEntry(player.getName());
                 break;
             case RED:
-                this.team1.addEntry(Bukkit.getOfflinePlayer(pUID).getName());
+                this.team1.addEntry(player.getName());
                 break;
             case YELLOW:
-                this.team2.addEntry(Bukkit.getOfflinePlayer(pUID).getName());
+                this.team2.addEntry(player.getName());
                 break;
             case GREEN:
-                this.team3.addEntry(Bukkit.getOfflinePlayer(pUID).getName());
+                this.team3.addEntry(player.getName());
                 break;
             case BLUE:
-                this.team4.addEntry(Bukkit.getOfflinePlayer(pUID).getName());
+                this.team4.addEntry(player.getName());
                 break;
         }
         updateScoreboardScores();
     }
 
-    public void setScoreBoard(UUID pUID) {
-        Bukkit.getPlayer(pUID).setScoreboard(board);
+    public void setScoreBoard(Player player) {
+        player.setScoreboard(board);
         updateNumberOfPlayers();
     }
 
-    public void removePlayerFromTeam(UUID pUID) {
-        org.bukkit.scoreboard.Team team = board.getTeam(Bukkit.getOfflinePlayer(pUID).getName());
-        if (team != null) team.removeEntry(Bukkit.getOfflinePlayer(pUID).getName());
+    public void removePlayerFromTeam(Player player) {
+        board.getTeams().forEach(team -> team.removeEntry(player.getName()));
     }
 }

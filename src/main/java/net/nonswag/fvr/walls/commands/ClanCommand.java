@@ -139,7 +139,7 @@ public class ClanCommand implements CommandExecutor {
                         Notifier.error(sender, "Can't kick yourself. Try /clan disband if you're leader. Or /clan leave.");
                         return;
                     }
-                    if (player != null) walls.getPlayer(player.getUniqueId()).setClan(null);
+                    if (player != null) walls.getPlayer(player).setClan(null);
                     Notifier.success(sender, target + " has been kicked from " + ChatColor.translateAlternateColorCodes('&', wallsPlayer.getClan()));
                 } else {
                     Notifier.error(sender, "Player was not in the clan / something went wrong :-/");
@@ -231,7 +231,7 @@ public class ClanCommand implements CommandExecutor {
     private void leave(CommandSender sender) {
         if (sender instanceof Player) {
             Player player = ((Player) sender);
-            if (walls.getPlayer(player.getUniqueId()).isClanLeader()) {
+            if (walls.getPlayer(player).isClanLeader()) {
                 Notifier.success(sender, "Nope. A leader can't just leave.. think of the members!! (or /clan disband)");
             } else if (walls.database.kickClanMember(sender.getName(), walls.getPlayer(((Player) sender).getUniqueId()).getClan())) {
                 UUID pUID = player.getUniqueId();

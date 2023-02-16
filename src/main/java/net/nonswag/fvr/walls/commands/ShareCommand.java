@@ -36,7 +36,7 @@ public class ShareCommand implements CommandExecutor {
             return true;
         }
         Player player = (Player) sender;
-        if (!walls.getPlayer(player.getUniqueId()).getRank().vip()) {
+        if (!walls.getPlayer(player).getRank().vip()) {
             Notifier.error(player, "You need a rank to be able to share! Get " + ChatColor.BLUE + "PRO" + ChatColor.RED + " / " + ChatColor.GREEN + "VIP" + ChatColor.RED + " at " + Walls.DISCORD);
             return true;
         }

@@ -34,7 +34,7 @@ public class ShoutCommand implements CommandExecutor{
             return true;
         }
         Player player = (Player) sender;
-        WallsPlayer wallsPlayer = walls.getPlayer(player.getUniqueId());
+        WallsPlayer wallsPlayer = walls.getPlayer(player);
         if (this.walls.isSpectator(player) && !wallsPlayer.getRank().staff()) {
             Notifier.error(sender, "Need to be in the fight to use this command :-/");
             return true;
@@ -42,7 +42,7 @@ public class ShoutCommand implements CommandExecutor{
         if (!this.yells.containsKey(player.getUniqueId()) && wallsPlayer.getRank().vip()) {
             this.yells.put(player.getUniqueId(), 0);
         } else {
-            if (!walls.getPlayer(player.getUniqueId()).getRank().staff() && !sender.isOp()) {
+            if (!walls.getPlayer(player).getRank().staff() && !sender.isOp()) {
                 if (wallsPlayer.getRank().pro()) {
                     int num = this.yells.get(player.getUniqueId());
                     num = num + 1;

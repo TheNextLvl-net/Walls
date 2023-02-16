@@ -50,26 +50,26 @@ public class GameStarter {
                     break;
                 case RED:
                     player.teleport(walls.getTeam1Spawn());
-                    walls.getPlayerScoreBoard().addPlayerToTeam(all, Team.RED);
+                    walls.getPlayerScoreBoard().addPlayerToTeam(player, Team.RED);
                     break;
                 case YELLOW:
                     player.teleport(walls.getTeam2Spawn());
-                    walls.getPlayerScoreBoard().addPlayerToTeam(all, Team.YELLOW);
+                    walls.getPlayerScoreBoard().addPlayerToTeam(player, Team.YELLOW);
                     break;
                 case GREEN:
                     player.teleport(walls.getTeam3Spawn());
-                    walls.getPlayerScoreBoard().addPlayerToTeam(all, Team.GREEN);
+                    walls.getPlayerScoreBoard().addPlayerToTeam(player, Team.GREEN);
                     break;
                 case BLUE:
                     player.teleport(walls.getTeam4Spawn());
-                    walls.getPlayerScoreBoard().addPlayerToTeam(all, Team.BLUE);
+                    walls.getPlayerScoreBoard().addPlayerToTeam(player, Team.BLUE);
                     break;
                 default:
                     break;
             }
             if (walls.getPlayer(all).getRank().pro()) proPerks.givePlayerKit(player);
             else if (walls.getPlayer(all).getRank().vip()) vipPerks.givePlayerKit(player);
-            walls.getPlayerScoreBoard().setScoreBoard(all);
+            walls.getPlayerScoreBoard().setScoreBoard(player);
         }
 
         assignedPlayers.forEach((uuid, team) -> {
@@ -77,7 +77,8 @@ public class GameStarter {
             if (wallsPlayer == null) return;
             wallsPlayer.setPlayerState(team);
             players.put(uuid, wallsPlayer);
-            walls.getPlayerScoreBoard().addPlayerToTeam(uuid, team);
+            Player player = Bukkit.getPlayer(uuid);
+            if (player != null) walls.getPlayerScoreBoard().addPlayerToTeam(player, team);
         });
 
         walls.setGameState(GameState.PEACETIME);

@@ -30,7 +30,7 @@ public class WorldListener implements Listener {
             case PEACETIME:
                 Block block = event.getBlock();
                 for (Selection selection : walls.getSelections()) {
-                    if (selection.contains(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ(), 1)) {
+                    if (selection.contains(event.getBlock().getX(), event.getBlock().getY(), event.getBlock().getZ(), true)) {
                         event.setCancelled(true);
                         Notifier.error(event.getPlayer(), "You are not allowed to break blocks here.");
                         return;

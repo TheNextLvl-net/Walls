@@ -74,14 +74,14 @@ public class DeathMessages {
         }
 
         Player player = event.getEntity();
-        WallsPlayer deadPlayer = walls.getPlayer(player.getUniqueId());
+        WallsPlayer deadPlayer = walls.getPlayer(player);
 
         DamageCause damageCause = player.getLastDamageCause().getCause();
         DeathCause deathCause = DeathCause.getByDamageCause(damageCause);
 
         String message = DeathMessages.deathMessages.get("messages." + deathCause.name().toLowerCase().replace('_', '-'));
 
-        Player killer = null;
+        Player killer;
         WallsPlayer wallsKiller = null;
 
         switch (deathCause) {
@@ -89,7 +89,7 @@ public class DeathMessages {
             case PVP:
                 killer = player.getKiller();
                 if (killer != null) {
-                    wallsKiller = walls.getPlayer(killer.getUniqueId());
+                    wallsKiller = walls.getPlayer(killer);
                     StringBuilder wielding = new StringBuilder("Unknown");
                     ItemStack killedByItem = null;
                     if (killer.getItemInHand() != null) {
@@ -124,7 +124,7 @@ public class DeathMessages {
             case PROJECTILE:
                 if (player.getKiller() != null) {
                     killer = player.getKiller();
-                    wallsKiller = walls.getPlayer(killer.getUniqueId());
+                    wallsKiller = walls.getPlayer(killer);
                     message = message.replace("<killer>", Walls.teamChatColors[wallsKiller.getPlayerState().ordinal()]
                             + killer.getName()).replace("<killerteam>", Walls.teamNames[wallsKiller.getPlayerState().ordinal()]);
                     message = message.replace("<killed>", Walls.teamChatColors[deadPlayer.getPlayerState().ordinal()]
@@ -169,9 +169,6 @@ public class DeathMessages {
                     + player.getName()).replace("<team>", Walls.teamNames[deadPlayer.getPlayerState().ordinal()]);
         } else message = deadPlayer.getName() + " died suspiciously! O_o";
         Notifier.broadcast(ChatColor.translateAlternateColorCodes('&', message));
-        if (wallsKiller != null) {
-            wallsKiller.setKills(wallsKiller.getKills() + 1);
-            walls.getPlayers().put(killer.getUniqueId(), wallsKiller);
-        }
+        if (wallsKiller != null) wallsKiller.setKills(wallsKiller.getKills() + 1);
     }
 }

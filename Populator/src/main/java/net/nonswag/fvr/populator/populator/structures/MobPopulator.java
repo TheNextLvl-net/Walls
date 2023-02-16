@@ -28,7 +28,7 @@ public class MobPopulator extends BlockPopulator {
 
     @Override
     public void populate(World world, Random random, Chunk chunk) {
-        if (random.nextInt(100) > 10) return;
+        if (random.nextInt(100) > 15) return;
         for (int i = 0; i < random.nextInt(3); i++) {
             int x = chunk.getX() * 16 + random.nextInt(16);
             int z = chunk.getZ() * 16 + random.nextInt(16);

@@ -106,7 +106,7 @@ public class Walls extends JavaPlugin implements Listener {
     @Setter
     @RequiredArgsConstructor
     public static class WallsPlayer {
-        private final UUID uuid;
+        private final UUID uniqueId;
         private final String name;
         private String clan = null;
         private Rank rank = Rank.NONE;
@@ -483,15 +483,12 @@ public class Walls extends JavaPlugin implements Listener {
                     event.getEntity().getKiller().getInventory().addItem(new ItemStack(Material.GOLDEN_APPLE, 1));
                     Notifier.success(event.getEntity().getKiller(), "You got a Golden Apple for that Kill!! Eat it for health!");
                 }
-                getPlayerScoreBoard().removePlayerFromTeam(event.getEntity().getUniqueId());
-                getPlayerScoreBoard().addPlayerToTeam(event.getEntity().getUniqueId(), Team.SPECTATORS);
-                WallsPlayer deadWallsPlayer = getPlayer(event.getEntity().getUniqueId());
-                deadWallsPlayer.deaths = 1;
-                deadWallsPlayer.minutes = (this.clock.getSecondsRemaining() / 60);
-                getPlayers().put(event.getEntity().getUniqueId(), deadWallsPlayer);
-                if (deadWallsPlayer.getRank().equals(Rank.VIP)) {
-                    player.setAllowFlight(true);
-                }
+                getPlayerScoreBoard().removePlayerFromTeam(event.getEntity());
+                getPlayerScoreBoard().addPlayerToTeam(event.getEntity(), Team.SPECTATORS);
+                WallsPlayer deadWallsPlayer = getPlayer(event.getEntity());
+                deadWallsPlayer.setDeaths(1);
+                deadWallsPlayer.setMinutes(clock.getSecondsRemaining() / 60);
+                if (deadWallsPlayer.getRank().vip()) player.setAllowFlight(true);
                 if (clanBattle || tournamentMode) {
                     event.getEntity().kickPlayer("§cGG. No Specs in this game I'm afraid.");
                 }
@@ -500,11 +497,9 @@ public class Walls extends JavaPlugin implements Listener {
                     this.foodDisabled = false;
                     Notifier.broadcast("You can now eat again!");
                 }
-                WallsPlayer wallsPlayer = getPlayer(player.getUniqueId());
-                wallsPlayer.playerState = Team.SPECTATORS;
+                getPlayer(player).setPlayerState(Team.SPECTATORS);
                 player.closeInventory();
                 player.getInventory().clear();
-                getPlayers().put(player.getUniqueId(), wallsPlayer);
                 if (calculateTeamsLeft() < 2) {
                     setGameState(GameState.FINISHED);
                     Notifier.broadcast("Server restarting in " + restartTimer + " seconds!");
@@ -777,10 +772,9 @@ public class Walls extends JavaPlugin implements Listener {
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK || event.getAction() == Action.RIGHT_CLICK_AIR) {
             if (event.getPlayer().getItemInHand().getType() == Material.COMPASS) {
                 WallsPlayer wallsPlayer = this.getPlayer(event.getPlayer().getUniqueId());
-                wallsPlayer.compassPointsToEnemy = !wallsPlayer.compassPointsToEnemy;
-                getPlayers().put(event.getPlayer().getUniqueId(), wallsPlayer);
+                wallsPlayer.setCompassPointsToEnemy(!wallsPlayer.isCompassPointsToEnemy());
                 ItemMeta compass = Bukkit.getItemFactory().getItemMeta(Material.COMPASS);
-                if (wallsPlayer.compassPointsToEnemy) {
+                if (wallsPlayer.isCompassPointsToEnemy()) {
                     Notifier.error(event.getPlayer(), "Compass Points to Enemy!!");
                     compass.setDisplayName("Enemy Finder");
                     event.getPlayer().getItemInHand().removeEnchantment(Enchantment.DAMAGE_ARTHROPODS);
@@ -946,7 +940,7 @@ public class Walls extends JavaPlugin implements Listener {
                                 return;
                             }
                             Notifier.team(this, player.playerState, event.getPlayer().getName() + " joined " + teamNames[team.ordinal()]);
-                            getPlayerScoreBoard().addPlayerToTeam(event.getPlayer().getUniqueId(), team);
+                            getPlayerScoreBoard().addPlayerToTeam(event.getPlayer(), team);
                             player.playerState = team;
                             event.setCancelled(true);
                         } else {
@@ -1019,7 +1013,7 @@ public class Walls extends JavaPlugin implements Listener {
             if ((block != null) && (block.getType() == Material.STONE_PLATE)
                     && (block.getRelative(0, -1, 0).getType() == Material.GRAVEL)) {
                 final Team team = getBoom().get(block.getLocation());
-                if (team != null && team != getPlayer(player.getUniqueId()).getPlayerState()) {
+                if (team != null && team != getPlayer(player).getPlayerState()) {
                     block.getWorld().createExplosion(block.getLocation(), 3F);
                     getBoom().remove(block.getLocation());
                 }
@@ -1347,19 +1341,16 @@ public class Walls extends JavaPlugin implements Listener {
         }
     }
 
-
     public void dropWalls() {
         Bukkit.getWorlds().forEach(world -> world.setGameRuleValue("doFireTick", "true"));
         Notifier.broadcast("Get ready to kill your enemy!");
         setGameState(GameState.FIGHTING);
-        final List<Selection> toRemove = new ArrayList<>();
-        for (final Selection s : getSelections()) {
-            if (s.getType() == 1) {
-                s.remove(Bukkit.getWorld(levelName));
-                toRemove.add(s);
-            }
+        World world = Bukkit.getWorld(levelName);
+        for (Selection selection : new ArrayList<>(getSelections())) {
+            if (!selection.isWalls()) continue;
+            selection.remove(world);
+            getSelections().remove(selection);
         }
-        getSelections().removeAll(toRemove);
         Notifier.broadcast("The walls are now gone!");
         startHungerChecker();
         this.clock.abort();
@@ -1485,15 +1476,10 @@ public class Walls extends JavaPlugin implements Listener {
             if (this.teams > 1) {
                 Notifier.broadcast(this.teams + " teams left!");
             } else {
-                if (t1 > 0) {
-                    winningTeam = 1;
-                } else if (t2 > 0) {
-                    winningTeam = 2;
-                } else if (t3 > 0) {
-                    winningTeam = 3;
-                } else if (t4 > 0) {
-                    winningTeam = 4;
-                }
+                if (t1 > 0) winningTeam = 1;
+                else if (t2 > 0) winningTeam = 2;
+                else if (t3 > 0) winningTeam = 3;
+                else if (t4 > 0) winningTeam = 4;
                 Notifier.broadcast("---------------------------------------------");
                 Notifier.broadcast("  Congratulations to " + teamNames[winningTeam] + ChatColor.WHITE + " for winning!");
                 Notifier.broadcast("---------------------------------------------");
@@ -1513,110 +1499,83 @@ public class Walls extends JavaPlugin implements Listener {
         return getPlayers().size();
     }
 
-    public final void defineArena() {
-
-        Selection c;
-        c = new Selection(Bukkit.getWorld(levelName).getName());
-        c.setPointA(-160, 0, -29);
-        c.setPointB(-15, 0, 117);
-
-        c = new Selection(Bukkit.getWorld(levelName).getName());
-        c.setPointA(-160, 0, 285);
-        c.setPointB(-15, 0, 142);
-
-        c = new Selection(Bukkit.getWorld(levelName).getName());
-        c.setPointA(155, 0, 287);
-        c.setPointB(10, 0, 142);
-
-        c = new Selection(Bukkit.getWorld(levelName).getName());
-        c.setPointA(159, 0, -31);
-        c.setPointB(10, 0, 117);
-
-        Selection s;
+    public void defineArena() {
+        Selection selection;
 
         // Lobby
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(-20, 198, 112);// lower left corner
-        s.setPointB(15, 204, 147);// upper right corner
-        getSelections().add(s);
+        selection = new Selection(levelName, false);
+        selection.setMinPoint(-20, 198, 112);
+        selection.setMaxPoint(15, 204, 147);
+        getSelections().add(selection);
 
         // Logo
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(42, 186, 130);// lower left corner
-        s.setPointB(-52, 168, 129);// upper right corner
-        getSelections().add(s);
+        selection = new Selection(levelName, false);
+        selection.setMinPoint(42, 186, 130);
+        selection.setMaxPoint(-52, 168, 129);
+        getSelections().add(selection);
 
         // walls
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(-14, 129, -10);// lower left corner
-        s.setPointB(-14, 62, 118);// upper right corner
-        s.setType(1);
-        getSelections().add(s);
+        selection = new Selection(levelName, true);
+        selection.setMinPoint(-14, 129, -10);
+        selection.setMaxPoint(-14, 62, 118);
+        getSelections().add(selection);
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(9, 129, -10);// lower left corner
-        s.setPointB(9, 62, 118);// upper right corner
-        s.setType(1);
-        getSelections().add(s);
+        selection = new Selection(levelName, true);
+        selection.setMinPoint(9, 129, -10);
+        selection.setMaxPoint(9, 62, 118);
+        getSelections().add(selection);
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(10, 129, 118);// lower left corner
-        s.setPointB(137, 62, 118);// upper right corner
-        s.setType(1);
-        getSelections().add(s);
+        selection = new Selection(levelName, true);
+        selection.setMinPoint(10, 129, 118);
+        selection.setMaxPoint(137, 62, 118);
+        getSelections().add(selection);
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(10, 129, 141);// lower left corner
-        s.setPointB(137, 62, 141);// upper right corner
-        s.setType(1);
-        getSelections().add(s);
+        selection = new Selection(levelName, true);
+        selection.setMinPoint(10, 129, 141);
+        selection.setMaxPoint(137, 62, 141);
+        getSelections().add(selection);
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(9, 129, 141);// lower left corner
-        s.setPointB(9, 62, 269);// upper right corner
-        s.setType(1);
-        getSelections().add(s);
+        selection = new Selection(levelName, true);
+        selection.setMinPoint(9, 129, 141);
+        selection.setMaxPoint(9, 62, 269);
+        getSelections().add(selection);
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(-14, 129, 141);// lower left corner
-        s.setPointB(-14, 62, 269);// upper right corner
-        s.setType(1);
-        getSelections().add(s);
+        selection = new Selection(levelName, true);
+        selection.setMinPoint(-14, 129, 141);
+        selection.setMaxPoint(-14, 62, 269);
+        getSelections().add(selection);
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(-15, 129, 141);// lower left corner
-        s.setPointB(-142, 62, 141);// upper right corner
-        s.setType(1);
-        getSelections().add(s);
+        selection = new Selection(levelName, true);
+        selection.setMinPoint(-15, 129, 141);
+        selection.setMaxPoint(-142, 62, 141);
+        getSelections().add(selection);
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(-15, 129, 118);// lower left corner
-        s.setPointB(-142, 62, 118);// upper right corner
-        s.setType(1);
-        getSelections().add(s);
+        selection = new Selection(levelName, true);
+        selection.setMinPoint(-15, 129, 118);
+        selection.setMaxPoint(-142, 62, 118);
+        getSelections().add(selection);
 
         // Starting pads
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(-156, 77, -26);// lower left corner
-        s.setPointB(-135, 62, -3);// upper right corner
-        getSelections().add(s);
+        selection = new Selection(levelName, false);
+        selection.setMinPoint(-156, 77, -26);
+        selection.setMaxPoint(-135, 62, -3);
+        getSelections().add(selection);
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(150, 85, -23);// lower left corner
-        s.setPointB(131, 62, -4);// upper right corner
-        getSelections().add(s);
+        selection = new Selection(levelName, false);
+        selection.setMinPoint(150, 85, -23);
+        selection.setMaxPoint(131, 62, -4);
+        getSelections().add(selection);
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(152, 77, 284);// lower left corner
-        s.setPointB(131, 62, 263);// upper right corner
-        getSelections().add(s);
+        selection = new Selection(levelName, false);
+        selection.setMinPoint(152, 77, 284);
+        selection.setMaxPoint(131, 62, 263);
+        getSelections().add(selection);
 
-        s = new Selection(Bukkit.getWorld(levelName).getName());
-        s.setPointA(-155, 77, 283);// lower left corner
-        s.setPointB(-135, 62, 263);// upper right corner
-        getSelections().add(s);
-
+        selection = new Selection(levelName, false);
+        selection.setMinPoint(-155, 77, 283);
+        selection.setMaxPoint(-135, 62, 263);
+        getSelections().add(selection);
     }
 
     public boolean isInASpawn(Location location) {
@@ -1701,7 +1660,7 @@ public class Walls extends JavaPlugin implements Listener {
             for (final Player potentialEnemy : playerList) {
                 if (!potentialEnemy.equals(player)) {
                     if (getPlayers().containsKey(potentialEnemy.getUniqueId())) {
-                        if (this.getPlayer(player.getUniqueId()).compassPointsToEnemy) {
+                        if (this.getPlayer(player).compassPointsToEnemy) {
                             if (!this.isSpectator(potentialEnemy) && !this.sameTeam(player.getUniqueId(), potentialEnemy.getUniqueId())) {
                                 final Location temploc = potentialEnemy.getLocation();
                                 final double tempdis = location.distanceSquared(temploc);
