@@ -66,7 +66,7 @@ public class RuinCityBiome extends WorldFiller {
         int zSize = this.maxZ - this.minZ;
         int x = this.minX + (xSize / 4);
         int z = this.minZ + (zSize / 4);
-        int y = world.getHighestBlockAt(x, z).getY() - 5;
+        int y = world.getHighestBlockAt(x, z).getY() - 5; // FIXME: 19.02.23 
         String chosen = options.get(Populator.RANDOM.nextInt(options.size()));
         Location location = new Location(Bukkit.getWorlds().get(0), x, y, z);
         loader.paste(chosen, location);

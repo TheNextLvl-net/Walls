@@ -36,10 +36,14 @@ public class GameStarter {
             WallsPlayer tempWallsPlayer = walls.getPlayer(all);
             switch (tempWallsPlayer.getTeam()) {
                 case SPECTATORS:
-                    int rand = GameStarter.getSmallestTeam(walls);
-                    assignedPlayers.put(all, Team.values()[rand]);
-                    player.teleport(walls.getSpawns().get(rand));
-                    Notifier.notify(player, "You have been assigned to " + Walls.teamNames[rand]);
+                    int smallestTeam = GameStarter.getSmallestTeam(walls);
+                    System.out.print("smallest team: " + smallestTeam);
+                    System.out.println("team is: " + Team.values()[smallestTeam]);
+                    System.out.println("available team spawns: " + walls.getSpawns().size());
+                    assignedPlayers.put(all, Team.values()[smallestTeam]);
+                    if (smallestTeam >= walls.getSpawns().size()) return;
+                    player.teleport(walls.getSpawns().get(smallestTeam));
+                    Notifier.notify(player, "You have been assigned to " + Walls.teamNames[smallestTeam]);
                     break;
                 case RED:
                     player.teleport(walls.getTeam1Spawn());

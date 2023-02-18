@@ -883,8 +883,7 @@ public class Walls extends JavaPlugin implements Listener {
             if (target != null) {
                 target.getWorld().strikeLightning(target);
                 stack.setDurability((short) (stack.getDurability() - 10));
-                numberOfUsesLeft = numberOfUsesLeft - 1;
-                thorOwners.put(event.getPlayer().getUniqueId(), numberOfUsesLeft);
+                thorOwners.put(event.getPlayer().getUniqueId(), --numberOfUsesLeft);
                 if (numberOfUsesLeft > 0) {
                     Notifier.notify(event.getPlayer(), "Mjölnir has " + numberOfUsesLeft + " remaining lightning bolts!");
                 } else {
@@ -920,7 +919,9 @@ public class Walls extends JavaPlugin implements Listener {
                 event.setCancelled(true);
                 break;
             case FIGHTING:
-                if (!isSpectator(event.getEntity()) && ThreadLocalRandom.current().nextInt(100) > 30) return;
+                if (isSpectator(event.getEntity())) event.setCancelled(true);
+                if (((Player) event.getEntity()).getFoodLevel() < event.getFoodLevel()) return;
+                if (ThreadLocalRandom.current().nextInt(100) < 30) return;
                 event.setCancelled(true);
                 break;
             default:
