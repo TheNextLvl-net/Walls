@@ -91,13 +91,11 @@ public class SpecPlayerKit {
                     player.getInventory().setItem(5, blue);
                 }
                 Bukkit.getScheduler().runTaskLater(walls, () -> {
-                    if (Walls.fullDiamond && Walls.UHC) {
-                        TitleManager.sendTitle(player, "§9My UHC Stacked Walls", "§eRegen only with gold apples..");
-                    } else if (Walls.diamondONLY && Walls.UHC) {
+                    if (Walls.diamondWalls && Walls.UHC) {
                         TitleManager.sendTitle(player, "§bMy UHC Diamond Walls", "§eRegen only with gold apples..");
-                    } else if (Walls.diamondONLY) {
+                    } else if (Walls.diamondWalls) {
                         TitleManager.sendTitle(player, "§bMy Diamond Walls", "");
-                    } else if (Walls.ironONLY) {
+                    } else if (Walls.ironWalls) {
                         TitleManager.sendTitle(player, "§bMy Speed Walls", "");
                     } else if (Walls.UHC) {
                         TitleManager.sendTitle(player, "§cMy UHC Walls", "§eRegen only with gold apples..");

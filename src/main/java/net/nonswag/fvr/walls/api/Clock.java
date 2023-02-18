@@ -1,26 +1,18 @@
 package net.nonswag.fvr.walls.api;
 
-
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import net.nonswag.fvr.walls.Walls;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
+@RequiredArgsConstructor
 public class Clock extends Thread {
-
-
+    private final Walls walls;
+    @Getter
     private int seconds;
     private Runnable runner;
-    private final Walls plugin;
-
-    public Clock(Walls plugin) {
-        this.plugin = plugin;
-        this.start();
-    }
-
-    public int getSecondsRemaining() {
-        return this.seconds;
-    }
 
     @Override
     @SuppressWarnings("BusyWait")
@@ -28,23 +20,21 @@ public class Clock extends Thread {
         while (!Thread.interrupted()) {
             try {
                 Thread.sleep(1000);
-            } catch (final InterruptedException e) {
+            } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;
             }
-            switch (plugin.getGameState()) {
+            switch (walls.getGameState()) {
                 case PREGAME:
-                    this.seconds--;
-                    if ((this.seconds <= 0) && (this.runner != null)) {
-                        Bukkit.getScheduler().runTask(this.plugin, this.runner);
-                        this.abort();
+                    if (--seconds <= 0 && runner != null) {
+                        Bukkit.getScheduler().runTask(walls, runner);
+                        abort();
                     }
-                    this.plugin.getPlayerScoreBoard().updateClock(seconds);
+                    walls.getPlayerScoreBoard().updateClock(seconds);
                     break;
                 case PEACETIME:
-                    this.seconds--;
-                    if ((this.seconds % 60) == 0) {
-                        final int min = this.seconds / 60;
+                    if (--seconds % 60 == 0) {
+                        int min = seconds / 60;
                         switch (min) {
                             case 7:
                             case 5:
@@ -52,15 +42,14 @@ public class Clock extends Thread {
                                 Notifier.broadcast(ChatColor.GOLD + "" + min + " minute" + (min != 1 ? "s" : "") + " left until the wall drops!");
                         }
                     }
-                    if ((this.seconds <= 0) && (this.runner != null)) {
-                        Bukkit.getScheduler().runTask(this.plugin, this.runner);
-                        this.abort();
+                    if (seconds <= 0 && runner != null) {
+                        Bukkit.getScheduler().runTask(walls, runner);
+                        abort();
                     }
-                    this.plugin.getPlayerScoreBoard().updateClock(seconds);
+                    walls.getPlayerScoreBoard().updateClock(seconds);
                     break;
                 case FIGHTING:
-                    this.seconds++;
-                    this.plugin.getPlayerScoreBoard().updateClock(seconds);
+                    walls.getPlayerScoreBoard().updateClock(++seconds);
                     break;
                 default:
                     break;
@@ -69,14 +58,12 @@ public class Clock extends Thread {
     }
 
     public void abort() {
-        this.runner = null;
-        this.seconds = 0;
+        runner = null;
+        seconds = 0;
     }
     
     public void setClock(int seconds, Runnable runner) {
         this.seconds = seconds;
         this.runner = runner;
     }
-
-
 }

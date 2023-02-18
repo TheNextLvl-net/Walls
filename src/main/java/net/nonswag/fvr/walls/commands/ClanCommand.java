@@ -176,13 +176,11 @@ public class ClanCommand implements CommandExecutor {
             if (args.length == 2 && (sender.isOp() || wallsPlayer.getRank().mgm())) {
                 if (walls.database.disbandClanByName(args[1])) {
                     Notifier.success(sender, args[1] + " blew up - all gone! :(");
-                    Notifier.staff(walls, args[1] + " was disbanded by " + sender.getName());
                 } else Notifier.error(sender, "Nope. Something went wrong there :(");
             } else if (args.length == 1) {
                 if (wallsPlayer.isClanLeader()) {
                     if (walls.database.disbandClan(wallsPlayer.getClan())) {
                         Notifier.success(sender, "You're clan blew up - all gone! :(");
-                        Notifier.staff(walls, ChatColor.translateAlternateColorCodes('&', wallsPlayer.getClan()) + " was disbanded.");
                         wallsPlayer.setClan(null);
                         wallsPlayer.setClanLeader(false);
                     } else {
@@ -273,7 +271,6 @@ public class ClanCommand implements CommandExecutor {
             if (!player.isClanLeader()) {
                 String newName = stripSpecialClanCharacters(args[1]);
                 if (walls.database.createClan(newName, newLeader.getUniqueId(), ClanCommand.stripAllClanCharacters(newName))) {
-                    Notifier.staff(this.walls, newLeader.getName() + " is now leader of " + newName);
                     Notifier.success(newLeader, "You are now leader of " + newName);
                     this.setClanName(newLeader, newName);
                     player.setClanLeader(true);

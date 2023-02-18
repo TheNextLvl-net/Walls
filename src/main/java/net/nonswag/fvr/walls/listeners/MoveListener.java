@@ -18,7 +18,9 @@ public class MoveListener implements Listener {
         switch (walls.getGameState()) {
             case PREGAME:
                 int lobbyHeight = walls.getGameSpawn().getBlockY();
-                if (event.getTo().getBlockY() < (lobbyHeight - 6) && event.getPlayer().getGameMode() != GameMode.CREATIVE) {
+                if (event.getPlayer().getGameMode() == GameMode.CREATIVE) return;
+                if (event.getPlayer().getGameMode() == GameMode.SPECTATOR) return;
+                if (event.getTo().getBlockY() < lobbyHeight - 6) {
                     event.getPlayer().setFallDistance(0f);
                     event.getPlayer().teleport(walls.getGameSpawn());
                 }

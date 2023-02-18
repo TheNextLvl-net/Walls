@@ -86,9 +86,7 @@ public class KitCommand implements CommandExecutor {
     }
 
     public static void playerChoice(Walls walls, Player player, String choice) {
-        if (used.contains(player.getUniqueId())) {
-            Notifier.error(player, "Seems like you already have a kit :)");
-        } else {
+        if (!used.contains(player.getUniqueId())) {
             if (free.containsKey(choice)) {
                 player.getInventory().addItem(free.get(choice).toArray(new ItemStack[]{}));
                 Notifier.error(player, "Enjoy FREE kit " + choice);
@@ -106,7 +104,7 @@ public class KitCommand implements CommandExecutor {
                 } else Notifier.error(player, "This is a PRO kit - you need to upgrade to get this one :-/");
             } else Notifier.error(player, "No luck - kit " + choice + " does not exist :(");
             player.updateInventory();
-        }
+        } else Notifier.error(player, "Seems like you already have a kit :)");
     }
 
     @Getter

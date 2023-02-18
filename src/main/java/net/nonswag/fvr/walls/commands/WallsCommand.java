@@ -33,13 +33,13 @@ public class WallsCommand implements CommandExecutor {
         if (args.length < 1) {
             if (sender instanceof Player) error(sender, "usage: /walls votestart");
             if (sender.isOp()) {
-                error(sender, "usage: /walls drop | rank | autostartplayers | peacetimemins | clanrename | clanbattle | captain | restricted | diamondwalls | ironwalls | fixdb");
+                error(sender, "usage: /walls drop | rank | autostartplayers | clanrename | clanbattle | captain | restricted | diamondwalls | ironwalls | fixdb");
             }
         } else if (args[0].equalsIgnoreCase("diamondwalls")) {
-            if (sender.isOp()) broadcast("Set diamondwalls to " + (Walls.diamondONLY = !Walls.diamondONLY));
+            if (sender.isOp()) broadcast("Set diamondwalls to " + (Walls.diamondWalls = !Walls.diamondWalls));
             else error(sender, "You have no rights to do this");
         } else if (args[0].equalsIgnoreCase("ironwalls")) {
-            if (sender.isOp()) broadcast("Set ironwalls to " + (Walls.ironONLY = !Walls.ironONLY));
+            if (sender.isOp()) broadcast("Set ironwalls to " + (Walls.ironWalls = !Walls.ironWalls));
             else error(sender, "You have no rights to do this");
         } else if (args[0].equalsIgnoreCase("stop")) stop(sender);
         else if (args[0].equalsIgnoreCase("fixdb")) fixdb(sender);
@@ -53,7 +53,6 @@ public class WallsCommand implements CommandExecutor {
         else if (args[0].equalsIgnoreCase("drop")) drop(sender);
         else if (args[0].equalsIgnoreCase("rank")) setRank(sender, args);
         else if (args[0].equalsIgnoreCase("autostartplayers")) setAutoStartPlayers(sender, args);
-        else if (args[0].equalsIgnoreCase("peacetimemins")) setPeaceTimeMins(sender, args);
         else if (args[0].equalsIgnoreCase("clanbattle")) toggleClanBattle(sender);
         else if (args[0].equalsIgnoreCase("restricted")) setPlayerJoinRestriction(sender, args);
         else if (args[0].equalsIgnoreCase("captain")) this.addCaptain(sender, args);
@@ -272,21 +271,6 @@ public class WallsCommand implements CommandExecutor {
                 error(sender, "/walls autostartplayers <number of players>");
             }
             else error(sender, "/walls autostartplayers <number of players>");
-        } else error(sender, "You have no rights to do this");
-    }
-
-    private void setPeaceTimeMins(CommandSender sender, String[] args) {
-        if (sender.isOp()) {
-            if (args.length == 2) {
-                try {
-                    Walls.peaceTimeMins = Integer.parseInt(args[1]);
-                    success(sender, "Yup. Peace Time Minutes Set to " + Walls.peaceTimeMins);
-                } catch (Exception e) {
-                    error(sender, "/walls peacetimemins <minutes>");
-                }
-            } else {
-                error(sender, "/walls peacetimemins <minutes>");
-            }
         } else error(sender, "You have no rights to do this");
     }
 

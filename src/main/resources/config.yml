@@ -13,15 +13,9 @@ tournamentMode: false
 # 0-ANYONE, 1-VIP, 2-PRO, 3-LEGENDARY, 4-STAFF
 playerJoinRestriction: ANYONE
 allowPickTeams: true
-# --------------------------------------
-# --------------------------------------
-# fullDiamond = random diamond, iron, chain games (usually 3 mins peace time)
-fullDiamond: false
-# --------------------------------------
-# --------------------------------------
-# diamondONLY restricts the above to ONLY diamond games. Top one sets priority. If diamond is true, iron will be ignored and so on...
-diamondONLY: false
-ironONLY: false
+# Either diamond or iron walls
+diamondWalls: false
+ironWalls: false
 # --------------------------------------
 # --------------------------------------
 # clanBattle allows clan naming - which affects team names. restricts to only those with the clan names to join and play.

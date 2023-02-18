@@ -80,7 +80,7 @@ public class PlayerScoreBoard {
                 if (walls.starting) {
                     teamNumbersObjective.setDisplayName(ChatColor.LIGHT_PURPLE + "Starting.. " + ChatColor.WHITE + time);
                 } else if (time == 0) {
-                    teamNumbersObjective.setDisplayName("Peace: " + Walls.peaceTimeMins + ":00");
+                    teamNumbersObjective.setDisplayName("Peace: " + walls.getPeaceTimeMins() + ":00");
                 } else {
                     teamNumbersObjective.setDisplayName((Walls.preGameAutoStartPlayers - walls.getNumberOfPlayers()) + " more players");
                 }

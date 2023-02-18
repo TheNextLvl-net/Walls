@@ -15,24 +15,17 @@ import org.bukkit.entity.Player;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class GameStarter {
 
     private static final int[] numberAddedToTeam = new int[5];
 
     public static void startGame(Map<UUID, WallsPlayer> players, final Walls walls) {
-        for (int i = 0; i < 5; i++) {
-            numberAddedToTeam[i] = 0;
-        }
-
+        for (int i = 0; i < 5; i++) numberAddedToTeam[i] = 0;
         Map<UUID, Team> assignedPlayers = new HashMap<>();
-
         BasicPlayerKit basicKit = new BasicPlayerKit();
         VipStartPlayerKitPerks vipPerks = new VipStartPlayerKitPerks();
         ProStartPlayerKitPerks proPerks = new ProStartPlayerKitPerks();
-
-
         for (UUID all : players.keySet()) {
             Player player = Bukkit.getPlayer(all);
             if (player == null) continue;
@@ -83,33 +76,14 @@ public class GameStarter {
 
         walls.setGameState(GameState.PEACETIME);
         Bukkit.getWorlds().forEach(world -> world.setGameRuleValue("doDaylightCycle", "true"));
-        Notifier.broadcast(Walls.peaceTimeMins + " minutes until the wall drops! " + ChatColor.BOLD + "GOOD LUCK EVERYONE!");
+        Notifier.broadcast(walls.getPeaceTimeMins() + " minutes until the wall drops! " + ChatColor.BOLD + "GOOD LUCK EVERYONE!");
 
         walls.kickOffCompassThread();
         Notifier.broadcast("Enemy Finder Compass now activated.");
 
-
-        if (Walls.diamondONLY) {
-            FullKitCommand.fullDiamond(walls);
-
-        } else if (Walls.ironONLY) {
-
-            FullKitCommand.fullIron(walls);
-
-        } else if (Walls.fullDiamond) {
-            int whichGame = ThreadLocalRandom.current().nextInt(4);
-            switch (whichGame) {
-                case 1:
-                    FullKitCommand.fullIron(walls);
-                    break;
-                case 2:
-                case 3:
-                    FullKitCommand.fullDiamond(walls);
-                    break;
-
-            }
-        }
-        walls.clock.setClock(Walls.peaceTimeMins * 60, walls::dropWalls);
+        if (Walls.diamondWalls) FullKitCommand.fullDiamond(walls);
+        else if (Walls.ironWalls) FullKitCommand.fullIron(walls);
+        walls.clock.setClock(walls.getPeaceTimeMins() * 60, walls::dropWalls);
         walls.getPlayerScoreBoard().updateScoreboardScores();
     }
 

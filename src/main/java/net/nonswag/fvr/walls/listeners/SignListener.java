@@ -49,7 +49,7 @@ public class SignListener implements Listener {
     }
 
     private void biomeSign(SignChangeEvent event) {
-        String teamName = event.getLine(1).replace(" ", "");
+        String teamName = event.getLine(1).trim();
         try {
             Walls.Team team = Walls.Team.valueOf(teamName.toUpperCase());
             if (team.equals(Walls.Team.SPECTATORS)) throw new IllegalArgumentException();

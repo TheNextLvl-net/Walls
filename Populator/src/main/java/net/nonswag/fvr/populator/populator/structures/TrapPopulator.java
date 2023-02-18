@@ -23,7 +23,7 @@ public class TrapPopulator extends BlockPopulator {
     @Override
     public void populate(World world, Random rand, Chunk chunk) {
         if (!contains(chunk)) return;
-        if (rand.nextInt(100) < 27) return;
+        if (rand.nextInt(100) <= 13.5) return;
         int x = 6 + rand.nextInt(4);
         int z = 6 + rand.nextInt(4);
         int depth = 20 + rand.nextInt(30);

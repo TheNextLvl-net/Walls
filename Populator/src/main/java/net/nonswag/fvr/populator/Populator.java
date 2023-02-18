@@ -37,7 +37,6 @@ public class Populator extends JavaPlugin {
                     WorldFiller filler = (WorldFiller) constructor.newInstance(world, minX, minZ, maxX, maxZ, 1, 61);
                     filler.generate();
                     filler.populate();
-                    System.out.println("Generated biome " + (i + 1) + ": " + filler.getClass().getSimpleName());
                 }
                 String time = StringUtil.format("#,##0.000", (System.currentTimeMillis() - now) / 1000d);
                 System.out.println("Generated biomes in: " + time + "s");
@@ -75,7 +74,7 @@ public class Populator extends JavaPlugin {
         Collections.shuffle(fillers);
         for (int i = 0; i < 4; i++) {
             Class<? extends WorldFiller> filler = fillers.get(i);
-            biomes.put(i + 1, filler.getSimpleName());
+            biomes.put(i == 0 ? 1 : i == 1 ? 2 : i == 2 ? 4 : 3, filler.getSimpleName());
             Populator.fillers.add(filler);
         }
         return biomes;

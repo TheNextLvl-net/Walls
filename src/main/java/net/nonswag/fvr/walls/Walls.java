@@ -34,7 +34,10 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.entity.*;
 import org.bukkit.event.entity.EntityRegainHealthEvent.RegainReason;
-import org.bukkit.event.inventory.*;
+import org.bukkit.event.inventory.BrewEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.*;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.weather.WeatherChangeEvent;
@@ -132,13 +135,12 @@ public class Walls extends JavaPlugin implements Listener {
         }
     }
 
-    public static final String STAFFCHATT_PREFIX = "§c[§bStaffChat§c] ";
     public static final String CLANCHAT_PREFIX = "§c[§3??§c] ";
-    public static final String OPCHAT_PREFIX = "§c[§cOPCHAT§c] ";
     public static String[] teamNames = {"§dSpecs", "§cTeam 1", "§eTeam 2", "§aTeam 3", "§9Team 4"};
     public static ChatColor[] teamChatColors = {ChatColor.LIGHT_PURPLE, ChatColor.RED, ChatColor.YELLOW, ChatColor.GREEN, ChatColor.BLUE};
 
-    private final Map<UUID, Integer> mutedPlayers = new HashMap<>();
+    private final Map<UUID, Integer> mutedPlayers = new HashMap<>(); // TODO: 17.02.23 should i add a mute system or remove the code base?
+    @Getter
     private final Map<UUID, WallsPlayer> players = new HashMap<>();
 
     @Getter
@@ -160,6 +162,7 @@ public class Walls extends JavaPlugin implements Listener {
     static {
         PropertiesFile properties = new PropertiesFile("server.properties");
         levelName = properties.getRoot().getString("level-name");
+        freeUpSpace();
     }
 
     @Getter
@@ -210,11 +213,6 @@ public class Walls extends JavaPlugin implements Listener {
 
     @Getter
     private final List<EntityType> allowedMobs = Arrays.asList(
-            EntityType.CAVE_SPIDER,
-            EntityType.ZOMBIE,
-            EntityType.SKELETON,
-            EntityType.SILVERFISH,
-            EntityType.SPIDER,
             EntityType.SHEEP,
             EntityType.PIG,
             EntityType.CHICKEN,
@@ -227,22 +225,23 @@ public class Walls extends JavaPlugin implements Listener {
     @Getter
     private final List<Selection> selections = new ArrayList<>();
     public Clock clock;
+    @Getter
+    @Setter
     private GameState gameState = GameState.PREGAME;
     @Getter
     private final Map<UUID, PlayerInventory> inventory = new HashMap<>();
     public static boolean UHC = false;
-    public static int peaceTimeMins = 15;
     public static int preGameAutoStartPlayers = 4;
     public static int preGameAutoStartSeconds = 30;
     public static PlayerJoinType playerJoinRestriction = PlayerJoinType.ANYONE;
-    public static boolean fullDiamond = false;
-    public static boolean diamondONLY = false;
-    public static boolean ironONLY = false;
+    public static boolean diamondWalls = false;
+    public static boolean ironWalls = false;
     public static boolean clanBattle = false;
     public static boolean tournamentMode = false;
     public static boolean allowPickTeams = false;
     public static boolean shhhhh = false;
     public static List<String> clans = new ArrayList<>();
+    private int peaceTimeMins = 15;
     public final int restartTimer = 15;
     public boolean starting = false;
     @Getter
@@ -264,7 +263,10 @@ public class Walls extends JavaPlugin implements Listener {
     public void onEnable() {
         spectatorKit = new SpecPlayerKit(this);
         playerScoreBoard = new PlayerScoreBoard(this);
-        Populator.selectBiomes().forEach((ordinal, biome) -> BIOMES.put(Team.values()[ordinal], biome));
+        Populator.selectBiomes().forEach((ordinal, biome) -> {
+            BIOMES.put(Team.values()[ordinal], biome);
+            System.out.println(biome + " is related to team " + Team.values()[ordinal] + " " + ordinal);
+        });
         WorldEdit.getInstance().getConfiguration().navigationWand = -1;
 
         Bukkit.getScheduler().runTaskLater(this, () -> {
@@ -289,9 +291,8 @@ public class Walls extends JavaPlugin implements Listener {
         preGameAutoStartSeconds = getConfig().getInt("preGameAutoStartSeconds");
         relogTime = getConfig().getInt("relogTime");
         combatRelogTime = getConfig().getInt("combatRelogTime");
-        fullDiamond = getConfig().getBoolean("fullDiamond");
-        diamondONLY = getConfig().getBoolean("diamondONLY");
-        ironONLY = getConfig().getBoolean("ironONLY");
+        diamondWalls = getConfig().getBoolean("diamondWalls");
+        ironWalls = getConfig().getBoolean("ironWalls");
         clanBattle = getConfig().getBoolean("clanBattle");
         tournamentMode = getConfig().getBoolean("tournamentMode");
         playerJoinRestriction = PlayerJoinType.valueOf(getConfig().getString("playerJoinRestriction"));
@@ -312,27 +313,17 @@ public class Walls extends JavaPlugin implements Listener {
         }
 
         World world = Bukkit.getWorlds().get(0);
-        gameSpawn = new Location(world, -2, world.getHighestBlockYAt(-2, 130), 130);
 
-        team1Spawn = new Location(world, -149, 65, -17);
-        team2Spawn = new Location(world, 144, 65, -17);
-        team3Spawn = new Location(world, 144, 65, 276);
-        team4Spawn = new Location(world, -149, 65, 276);
-        spawns.add(gameSpawn);
-        spawns.add(team1Spawn);
-        spawns.add(team2Spawn);
-        spawns.add(team3Spawn);
-        spawns.add(team4Spawn);
+        spawns.add(team1Spawn = new Location(world, -149, 65, -17));
+        spawns.add(team2Spawn = new Location(world, 144, 65, -17));
+        spawns.add(team3Spawn = new Location(world, 144, 65, 276));
+        spawns.add(team4Spawn = new Location(world, -149, 65, 276));
 
-        team1Corner = new Location(world, -23, 62, 108);
-        team2Corner = new Location(world, 19, 62, 108);
-        team3Corner = new Location(world, 19, 62, 151);
-        team4Corner = new Location(world, -23, 62, 151);
-        corners.add(gameSpawn);
-        corners.add(team1Corner);
-        corners.add(team2Corner);
-        corners.add(team3Corner);
-        corners.add(team4Corner);
+        corners.add(gameSpawn = new Location(world, -2, world.getHighestBlockYAt(-2, 130), 130));
+        corners.add(team1Corner = new Location(world, -23, 62, 108));
+        corners.add(team2Corner = new Location(world, 19, 62, 108));
+        corners.add(team3Corner = new Location(world, 19, 62, 151));
+        corners.add(team4Corner = new Location(world, -23, 62, 151));
 
         DeathMessages.initializeDeathMessages();
 
@@ -340,13 +331,8 @@ public class Walls extends JavaPlugin implements Listener {
         registerCommands();
 
         defineArena();
-        this.clock = new Clock(this);
+        (this.clock = new Clock(this)).start();
         this.database = new DatabaseUtil(this);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (WallsCommand.FIX_DB) fixDatabase();
-            changeLevelName(nextMap);
-            freeUpSpace();
-        }));
         nextMap = selectNextMap();
         loadStats();
     }
@@ -356,6 +342,7 @@ public class Walls extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new PingListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SignListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ChatListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new MoveListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SpawnListener(this), this);
         Bukkit.getPluginManager().registerEvents(new WorldListener(this), this);
         Bukkit.getPluginManager().registerEvents(new RespawnListener(this), this);
@@ -390,8 +377,10 @@ public class Walls extends JavaPlugin implements Listener {
     public void onDisable() {
         Walls.STAT_SIGNS.save();
         Walls.BIOME_SIGNS.save();
-        this.clock.interrupt();
+        clock.interrupt();
+        if (WallsCommand.FIX_DB) fixDatabase();
         Database.disconnect();
+        changeLevelName(nextMap);
     }
 
     private String selectNextMap() {
@@ -418,9 +407,11 @@ public class Walls extends JavaPlugin implements Listener {
         } else Files.copy(source.toPath(), destination.toPath());
     }
 
-    private void freeUpSpace() {
+    private static void freeUpSpace() {
         try {
-            delete(new File(Bukkit.getWorldContainer(), levelName));
+            File[] files = Bukkit.getWorldContainer().listFiles((dir, name) -> !name.equalsIgnoreCase(levelName) && !name.equals("Templates"));
+            if (files == null) throw new FileNotFoundException(Bukkit.getWorldContainer().getAbsolutePath());
+            for (File file : files) delete(file);
         } catch (IOException e) {
             System.err.println("Failed to delete the old map, You have to do it manually");
             e.printStackTrace();
@@ -453,7 +444,7 @@ public class Walls extends JavaPlugin implements Listener {
         properties.save();
     }
 
-    private void delete(File file) throws IOException {
+    private static void delete(File file) throws IOException {
         if (file.isDirectory()) {
             File[] files = file.listFiles();
             if (files != null) for (File all : files) delete(all);
@@ -487,7 +478,7 @@ public class Walls extends JavaPlugin implements Listener {
                 getPlayerScoreBoard().addPlayerToTeam(event.getEntity(), Team.SPECTATORS);
                 WallsPlayer deadWallsPlayer = getPlayer(event.getEntity());
                 deadWallsPlayer.setDeaths(1);
-                deadWallsPlayer.setMinutes(clock.getSecondsRemaining() / 60);
+                deadWallsPlayer.setMinutes(clock.getSeconds() / 60);
                 if (deadWallsPlayer.getRank().vip()) player.setAllowFlight(true);
                 if (clanBattle || tournamentMode) {
                     event.getEntity().kickPlayer("§cGG. No Specs in this game I'm afraid.");
@@ -514,9 +505,7 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler(priority = EventPriority.LOW)
     public void onDispense(BlockDispenseEvent event) {
-        if (this.foodDisabled && event.getItem().getType() == Material.POTION) {
-            event.setCancelled(true);
-        }
+        if (foodDisabled && event.getItem().getType() == Material.POTION) event.setCancelled(true);
     }
 
     @EventHandler
@@ -547,138 +536,54 @@ public class Walls extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    void PlayerTeleportEvent(PlayerTeleportEvent event) {
-        if (event.getCause() == TeleportCause.ENDER_PEARL) {
-            if (event.getTo().getBlockY() >= (buildHeight + 10)) {
-                Notifier.error(event.getPlayer(), "Pearl landed a little too high.. you need to aim lower :(");
-                event.setCancelled(true);
-            } else if (this.isInASpawn(event.getTo()) && event.getTo().getBlockY() > 82) {
-                event.setCancelled(true);
-                Notifier.error(event.getPlayer(), "Aww man you cant pearl there :(");
-            }
+    public void PlayerTeleportEvent(PlayerTeleportEvent event) {
+        if (event.getCause() != TeleportCause.ENDER_PEARL) return;
+        if (event.getTo().getBlockY() >= buildHeight) {
+            Notifier.error(event.getPlayer(), "Pearl landed a little too high.. you need to aim lower :(");
+            event.setCancelled(true);
+        } else if (this.isInASpawn(event.getTo()) && event.getTo().getBlockY() > 82) {
+            Notifier.error(event.getPlayer(), "Aww man you cant pearl there :(");
+            event.setCancelled(true);
         }
     }
 
     private boolean checkSpecBlockingProjectile(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Arrow) {
-            if (event.getEntity() instanceof Player && ((Arrow) event.getDamager()).getShooter() instanceof Player) {
-                Arrow arrow = (Arrow) event.getDamager();
-
-                Vector velocity = arrow.getVelocity();
-
-                Player shooter = (Player) arrow.getShooter();
-                Player damaged = (Player) event.getEntity();
-
-                try {
-                    if (this.isSpectator(event.getEntity())) {
-                        damaged.teleport(event.getDamager().getLocation().add(0, 5, 0));
-                        damaged.setFlying(true);
-
-                        Arrow newArrow = shooter.launchProjectile(Arrow.class);
-                        newArrow.setShooter(shooter);
-                        newArrow.setVelocity(velocity);
-                        newArrow.setBounce(false);
-
-                        event.setCancelled(true);
-                        arrow.remove();
-                        return true;
-                    }
-
-                } catch (Exception e) {
-                    this.getLogger().info("ERROR: failed to fixed spec block enderpearl");
-                }
-
-            }
-        } else if (event.getDamager() instanceof Snowball) {
-            if (event.getEntity() instanceof Player && ((Snowball) event.getDamager()).getShooter() instanceof Player) {
-                Snowball snowBall = (Snowball) event.getDamager();
-
-                Vector velocity = snowBall.getVelocity();
-
-                Player shooter = (Player) snowBall.getShooter();
-                Player damaged = (Player) event.getEntity();
-
-                try {
-                    if (this.isSpectator(event.getEntity())) {
-                        damaged.teleport(event.getEntity().getLocation().add(0, 5, 0));
-                        damaged.setFlying(true);
-
-                        Snowball newSnowBall = shooter.launchProjectile(Snowball.class);
-                        newSnowBall.setShooter(shooter);
-                        newSnowBall.setVelocity(velocity);
-                        newSnowBall.setBounce(false);
-
-                        event.setCancelled(true);
-                        snowBall.remove();
-                        return true;
-                    }
-                } catch (Exception e) {
-                    this.getLogger().info("ERROR: failed to fixed spec block enderpearl");
-                }
-
-            }
-        } else if (event.getDamager() instanceof EnderPearl) {
-            if (event.getEntity() instanceof Player && ((EnderPearl) event.getDamager()).getShooter() instanceof Player) {
-                EnderPearl enderPearl = (EnderPearl) event.getDamager();
-
-                Vector velocity = enderPearl.getVelocity();
-
-                Player shooter = (Player) enderPearl.getShooter();
-                Player damaged = (Player) event.getEntity();
-
-                // spec block
-                try {
-                    if (this.isSpectator(event.getEntity())) {
-                        damaged.teleport(event.getEntity().getLocation().add(0, 5, 0));
-                        damaged.setFlying(true);
-
-                        EnderPearl newEnderPearl = shooter.launchProjectile(EnderPearl.class);
-                        newEnderPearl.setShooter(shooter);
-                        newEnderPearl.setVelocity(velocity);
-                        newEnderPearl.setBounce(false);
-
-                        event.setCancelled(true);
-                        enderPearl.remove();
-                        return true;
-                    }
-                } catch (Exception e) {
-                    this.getLogger().info("ERROR: failed to fixed spec block enderpearl");
-                }
-            }
-        }
-        return false;
-
+        if (!(event.getDamager() instanceof Projectile)) return false;
+        if (!(event.getEntity() instanceof Player)) return false;
+        if (!(((Projectile) event.getDamager()).getShooter() instanceof Player)) return false;
+        Projectile projectile = (Projectile) event.getDamager();
+        Vector velocity = projectile.getVelocity();
+        Player shooter = (Player) projectile.getShooter();
+        Player damaged = (Player) event.getEntity();
+        if (!isSpectator(event.getEntity())) return false;
+        damaged.teleport(event.getDamager().getLocation().add(0, 5, 0));
+        damaged.setFlying(true);
+        Projectile newProjectile = shooter.launchProjectile(projectile.getClass());
+        newProjectile.setShooter(shooter);
+        newProjectile.setVelocity(velocity);
+        newProjectile.setBounce(false);
+        event.setCancelled(true);
+        projectile.remove();
+        return true;
     }
 
     @EventHandler(priority = EventPriority.HIGH)
     public void onPlayerHurtPlayer(EntityDamageByEntityEvent event) {
-
         Entity entityDamager = event.getDamager();
-
-
         switch (getGameState()) {
             case PREGAME:
-                if (entityDamager instanceof Player) {
-                    Player damager = (Player) entityDamager;
-                    if (damager.getInventory().getItemInHand().getType() == Material.SNOW_BALL) {
-                        damager.setHealth(20);
-                    } else {
-                        event.setCancelled(true);
-                    }
-                }
+                if (!(entityDamager instanceof Player)) return;
+                Player damager = (Player) entityDamager;
+                if (damager.getInventory().getItemInHand().getType() == Material.SNOW_BALL) damager.setHealth(20);
+                else event.setCancelled(true);
                 break;
             case PEACETIME:
             case FIGHTING:
-
-                if (checkSpecBlockingProjectile(event)) {
-                    return;
-                }
-
+                if (checkSpecBlockingProjectile(event)) return;
                 if (entityDamager instanceof Player && this.isSpectator(entityDamager)) {
                     event.setCancelled(true);
                     break;
                 }
-
                 if (event.getEntity() instanceof Player && event.getDamager() instanceof Player) {
                     if (isSpectator(event.getEntity()) || isSpectator(event.getDamager())) {
                         event.setCancelled(true);
@@ -688,66 +593,48 @@ public class Walls extends JavaPlugin implements Listener {
                         event.setCancelled(true);
                         break;
                     }
-
-                    if (!tournamentMode) {
-
-
-                        UUID hitter = event.getDamager().getUniqueId();
-                        if (!getInCombat().containsKey(hitter)) {
-                            Notifier.error(Bukkit.getPlayer(hitter), "You are now in combat ! Do not LOG out.");
-                        }
-                        UUID beingHit = event.getEntity().getUniqueId();
-                        if (!getInCombat().containsKey(beingHit)) {
-                            Notifier.error(Bukkit.getPlayer(beingHit), "You are now in combat ! Do not LOG out.");
-                        }
-                        getInCombat().put(hitter, System.currentTimeMillis() + (combatRelogTime * 1000L));
-                        getInCombat().put(beingHit, System.currentTimeMillis() + (combatRelogTime * 1000L));
+                    if (tournamentMode) return;
+                    UUID hitter = event.getDamager().getUniqueId();
+                    if (!getInCombat().containsKey(hitter)) {
+                        Notifier.error(Bukkit.getPlayer(hitter), "You are now in combat ! Do not LOG out.");
                     }
+                    UUID beingHit = event.getEntity().getUniqueId();
+                    if (!getInCombat().containsKey(beingHit)) {
+                        Notifier.error(Bukkit.getPlayer(beingHit), "You are now in combat ! Do not LOG out.");
+                    }
+                    getInCombat().put(hitter, System.currentTimeMillis() + (combatRelogTime * 1000L));
+                    getInCombat().put(beingHit, System.currentTimeMillis() + (combatRelogTime * 1000L));
                 }
-
-
                 if (event.getDamager() instanceof Projectile) {
-                    final ProjectileSource shooter = ((Projectile) event.getDamager()).getShooter();
-                    UUID hitter = null;
+                    ProjectileSource shooter = ((Projectile) event.getDamager()).getShooter();
+                    UUID attacker = null;
                     if (shooter instanceof Player && event.getEntity() instanceof Player) {
                         if (sameTeam(event.getEntity().getUniqueId(), ((Entity) shooter).getUniqueId())) {
                             event.setCancelled(true);
                             break;
                         }
-                        hitter = ((Player) ((Projectile) event.getDamager()).getShooter()).getUniqueId();
+                        attacker = ((Player) ((Projectile) event.getDamager()).getShooter()).getUniqueId();
                     }
-
-                    if (!tournamentMode) {
-                        if (hitter != null && !getInCombat().containsKey(hitter)) {
-                            Notifier.error(Bukkit.getPlayer(hitter), "You are now in combat ! Do not LOG out.");
-                            getInCombat().put(hitter, System.currentTimeMillis() + (combatRelogTime * 1000L));
-                        }
-
-                        if (event.getEntity() instanceof Player) {
-                            UUID beingHit = event.getEntity().getUniqueId();
-                            if (!getInCombat().containsKey(beingHit)) {
-                                Notifier.error(Bukkit.getPlayer(beingHit), "You are now in combat ! Do not LOG out.");
-                            }
-                            getInCombat().put(beingHit, System.currentTimeMillis() + (combatRelogTime * 1000L));
-                        }
+                    if (tournamentMode) return;
+                    if (attacker != null && !getInCombat().containsKey(attacker)) {
+                        Notifier.error(Bukkit.getPlayer(attacker), "You are now in combat ! Do not LOG out.");
+                        getInCombat().put(attacker, System.currentTimeMillis() + (combatRelogTime * 1000L));
                     }
+                    if (!(event.getEntity() instanceof Player)) return;
+                    UUID beingHit = event.getEntity().getUniqueId();
+                    if (!getInCombat().containsKey(beingHit)) {
+                        Notifier.error(Bukkit.getPlayer(beingHit), "You are now in combat ! Do not LOG out.");
+                    }
+                    getInCombat().put(beingHit, System.currentTimeMillis() + (combatRelogTime * 1000L));
                 }
-
-
                 break;
-
             case FINISHED:
-                if (event.getEntity() instanceof Player) {
-                    event.setCancelled(true);
-                }
-                if (event.getDamager() instanceof Player) {
-                    event.setCancelled(true);
-                }
+                if (!(event.getEntity() instanceof Player) && !(event.getDamager() instanceof Player)) return;
+                event.setCancelled(true);
                 break;
             default:
                 break;
         }
-
     }
 
     private void checkForCompassSwitch(PlayerInteractEvent event) {
@@ -797,19 +684,18 @@ public class Walls extends JavaPlugin implements Listener {
                     || (clickedMaterial == Material.ENCHANTMENT_TABLE) || (clickedMaterial == Material.WORKBENCH)) {
                 Location location = event.getClickedBlock().getLocation();
                 for (ProtectedContainer container : getProtectedContainers()) {
-                    if (container.matches(location, null)) {
-                        if (container.getOwner().equals(event.getPlayer().getName())) {
-                            if (event.getPlayer().isSneaking()) {
-                                getProtectedContainers().remove(container);
-                                Notifier.success(event.getPlayer(), clickedMaterial.name() + " no longer protected.");
-                                event.setCancelled(true);
-                            }
-                        } else {
-                            Notifier.error(event.getPlayer(), "This is owned by " + container.getOwner());
+                    if (!container.matches(location, null)) continue;
+                    if (container.getOwner().equals(event.getPlayer().getName())) {
+                        if (event.getPlayer().isSneaking()) {
+                            getProtectedContainers().remove(container);
+                            Notifier.success(event.getPlayer(), clickedMaterial.name() + " no longer protected.");
                             event.setCancelled(true);
                         }
-                        return;
+                    } else {
+                        Notifier.error(event.getPlayer(), "This is owned by " + container.getOwner());
+                        event.setCancelled(true);
                     }
+                    return;
                 }
             }
         }
@@ -817,30 +703,23 @@ public class Walls extends JavaPlugin implements Listener {
         if ((event.getAction() == Action.RIGHT_CLICK_BLOCK)) {
             final Material clickedMaterial = event.getClickedBlock().getType();
             if ((clickedMaterial == Material.CHEST) || (clickedMaterial == Material.FURNACE) || (clickedMaterial == Material.BURNING_FURNACE)) {
-                final Location location = event.getClickedBlock().getLocation();
+                Location location = event.getClickedBlock().getLocation();
                 Location second = null;
                 if (clickedMaterial == Material.CHEST) {
-                    final Block north = event.getClickedBlock().getRelative(BlockFace.NORTH);
-                    final Block south = event.getClickedBlock().getRelative(BlockFace.SOUTH);
-                    final Block east = event.getClickedBlock().getRelative(BlockFace.EAST);
-                    final Block west = event.getClickedBlock().getRelative(BlockFace.WEST);
-                    if (north.getType() == Material.CHEST) {
-                        second = north.getLocation();
-                    } else if (south.getType() == Material.CHEST) {
-                        second = south.getLocation();
-                    } else if (east.getType() == Material.CHEST) {
-                        second = east.getLocation();
-                    } else if (west.getType() == Material.CHEST) {
-                        second = west.getLocation();
-                    }
+                    Block north = event.getClickedBlock().getRelative(BlockFace.NORTH);
+                    Block south = event.getClickedBlock().getRelative(BlockFace.SOUTH);
+                    Block east = event.getClickedBlock().getRelative(BlockFace.EAST);
+                    Block west = event.getClickedBlock().getRelative(BlockFace.WEST);
+                    if (north.getType() == Material.CHEST) second = north.getLocation();
+                    else if (south.getType() == Material.CHEST) second = south.getLocation();
+                    else if (east.getType() == Material.CHEST) second = east.getLocation();
+                    else if (west.getType() == Material.CHEST) second = west.getLocation();
                 }
-                for (final ProtectedContainer container : getProtectedContainers()) {
-                    if (container.matches(location, second)) {
-                        if (!container.getOwner().equals(event.getPlayer().getName())) {
-                            event.setCancelled(true);
-                            Notifier.error(event.getPlayer(), "This is owned by " + container.getOwner());
-                        }
-                    }
+                for (ProtectedContainer container : getProtectedContainers()) {
+                    if (!container.matches(location, second)) continue;
+                    if (container.getOwner().equals(event.getPlayer().getName())) continue;
+                    Notifier.error(event.getPlayer(), "This is owned by " + container.getOwner());
+                    event.setCancelled(true);
                 }
             }
         }
@@ -850,18 +729,17 @@ public class Walls extends JavaPlugin implements Listener {
         switch (getGameState()) {
             case PEACETIME:
             case FIGHTING:
-                if ((event.getAction() == Action.LEFT_CLICK_BLOCK) || (event.getAction() == Action.RIGHT_CLICK_BLOCK) && !this.isSpectator(event.getPlayer())) {
-                    final Block block = event.getClickedBlock();
-                    if ((block != null) && (block.getType() == Material.WOOD_BUTTON || block.getType() == Material.STONE_BUTTON) && !this.isSpectator(event.getPlayer())) {
-                        final Block above = block.getRelative(BlockFace.DOWN);
-                        if ((above != null) && (above.getType() == Material.WALL_SIGN)) {
-                            final Sign sign = (Sign) above.getState();
-                            if (ChatColor.stripColor(sign.getLine(2)).equalsIgnoreCase("kit")) {
-                                final String choice = ChatColor.stripColor(sign.getLine(1)).toLowerCase().replace(" ", "");
-                                KitCommand.playerChoice(this, event.getPlayer(), choice);
-                            }
-                        }
-                    }
+                if (event.getAction() != Action.LEFT_CLICK_BLOCK && event.getAction() != Action.RIGHT_CLICK_BLOCK)
+                    return;
+                if (this.isSpectator(event.getPlayer())) return;
+                Block block = event.getClickedBlock();
+                if ((block != null) && (block.getType() == Material.WOOD_BUTTON || block.getType() == Material.STONE_BUTTON)) {
+                    Block above = block.getRelative(BlockFace.DOWN);
+                    if (above == null || above.getType() != Material.WALL_SIGN) return;
+                    Sign sign = (Sign) above.getState();
+                    if (!ChatColor.stripColor(sign.getLine(2)).equalsIgnoreCase("kit")) return;
+                    String choice = ChatColor.stripColor(sign.getLine(1)).toLowerCase().trim();
+                    KitCommand.playerChoice(this, event.getPlayer(), choice);
                 }
                 break;
             case FINISHED:
@@ -870,30 +748,26 @@ public class Walls extends JavaPlugin implements Listener {
             default:
                 break;
         }
-
     }
 
     private void checkSpecPlayerFinder(PlayerInteractEvent event) {
-        if (isSpectator(event.getPlayer())) {
-            if (event.getPlayer().getItemInHand().getType() == Material.SKULL_ITEM) {
-                Inventory chest = Bukkit.createInventory(null, 6 * 9, "Player Finder :)");
-                for (UUID uuid : getPlayers().keySet()) {
-                    Player player = Bukkit.getPlayer(uuid);
-                    if (player == null || isSpectator(player)) continue;
-                    ItemStack skull = new ItemStack(Material.SKULL_ITEM, 1, (byte) 3);
-                    ItemMeta meta = skull.getItemMeta();
-                    if (meta == null) continue;
-                    if (meta instanceof SkullMeta) ((SkullMeta) meta).setOwner(player.getName());
-                    meta.setDisplayName("§7" + player.getName());
-                    skull.setItemMeta(meta);
-                    chest.addItem(skull);
-                }
-                event.getPlayer().openInventory(chest);
-                event.setCancelled(true);
-            } else {
-                event.setCancelled(true);
+        if (!isSpectator(event.getPlayer())) return;
+        if (event.getPlayer().getItemInHand().getType() == Material.SKULL_ITEM) {
+            Inventory chest = Bukkit.createInventory(null, 6 * 9, "Player Finder :)");
+            for (UUID uuid : getPlayers().keySet()) {
+                Player player = Bukkit.getPlayer(uuid);
+                if (player == null || isSpectator(player)) continue;
+                ItemStack skull = new ItemStack(Material.SKULL_ITEM, 1, (byte) 3);
+                ItemMeta meta = skull.getItemMeta();
+                if (meta == null) continue;
+                if (meta instanceof SkullMeta) ((SkullMeta) meta).setOwner(player.getName());
+                meta.setDisplayName("§7" + player.getName());
+                skull.setItemMeta(meta);
+                chest.addItem(skull);
             }
-        }
+            event.getPlayer().openInventory(chest);
+            event.setCancelled(true);
+        } else event.setCancelled(true);
     }
 
 
@@ -904,16 +778,10 @@ public class Walls extends JavaPlugin implements Listener {
                 if (event.getPlayer().getItemInHand().getType() == Material.WOOL) {
                     final String itemName = ChatColor.stripColor(event.getPlayer().getItemInHand().getItemMeta().getDisplayName());
                     Team team = Team.SPECTATORS;
-                    if (itemName.equals(ChatColor.stripColor(teamNames[1]))) {
-                        team = Team.RED;
-                    } else if (itemName.equals(ChatColor.stripColor(teamNames[2]))) {
-                        team = Team.YELLOW;
-                    } else if (itemName.equals(ChatColor.stripColor(teamNames[3]))) {
-                        team = Team.GREEN;
-                    } else if (itemName.equals(ChatColor.stripColor(teamNames[4]))) {
-                        team = Team.BLUE;
-                    }
-
+                    if (itemName.equals(ChatColor.stripColor(teamNames[1]))) team = Team.RED;
+                    else if (itemName.equals(ChatColor.stripColor(teamNames[2]))) team = Team.YELLOW;
+                    else if (itemName.equals(ChatColor.stripColor(teamNames[3]))) team = Team.GREEN;
+                    else if (itemName.equals(ChatColor.stripColor(teamNames[4]))) team = Team.BLUE;
                     if (event.getAction() == Action.LEFT_CLICK_AIR || event.getAction() == Action.LEFT_CLICK_BLOCK) {
                         WallsPlayer player = getPlayer(event.getPlayer().getUniqueId());
                         if (this.checkEnoughSpaceInTeam(team.ordinal())) {
@@ -935,7 +803,6 @@ public class Walls extends JavaPlugin implements Listener {
                         event.getPlayer().updateInventory();
                     }
                 }
-
                 break;
             case PEACETIME:
                 checkSpecPlayerFinder(event);
@@ -998,35 +865,34 @@ public class Walls extends JavaPlugin implements Listener {
                 }
             }
         }
-        if (this.loreMatch(stack, "Weapon of the Gods!")) {
-            if (thorOwners.containsKey(event.getPlayer().getUniqueId())) {
-                int numberOfUsesLeft = thorOwners.get(event.getPlayer().getUniqueId());
+        if (!this.loreMatch(stack, "Weapon of the Gods!")) return;
+        if (thorOwners.containsKey(event.getPlayer().getUniqueId())) {
+            int numberOfUsesLeft = thorOwners.get(event.getPlayer().getUniqueId());
 
-                Location target = null;
-                if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
-                    target = block == null ? null : block.getLocation();
-                }
-                if (event.getAction() == Action.LEFT_CLICK_AIR) {
-                    final Block targetBlock = player.getTargetBlock((HashSet<Material>) null, 50);
-                    if (targetBlock != null) {
-                        target = targetBlock.getLocation();
+            Location target = null;
+            if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
+                target = block == null ? null : block.getLocation();
+            }
+            if (event.getAction() == Action.LEFT_CLICK_AIR) {
+                final Block targetBlock = player.getTargetBlock((HashSet<Material>) null, 50);
+                if (targetBlock != null) {
+                    target = targetBlock.getLocation();
 
-                    }
                 }
-                if (target != null) {
-                    target.getWorld().strikeLightning(target);
-                    stack.setDurability((short) (stack.getDurability() - 10));
-                    numberOfUsesLeft = numberOfUsesLeft - 1;
-                    thorOwners.put(event.getPlayer().getUniqueId(), numberOfUsesLeft);
-                    if (numberOfUsesLeft > 0) {
-                        Notifier.notify(event.getPlayer(), "Thor Hammer has " + numberOfUsesLeft + " remaining lightning bolts!");
-                    } else {
-                        player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1, 1);
-                        player.getInventory().removeItem(player.getInventory().getItemInHand());
-                    }
+            }
+            if (target != null) {
+                target.getWorld().strikeLightning(target);
+                stack.setDurability((short) (stack.getDurability() - 10));
+                numberOfUsesLeft = numberOfUsesLeft - 1;
+                thorOwners.put(event.getPlayer().getUniqueId(), numberOfUsesLeft);
+                if (numberOfUsesLeft > 0) {
+                    Notifier.notify(event.getPlayer(), "Mjölnir has " + numberOfUsesLeft + " remaining lightning bolts!");
+                } else {
+                    player.playSound(player.getLocation(), Sound.ITEM_BREAK, 1, 1);
+                    player.getInventory().removeItem(player.getInventory().getItemInHand());
                 }
-            } else Notifier.error(event.getPlayer(), "§cYou cannot use Mjölnir");
-        }
+            }
+        } else Notifier.error(event.getPlayer(), "§cYou cannot use Mjölnir");
     }
 
 
@@ -1036,11 +902,7 @@ public class Walls extends JavaPlugin implements Listener {
             case PREGAME:
             case PEACETIME:
             case FIGHTING:
-                if (UHC) {
-                    if (event.getRegainReason() != RegainReason.MAGIC_REGEN) {
-                        event.setCancelled(true);
-                    }
-                }
+                if (UHC && event.getRegainReason() != RegainReason.MAGIC_REGEN) event.setCancelled(true);
                 break;
             case FINISHED:
                 event.setCancelled(true);
@@ -1050,19 +912,16 @@ public class Walls extends JavaPlugin implements Listener {
         }
     }
 
-
     @EventHandler(priority = EventPriority.NORMAL)
     public void onFoodLevelChange(FoodLevelChangeEvent event) {
         switch (getGameState()) {
             case PREGAME:
             case PEACETIME:
-            case FINISHED:
                 event.setCancelled(true);
                 break;
             case FIGHTING:
-                if (isSpectator(event.getEntity())) {
-                    event.setCancelled(true);
-                }
+                if (!isSpectator(event.getEntity()) && ThreadLocalRandom.current().nextInt(100) > 30) return;
+                event.setCancelled(true);
                 break;
             default:
                 break;
@@ -1072,35 +931,15 @@ public class Walls extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
-        if (!event.getPlayer().isOp()) {
-            final String[] split = event.getMessage().split(" ");
-            if (split.length < 1) return;
-            String cmd = split[0].trim().substring(1).toLowerCase();
-            if ((cmd.equals("tell") || cmd.equals("msg") || cmd.equals("w")) && this.mutedPlayers.containsKey(event.getPlayer().getUniqueId())) {
-                Notifier.error(event.getPlayer(), "You are muted." + ChatColor.BOLD + " Please use chat responsibly.");
-                event.setCancelled(true);
-            }
+        if (event.getPlayer().isOp()) return;
+        String[] split = event.getMessage().split(" ");
+        if (split.length < 1) return;
+        String cmd = split[0].trim().substring(1).toLowerCase();
+        if ((cmd.equals("tell") || cmd.equals("msg") || cmd.equals("w")) && this.mutedPlayers.containsKey(event.getPlayer().getUniqueId())) {
+            Notifier.error(event.getPlayer(), "You are muted." + ChatColor.BOLD + " Please use chat responsibly.");
+            event.setCancelled(true);
         }
     }
-
-
-    @EventHandler(priority = EventPriority.LOW)
-    public void onPlayerBucketEmpty(PlayerBucketEmptyEvent event) {
-        switch (getGameState()) {
-            case PEACETIME:
-                if (event.getBucket() == Material.LAVA_BUCKET) {
-                    event.setCancelled(true);
-                    Notifier.error(event.getPlayer(), "You can't pour lava while the walls are up!");
-                }
-                break;
-            case FINISHED:
-                event.setCancelled(true);
-                break;
-            default:
-                break;
-        }
-    }
-
 
     @EventHandler
     public void onBucketPlace(PlayerBucketEmptyEvent event) {
@@ -1127,30 +966,6 @@ public class Walls extends JavaPlugin implements Listener {
                 break;
             default:
                 break;
-        }
-    }
-
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void preventCrafting(CraftItemEvent event) {
-        try {
-            final Material m = event.getInventory().getResult().getType();
-            if (m == Material.HOPPER || m == Material.ITEM_FRAME || m == Material.BREWING_STAND || m == Material.BREWING_STAND_ITEM) {
-                event.setCancelled(true);
-                return;
-            }
-            switch (getGameState()) {
-                case PREGAME:
-                case PEACETIME:
-                    if (m == Material.HOPPER_MINECART || m == Material.EXPLOSIVE_MINECART) {
-                        event.setCancelled(true);
-                    }
-                    break;
-                case FIGHTING:
-                case FINISHED:
-                default:
-                    break;
-            }
-        } catch (NullPointerException ignored) {
         }
     }
 
@@ -1210,8 +1025,7 @@ public class Walls extends JavaPlugin implements Listener {
             Notifier.broadcast(event.getPlayer().getName() + ChatColor.DARK_PURPLE + " SET OFF THE CENTER TRAP.. 20 SECONDS TO BOOOM!");
             World world = event.getPlayer().getWorld();
             world.getBlockAt(new Location(world, -2, 50, 130)).setType(Material.AIR);
-            TNTPrimed tnt = (TNTPrimed) world.spawnEntity(new Location(world, -2, 51, 130), EntityType.PRIMED_TNT);
-            tnt.setFuseTicks(400);
+            world.spawn(new Location(world, -2, 51, 130), TNTPrimed.class).setFuseTicks(400);
         }
     }
 
@@ -1332,7 +1146,7 @@ public class Walls extends JavaPlugin implements Listener {
         }
         Notifier.broadcast("The walls are now gone!");
         startHungerChecker();
-        this.clock.abort();
+        clock.abort();
         kickOffNoWinnerThread();
         kickOffCombatThread();
         Bukkit.getScheduler().runTaskLater(this, () -> {
@@ -1341,10 +1155,6 @@ public class Walls extends JavaPlugin implements Listener {
                 Notifier.broadcast("Leprechaun kit just lost power :(");
             }
         }, 1800 * 20);
-    }
-
-    public Map<UUID, WallsPlayer> getPlayers() {
-        return players;
     }
 
     public WallsPlayer getPlayer(Player player) {
@@ -1405,68 +1215,52 @@ public class Walls extends JavaPlugin implements Listener {
         return getPlayer(a).team.compareTo(getPlayer(b).team) == 0;
     }
 
-    public void setGameState(GameState gameState) {
-        this.gameState = gameState;
-    }
-
-    public GameState getGameState() {
-        return gameState;
-    }
-
     public int calculateTeamsLeft() {
         int tempNumberOfTeams = 0;
-        int t1 = 0;
-        int t2 = 0;
-        int t3 = 0;
-        int t4 = 0;
+        int team1 = 0;
+        int team2 = 0;
+        int team3 = 0;
+        int team4 = 0;
         for (WallsPlayer wp : getPlayers().values()) {
             switch (wp.team) {
                 case RED:
-                    t1++;
+                    team1++;
                     break;
                 case YELLOW:
-                    t2++;
+                    team2++;
                     break;
                 case GREEN:
-                    t3++;
+                    team3++;
                     break;
                 case BLUE:
-                    t4++;
+                    team4++;
                     break;
                 default:
                     break;
             }
         }
 
-        if (t1 > 0) {
-            tempNumberOfTeams++;
-        }
-        if (t2 > 0) {
-            tempNumberOfTeams++;
-        }
-        if (t3 > 0) {
-            tempNumberOfTeams++;
-        }
-        if (t4 > 0) {
-            tempNumberOfTeams++;
-        }
+        if (team1 > 0) tempNumberOfTeams++;
+        if (team2 > 0) tempNumberOfTeams++;
+        if (team3 > 0) tempNumberOfTeams++;
+        if (team4 > 0) tempNumberOfTeams++;
         if (this.teams != tempNumberOfTeams) {
             this.teams = tempNumberOfTeams;
             if (this.teams > 1) {
                 Notifier.broadcast(this.teams + " teams left!");
             } else {
-                if (t1 > 0) winningTeam = 1;
-                else if (t2 > 0) winningTeam = 2;
-                else if (t3 > 0) winningTeam = 3;
-                else if (t4 > 0) winningTeam = 4;
+                if (team1 > 0) winningTeam = 1;
+                else if (team2 > 0) winningTeam = 2;
+                else if (team3 > 0) winningTeam = 3;
+                else if (team4 > 0) winningTeam = 4;
                 Notifier.broadcast("---------------------------------------------");
                 Notifier.broadcast("  Congratulations to " + teamNames[winningTeam] + ChatColor.WHITE + " for winning!");
                 Notifier.broadcast("---------------------------------------------");
                 Fireworks.spawnFireworksForPlayers(this);
                 for (UUID winner : this.getTeamList(Team.values()[winningTeam])) {
                     WallsPlayer wallsWinner = this.getPlayer(winner);
-                    wallsWinner.wins = 1;
-                    wallsWinner.minutes = (this.clock.getSecondsRemaining() / 60);
+                    wallsWinner.minutes = (this.clock.getSeconds() / 60);
+                    wallsWinner.wins++;
                 }
                 this.database.saveAllData();
             }
@@ -1691,46 +1485,41 @@ public class Walls extends JavaPlugin implements Listener {
 
     public static void updateBiomeSigns() {
         World world = Bukkit.getWorlds().get(0);
-        Iterator<BiomeSign> iterator = BIOME_SIGNS.getRoot().getSigns().iterator();
-        while (iterator.hasNext()) {
-            BiomeSign sign = iterator.next();
+        BIOME_SIGNS.getRoot().getSigns().forEach(sign -> {
             Position position = sign.getPosition();
             if (position.getWorld().equals(world.getName())) BIOMES.forEach((team, biome) -> {
                 if (!sign.getTeam().equals(team)) return;
                 Block block = world.getBlockAt(position.getX(), position.getY(), position.getZ());
-                if (!updateBiomeSign(block, sign, biome)) iterator.remove();
+                updateBiomeSign(block, sign, biome);
             });
-        }
+        });
     }
 
     public static void updateStatSigns() {
         World world = Bukkit.getWorlds().get(0);
-        Iterator<StatSign> iterator = STAT_SIGNS.getRoot().getSigns().iterator();
-        while (iterator.hasNext()) {
-            StatSign sign = iterator.next();
+        STAT_SIGNS.getRoot().getSigns().forEach(sign -> {
             Position position = sign.getPosition();
             if (position.getWorld().equals(world.getName())) STATS.forEach((stat, player) -> {
                 if (!sign.getStat().equals(stat)) return;
                 Block block = world.getBlockAt(position.getX(), position.getY(), position.getZ());
-                if (!updateStatSign(block, sign, player)) iterator.remove();
+                updateStatSign(block, sign, player);
             });
-        }
+        });
     }
 
-    public static boolean updateBiomeSign(Block block, BiomeSign sign, String biome) {
+    public static void updateBiomeSign(Block block, BiomeSign sign, String biome) {
         BlockState state = block.getState();
-        if (!(state instanceof Sign)) return false;
+        if (!(state instanceof Sign)) return;
         ((Sign) state).setLine(0, "");
         ((Sign) state).setLine(1, sign.getTeam().getName());
         ((Sign) state).setLine(2, biome);
         ((Sign) state).setLine(3, "");
         state.update();
-        return true;
     }
 
-    public static boolean updateStatSign(Block block, StatSign sign, WallsPlayer player) {
+    public static void updateStatSign(Block block, StatSign sign, WallsPlayer player) {
         BlockState state = block.getState();
-        if (!(state instanceof Sign)) return false;
+        if (!(state instanceof Sign)) return;
         ((Sign) state).setLine(0, "");
         if (player != null) ((Sign) state).setLine(1, player.getName());
         else ((Sign) state).setLine(1, "???");
@@ -1750,6 +1539,9 @@ public class Walls extends JavaPlugin implements Listener {
         }
         ((Sign) state).setLine(3, "");
         state.update();
-        return true;
+    }
+
+    public int getPeaceTimeMins() {
+        return ironWalls || diamondWalls ? 3 : peaceTimeMins;
     }
 }

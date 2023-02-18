@@ -12,6 +12,7 @@ import java.util.UUID;
 public class Notifier {
 
     private static final String PREFIX = "§6§lWalls§r ";
+    public static final String STAFF_CHAT = "§c[§bStaffChat§c] §b";
 
     public static void error(CommandSender sender, String message) {
         sender.sendMessage(PREFIX + ChatColor.RED + message);
@@ -36,11 +37,11 @@ public class Notifier {
         }
     }
 
-    public static void staff(Walls walls, String message) {
+    public static void staff(Walls walls, CommandSender sender, String message) {
         for (UUID uuid : walls.getStaffList()) {
             Player player = Bukkit.getPlayer(uuid);
             if (player == null || walls.noStaffChat.contains(uuid)) continue;
-            player.sendMessage(Walls.STAFFCHATT_PREFIX + "§f: " + message);
+            player.sendMessage(STAFF_CHAT + sender.getName() + "§r: " + message);
         }
     }
 }
