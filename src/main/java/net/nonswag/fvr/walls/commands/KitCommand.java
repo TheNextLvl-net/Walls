@@ -61,7 +61,7 @@ public class KitCommand implements CommandExecutor {
 
         kits.put(Type.PAID, paid);
 
-        vote.put("manager.voter", new Kit(new Item(Material.GOLD_AXE), new Item(Material.GOLDEN_APPLE)).getItems());
+        vote.put("voter", new Kit(new Item(Material.GOLD_AXE), new Item(Material.GOLDEN_APPLE)).getItems());
         kits.put(Type.VOTE, vote);
     }
 
@@ -90,6 +90,10 @@ public class KitCommand implements CommandExecutor {
             if (free.containsKey(choice)) {
                 player.getInventory().addItem(free.get(choice).toArray(new ItemStack[]{}));
                 Notifier.error(player, "Enjoy FREE kit " + choice);
+                used.add(player.getUniqueId());
+            } else if (vote.containsKey(choice)) {
+                player.getInventory().addItem(vote.get(choice).toArray(new ItemStack[]{}));
+                Notifier.error(player, "Enjoy VOTE kit " + choice);
                 used.add(player.getUniqueId());
             } else if (paid.containsKey(choice)) {
                 if (walls.getPlayer(player).getRank().pro()) {

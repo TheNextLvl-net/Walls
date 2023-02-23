@@ -7,7 +7,6 @@ import org.bukkit.*;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Dispenser;
-import org.bukkit.generator.ChunkGenerator;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -24,8 +23,8 @@ public class Populator extends JavaPlugin {
     public void onEnable() {
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, () -> {
             try {
-                long now = System.currentTimeMillis();
                 World world = Bukkit.getWorlds().get(0);
+                long now = System.currentTimeMillis();
                 world.setSpawnLocation(0, 64, 0);
                 System.out.println("Starting biome generation");
                 for (int i = 0; i < fillers.size(); i++) {
@@ -61,6 +60,7 @@ public class Populator extends JavaPlugin {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
             }
         }, 1);
     }
@@ -78,11 +78,6 @@ public class Populator extends JavaPlugin {
             Populator.fillers.add(filler);
         }
         return biomes;
-    }
-
-    @Override
-    public ChunkGenerator getDefaultWorldGenerator(String worldName, String id) {
-        return new EmptyGen();
     }
 
     public void fillChest(Chest c) {
