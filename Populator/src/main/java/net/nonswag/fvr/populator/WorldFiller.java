@@ -7,6 +7,7 @@ import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
+import org.bukkit.block.Block;
 import org.bukkit.generator.BlockPopulator;
 
 import java.util.ArrayList;
@@ -50,6 +51,10 @@ public abstract class WorldFiller implements Container {
         addPopulator(new DungeonPopulator());
         addPopulator(new TrapPopulator(this));
         addPopulator(getMobPopulator());
+    }
+
+    public boolean contains(Block block) {
+        return contains(block.getX(), block.getZ());
     }
 
     public boolean contains(int x, int z) {

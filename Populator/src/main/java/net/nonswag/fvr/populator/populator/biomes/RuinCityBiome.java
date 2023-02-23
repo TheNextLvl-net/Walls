@@ -10,7 +10,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
-import org.bukkit.block.Block;
 import org.bukkit.util.noise.PerlinOctaveGenerator;
 import org.bukkit.util.noise.SimplexOctaveGenerator;
 
@@ -22,8 +21,8 @@ public class RuinCityBiome extends WorldFiller {
 
     public RuinCityBiome(World world, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         super(world, Biome.BIRCH_FOREST_HILLS, minX, minZ, maxX, maxZ, startY, groundLevel);
-        this.addPopulator(new TreePopulator(TreePopulator.Type.FOREST));
-        this.addPopulator(new GravelStackPopulator());
+        addPopulator(new GravelStackPopulator(this));
+        addPopulator(new TreePopulator(TreePopulator.Type.FOREST));
     }
 
     @Override
@@ -53,8 +52,7 @@ public class RuinCityBiome extends WorldFiller {
                 for (int y = highest - 3; y < highest && y < world.getMaxHeight(); y++) {
                     world.getBlockAt(x, y, z).setType(Material.STONE);
                 }
-                Block b = world.getBlockAt(x, highest, z);
-                b.setType(Material.GRASS);
+                world.getBlockAt(x, highest, z).setType(Material.GRASS);
             }
         }
         pickAndPasteRuin();
@@ -62,19 +60,9 @@ public class RuinCityBiome extends WorldFiller {
 
     private void pickAndPasteRuin() {
         if (options.isEmpty()) return;
-        int xSize = this.maxX - this.minX;
-        int zSize = this.maxZ - this.minZ;
-        int x = this.minX + (xSize / 4);
-        int z = this.minZ + (zSize / 4);
-        int y = world.getHighestBlockAt(x, z).getY() - 5; // FIXME: 19.02.23 
-        String chosen = options.get(Populator.RANDOM.nextInt(options.size()));
-        Location location = new Location(Bukkit.getWorlds().get(0), x, y, z);
-        loader.paste(chosen, location);
-        chosen = options.get(Populator.RANDOM.nextInt(options.size()));
-        x = this.maxX - (xSize / 4);
-        z = this.maxZ - (zSize / 4);
-        y = world.getHighestBlockAt(x, z).getY() - 5;
-        location = new Location(Bukkit.getWorlds().get(0), x, y, z);
-        loader.paste(chosen, location);
+        int x = minX + ((maxX - minX) / 4);
+        int z = minZ + ((maxZ - minZ) / 4);
+        Location location = new Location(Bukkit.getWorlds().get(0), x, 53, z);
+        loader.paste(options.get(Populator.RANDOM.nextInt(options.size())), location);
     }
 }

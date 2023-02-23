@@ -49,30 +49,26 @@ public class Utils {
         if (!ignore_height && center.getBlock().getY() < 50) return;
         int radius_squared = radius * radius;
         Vector c = new Vector(0, 0, 0);
-        for (int x = -radius; x <= radius; x++)
-            for (int z = -radius; z <= radius; z++)
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
                 for (int y = -radius; y <= radius; y++) {
                     Vector v = new Vector(x, y, z);
                     if (c.distanceSquared(v) < radius_squared) {
                         Block b = center.getBlock().getRelative(x, y, z);
-                        if (checkMaterialIsModdable(b)) {
-                            blocks.add(b);
-                        } else {
-                            return;
-                        }
+                        if (checkMaterialIsModdable(b)) blocks.add(b);
+                        else return;
                     } else if (allow_same && (c.distanceSquared(v) == radius_squared)) {
                         Block b = center.getBlock().getRelative(x, y, z);
-                        if (checkMaterialIsModdable(b)) {
-                            blocks.add(b);
-                        } else {
-                            return;
-                        }
+                        if (checkMaterialIsModdable(b)) blocks.add(b);
+                        else return;
                     }
                 }
+            }
+        }
     }
 
     public static boolean checkMaterialIsModdable(Block block) {
-        return block.getType() == Material.AIR || block.getType() == Material.DIRT || block.getType() == Material.GRASS || block.getType() == Material.WATER || block.getType() == Material.STATIONARY_WATER || block.getType() == Material.SAND;
+        return block.isEmpty() || block.getType() == Material.DIRT || block.getType() == Material.GRASS || block.getType() == Material.WATER || block.getType() == Material.STATIONARY_WATER || block.getType() == Material.SAND;
     }
 
     @SuppressWarnings("deprecation")
@@ -98,22 +94,19 @@ public class Utils {
         }
     }
 
-    public static void createLeaves(Block block, Random random) {
+    public static void createLeaves(WorldFiller filler, Location center, Random random) {
         int radius = random.nextInt(3) + 2;
         int radius_squared = radius * radius;
-        Location center = block.getLocation();
-        Vector c = new Vector(0, 0, 0);
-        for (int x = -radius; x <= radius; x++)
-            for (int z = -radius; z <= radius; z++)
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
                 for (int y = 0; y <= radius - (radius == 4 ? 2 : 1); y++) {
-                    Vector v = new Vector(x, y, z);
-                    if (c.distanceSquared(v) <= radius_squared) {
-                        Block b = center.getBlock().getRelative(x, y, z);
-                        if (b.getType() == Material.AIR || b.getType() == Material.VINE) {
-                            b.setType(Material.LEAVES);
-                        }
-                    }
+                    Block block = center.getBlock().getRelative(x, y, z);
+                    if (!filler.contains(block)) continue;
+                    if (center.distanceSquared(block.getLocation()) > radius_squared) continue;
+                    if (block.isEmpty() || block.getType().equals(Material.VINE)) block.setType(Material.LEAVES);
                 }
+            }
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -297,11 +290,11 @@ public class Utils {
     }
 
     public static Block getHighestGrassBlock(Chunk chunk, int x, int z) {
-        Block block = null;
+        Block block;
         for (int i = chunk.getWorld().getMaxHeight(); i >= 0; i--) {
             Material material = (block = chunk.getBlock(x, i, z)).getType();
             if ((material == Material.GRASS || material == Material.MYCEL)) return block;
         }
-        return block;
+        return null;
     }
 }

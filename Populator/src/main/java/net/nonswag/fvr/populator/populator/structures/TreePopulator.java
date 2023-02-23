@@ -1,5 +1,7 @@
 package net.nonswag.fvr.populator.populator.structures;
 
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import net.nonswag.fvr.populator.Container;
 import org.bukkit.Chunk;
 import org.bukkit.Material;
@@ -9,6 +11,8 @@ import org.bukkit.generator.BlockPopulator;
 
 import java.util.Random;
 
+@AllArgsConstructor
+@RequiredArgsConstructor
 public class TreePopulator extends BlockPopulator {
     public enum Type {
         FOREST,
@@ -23,17 +27,8 @@ public class TreePopulator extends BlockPopulator {
         OASIS
     }
 
-    Type type;
-    Container container;
-
-    public TreePopulator(Type type) {
-        this(type, (x, z) -> true);
-    }
-
-    public TreePopulator(Type type, Container container) {
-        this.type = type;
-        this.container = container;
-    }
+    private final Type type;
+    private Container container = (x, z) -> true;
 
     @Override
     @SuppressWarnings("deprecation")
@@ -91,63 +86,61 @@ public class TreePopulator extends BlockPopulator {
         for (int i = 0; i < multiplier; i++) {
             centerX = (chunk.getX() << 4) + random.nextInt(16);
             centerZ = (chunk.getZ() << 4) + random.nextInt(16);
-            if (random.nextInt(300) < chance) {
-                int centerY = world.getHighestBlockYAt(centerX, centerZ) - 1;
-                Block sourceBlock = world.getBlockAt(centerX, centerY, centerZ);
-                if (!container.contains(sourceBlock.getX(), sourceBlock.getZ())) continue;
-                if ((sourceBlock.getType() == Material.GRASS || sourceBlock.getType() == Material.NETHER_BRICK) && sourceBlock.getRelative(0, 1, 1).getType() != Material.WATER) {
-                    world.getBlockAt(centerX, centerY + height + 1, centerZ).setTypeIdAndData(18, data, true);
-                    for (int j = 0; j < 4; j++) {
-                        world.getBlockAt(centerX, centerY + height + 1 - j, centerZ - 1).setTypeIdAndData(18, data, true);
-                        world.getBlockAt(centerX, centerY + height + 1 - j, centerZ + 1).setTypeIdAndData(18, data, true);
-                        world.getBlockAt(centerX - 1, centerY + height + 1 - j, centerZ).setTypeIdAndData(18, data, true);
-                        world.getBlockAt(centerX + 1, centerY + height + 1 - j, centerZ).setTypeIdAndData(18, data, true);
-                    }
-                    if (random.nextBoolean()) {
-                        world.getBlockAt(centerX + 1, centerY + height, centerZ + 1).setTypeIdAndData(18, data, true);
-                    }
-                    if (random.nextBoolean()) {
-                        world.getBlockAt(centerX + 1, centerY + height, centerZ - 1).setTypeIdAndData(18, data, true);
-                    }
-                    if (random.nextBoolean()) {
-                        world.getBlockAt(centerX - 1, centerY + height, centerZ + 1).setTypeIdAndData(18, data, true);
-                    }
-                    if (random.nextBoolean()) {
-                        world.getBlockAt(centerX - 1, centerY + height, centerZ - 1).setTypeIdAndData(18, data, true);
-                    }
-                    world.getBlockAt(centerX + 1, centerY + height - 1, centerZ + 1).setTypeIdAndData(18, data, true);
-                    world.getBlockAt(centerX + 1, centerY + height - 1, centerZ - 1).setTypeIdAndData(18, data, true);
-                    world.getBlockAt(centerX - 1, centerY + height - 1, centerZ + 1).setTypeIdAndData(18, data, true);
-                    world.getBlockAt(centerX - 1, centerY + height - 1, centerZ - 1).setTypeIdAndData(18, data, true);
-                    world.getBlockAt(centerX + 1, centerY + height - 2, centerZ + 1).setTypeIdAndData(18, data, true);
-                    world.getBlockAt(centerX + 1, centerY + height - 2, centerZ - 1).setTypeIdAndData(18, data, true);
-                    world.getBlockAt(centerX - 1, centerY + height - 2, centerZ + 1).setTypeIdAndData(18, data, true);
-                    world.getBlockAt(centerX - 1, centerY + height - 2, centerZ - 1).setTypeIdAndData(18, data, true);
-                    for (int j = 0; j < 2; j++) {
-                        for (int k = -2; k <= 2; k++) {
-                            for (int l = -2; l <= 2; l++) {
-                                world.getBlockAt(centerX + k, centerY + height - 1 - j, centerZ + l).setTypeIdAndData(18, data, true);
-                            }
-                        }
-                    }
-                    for (int j = 0; j < 2; j++) {
-                        if (random.nextBoolean()) {
-                            world.getBlockAt(centerX + 2, centerY + height - 1 - j, centerZ + 2).setTypeIdAndData(0, (byte) 0, true);
-                        }
-                        if (random.nextBoolean()) {
-                            world.getBlockAt(centerX + 2, centerY + height - 1 - j, centerZ - 2).setTypeIdAndData(0, (byte) 0, true);
-                        }
-                        if (random.nextBoolean()) {
-                            world.getBlockAt(centerX - 2, centerY + height - 1 - j, centerZ + 2).setTypeIdAndData(0, (byte) 0, true);
-                        }
-                        if (random.nextBoolean()) {
-                            world.getBlockAt(centerX - 2, centerY + height - 1 - j, centerZ - 2).setTypeIdAndData(0, (byte) 0, true);
-                        }
-                    }
-                    for (int y = 1; y <= height; y++) {
-                        world.getBlockAt(centerX, centerY + y, centerZ).setTypeIdAndData(17, data, true);
+            if (random.nextInt(300) >= chance) continue;
+            int centerY = world.getHighestBlockYAt(centerX, centerZ) - 1;
+            Block source = world.getBlockAt(centerX, centerY, centerZ);
+            if (source.isLiquid() || !container.contains(source.getX(), source.getZ())) continue;
+            if (!source.getType().equals(Material.GRASS) && !source.getType().equals(Material.NETHER_BRICK)) continue;
+            world.getBlockAt(centerX, centerY + height + 1, centerZ).setTypeIdAndData(18, data, true);
+            for (int j = 0; j < 4; j++) {
+                world.getBlockAt(centerX, centerY + height + 1 - j, centerZ - 1).setTypeIdAndData(18, data, true);
+                world.getBlockAt(centerX, centerY + height + 1 - j, centerZ + 1).setTypeIdAndData(18, data, true);
+                world.getBlockAt(centerX - 1, centerY + height + 1 - j, centerZ).setTypeIdAndData(18, data, true);
+                world.getBlockAt(centerX + 1, centerY + height + 1 - j, centerZ).setTypeIdAndData(18, data, true);
+            }
+            if (random.nextBoolean()) {
+                world.getBlockAt(centerX + 1, centerY + height, centerZ + 1).setTypeIdAndData(18, data, true);
+            }
+            if (random.nextBoolean()) {
+                world.getBlockAt(centerX + 1, centerY + height, centerZ - 1).setTypeIdAndData(18, data, true);
+            }
+            if (random.nextBoolean()) {
+                world.getBlockAt(centerX - 1, centerY + height, centerZ + 1).setTypeIdAndData(18, data, true);
+            }
+            if (random.nextBoolean()) {
+                world.getBlockAt(centerX - 1, centerY + height, centerZ - 1).setTypeIdAndData(18, data, true);
+            }
+            world.getBlockAt(centerX + 1, centerY + height - 1, centerZ + 1).setTypeIdAndData(18, data, true);
+            world.getBlockAt(centerX + 1, centerY + height - 1, centerZ - 1).setTypeIdAndData(18, data, true);
+            world.getBlockAt(centerX - 1, centerY + height - 1, centerZ + 1).setTypeIdAndData(18, data, true);
+            world.getBlockAt(centerX - 1, centerY + height - 1, centerZ - 1).setTypeIdAndData(18, data, true);
+            world.getBlockAt(centerX + 1, centerY + height - 2, centerZ + 1).setTypeIdAndData(18, data, true);
+            world.getBlockAt(centerX + 1, centerY + height - 2, centerZ - 1).setTypeIdAndData(18, data, true);
+            world.getBlockAt(centerX - 1, centerY + height - 2, centerZ + 1).setTypeIdAndData(18, data, true);
+            world.getBlockAt(centerX - 1, centerY + height - 2, centerZ - 1).setTypeIdAndData(18, data, true);
+            for (int j = 0; j < 2; j++) {
+                for (int k = -2; k <= 2; k++) {
+                    for (int l = -2; l <= 2; l++) {
+                        world.getBlockAt(centerX + k, centerY + height - 1 - j, centerZ + l).setTypeIdAndData(18, data, true);
                     }
                 }
+            }
+            for (int j = 0; j < 2; j++) {
+                if (random.nextBoolean()) {
+                    world.getBlockAt(centerX + 2, centerY + height - 1 - j, centerZ + 2).setTypeIdAndData(0, (byte) 0, true);
+                }
+                if (random.nextBoolean()) {
+                    world.getBlockAt(centerX + 2, centerY + height - 1 - j, centerZ - 2).setTypeIdAndData(0, (byte) 0, true);
+                }
+                if (random.nextBoolean()) {
+                    world.getBlockAt(centerX - 2, centerY + height - 1 - j, centerZ + 2).setTypeIdAndData(0, (byte) 0, true);
+                }
+                if (random.nextBoolean()) {
+                    world.getBlockAt(centerX - 2, centerY + height - 1 - j, centerZ - 2).setTypeIdAndData(0, (byte) 0, true);
+                }
+            }
+            for (int y = 1; y <= height; y++) {
+                world.getBlockAt(centerX, centerY + y, centerZ).setTypeIdAndData(17, data, true);
             }
         }
     }

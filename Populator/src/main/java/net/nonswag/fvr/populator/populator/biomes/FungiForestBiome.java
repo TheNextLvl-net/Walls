@@ -5,6 +5,7 @@ import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.populator.blocks.BushPopulator;
 import net.nonswag.fvr.populator.populator.blocks.WaterLilyPopulator;
 import net.nonswag.fvr.populator.populator.structures.*;
+import org.bukkit.GrassSpecies;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
@@ -21,13 +22,13 @@ public class FungiForestBiome extends WorldFiller {
         getMobPopulator().getMobs().remove(Cow.class);
         getMobPopulator().getMobs().add(MushroomCow.class);
         addPopulator(new ShallowLakePopulator(this), true);
-        addPopulator(new WaterLilyPopulator());
+        addPopulator(new WaterLilyPopulator(this));
         addPopulator(new MushroomPopulator());
         addPopulator(new HugeMushroomPopulator());
-        addPopulator(new BushPopulator(5));
+        addPopulator(new BushPopulator(this, 5));
         addPopulator(new FungiTreePopulator(this));
-        addPopulator(new WildGrassPopulator((byte) 1));
-        addPopulator(new WildGrassPopulator((byte) 2));
+        addPopulator(new WildGrassPopulator(this, GrassSpecies.NORMAL));
+        addPopulator(new WildGrassPopulator(this, GrassSpecies.FERN_LIKE));
     }
 
     @Override

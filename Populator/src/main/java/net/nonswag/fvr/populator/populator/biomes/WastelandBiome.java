@@ -7,6 +7,7 @@ import net.nonswag.fvr.populator.populator.structures.BarrenTreePopulator;
 import net.nonswag.fvr.populator.populator.structures.HutPopulator;
 import net.nonswag.fvr.populator.populator.structures.ShrubberyPopulator;
 import net.nonswag.fvr.populator.populator.structures.WildGrassPopulator;
+import org.bukkit.GrassSpecies;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
@@ -18,11 +19,11 @@ public class WastelandBiome extends WorldFiller {
 
     public WastelandBiome(World world, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         super(world, Biome.DESERT, minX, minZ, maxX, maxZ, startY, groundLevel);
-        this.addPopulator(new HutPopulator(), true);
-        this.addPopulator(new BushPopulator(3));
-        this.addPopulator(new WildGrassPopulator((byte) 0));
-        this.addPopulator(new ShrubberyPopulator());
-        this.addPopulator(new BarrenTreePopulator());
+        addPopulator(new WildGrassPopulator(this, GrassSpecies.DEAD));
+        addPopulator(new HutPopulator(), true);
+        addPopulator(new ShrubberyPopulator());
+        addPopulator(new BarrenTreePopulator());
+        addPopulator(new BushPopulator(this, 3));
     }
 
     @Override

@@ -92,8 +92,8 @@ public class WallsCommand implements CommandExecutor {
 
     private void autoStart() {
         if (VOTES.size() > Walls.preGameAutoStartPlayers / 2) {
-            broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + "30" + ChatColor.WHITE + " seconds!");
-            walls.clock.setClock(30, () -> GameStarter.startGame(walls.getPlayers(), walls));
+            broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + Walls.gameStartSeconds + ChatColor.WHITE + " seconds!");
+            walls.clock.setClock(Walls.gameStartSeconds, () -> GameStarter.startGame(walls.getPlayers(), walls));
             walls.starting = true;
         } else {
             int players = Walls.preGameAutoStartPlayers / 2 - VOTES.size();
@@ -142,8 +142,8 @@ public class WallsCommand implements CommandExecutor {
     private void startWalls(CommandSender sender) {
         if (sender.isOp() || (sender instanceof Player && (walls.getPlayer(((Player) sender).getUniqueId())).getRank().mgm())) {
             if (!walls.starting) {
-                broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + "30" + ChatColor.WHITE + " seconds!");
-                walls.clock.setClock(30, () -> GameStarter.startGame(walls.getPlayers(), walls));
+                broadcast("Game starts in " + ChatColor.LIGHT_PURPLE + Walls.gameStartSeconds + ChatColor.WHITE + " seconds!");
+                walls.clock.setClock(Walls.gameStartSeconds, () -> GameStarter.startGame(walls.getPlayers(), walls));
                 walls.starting = true;
             } else error(sender, "The game is already starting!");
         } else error(sender, "You have no rights to do this");

@@ -4,6 +4,7 @@ import net.nonswag.fvr.populator.Populator;
 import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.populator.blocks.WaterLilyPopulator;
 import net.nonswag.fvr.populator.populator.structures.*;
+import org.bukkit.GrassSpecies;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
@@ -21,14 +22,14 @@ public class IslandBiome extends WorldFiller {
     public IslandBiome(World world, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         super(world, Biome.BEACH, minX, minZ, maxX, maxZ, startY, groundLevel);
         addPopulator(new SandPopulator());
-        addPopulator(new WildGrassPopulator((byte) 1));
-        addPopulator(new FlowerPopulator());
+        addPopulator(new WildGrassPopulator(this, GrassSpecies.NORMAL));
+        addPopulator(new FlowerPopulator(this));
         addPopulator(new MelonPopulator());
-        addPopulator(new TreePopulator(TreePopulator.Type.FOREST));
         addPopulator(new PumpkinPopulator());
         addPopulator(new SugarcanePopulator());
-        addPopulator(new WaterLilyPopulator());
+        addPopulator(new WaterLilyPopulator(this));
         addPopulator(new LapisRingPopulator());
+        addPopulator(new TreePopulator(TreePopulator.Type.FOREST));
     }
 
     public void doWater() {

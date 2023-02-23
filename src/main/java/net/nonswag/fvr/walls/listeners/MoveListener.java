@@ -20,38 +20,24 @@ public class MoveListener implements Listener {
                 int lobbyHeight = walls.getGameSpawn().getBlockY();
                 if (event.getPlayer().getGameMode() == GameMode.CREATIVE) return;
                 if (event.getPlayer().getGameMode() == GameMode.SPECTATOR) return;
-                if (event.getTo().getBlockY() < lobbyHeight - 6) {
-                    event.getPlayer().setFallDistance(0f);
-                    event.getPlayer().teleport(walls.getGameSpawn());
-                }
+                if (event.getTo().getBlockY() < lobbyHeight - 6) event.getPlayer().teleport(walls.getGameSpawn());
                 break;
             case PEACETIME:
-                if (!walls.isSpectator(event.getPlayer())) {
-                    if (walls.isOnPaths(event.getTo())) {
-                        event.setCancelled(true);
-                        Notifier.error(event.getPlayer(), "Trying to escape :( try /spawn");
-                        return;
-                    }
-                    if (event.getTo().getBlockY() > (walls.getGameSpawn().getBlockY() - 4)) {
-                        event.setCancelled(true);
-                        Notifier.error(event.getPlayer(), "Trying to escape :( try /spawn");
-                        return;
-                    }
+                if (walls.isSpectator(event.getPlayer())) return;
+                if (walls.isOnPaths(event.getTo()) || event.getTo().getBlockY() > walls.getGameSpawn().getBlockY() - 4) {
+                    Notifier.error(event.getPlayer(), "Trying to escape :( try /spawn");
+                    event.setCancelled(true);
                 }
                 break;
             case FIGHTING:
             case FINISHED:
-                if (!walls.isSpectator(event.getPlayer())) {
-                    if (event.getTo().getBlockY() > (walls.getGameSpawn().getBlockY() - 4)) {
-                        event.setCancelled(true);
-                        Notifier.error(event.getPlayer(), "Trying to escape :( try /spawn");
-                        return;
-                    }
-                }
-                if (walls.isInASpawn(event.getTo()) && event.getTo().getBlockY() > 82 && !walls.isSpectator(event.getPlayer())) {
-                    event.getPlayer().teleport(event.getTo().add(0, -3, 0));
+                if (walls.isSpectator(event.getPlayer())) return;
+                if (event.getTo().getBlockY() > Walls.buildHeight) {
+                    Notifier.error(event.getPlayer(), "Trying to escape :( try /spawn");
+                    event.setCancelled(true);
+                } else if (walls.isInASpawn(event.getTo()) && event.getTo().getBlockY() > 82) {
                     Notifier.error(event.getPlayer(), "Aww man its way too dangerous to climb up there.. :(");
-                    return;
+                    event.setCancelled(true);
                 }
                 break;
             default:

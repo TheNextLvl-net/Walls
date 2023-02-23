@@ -41,8 +41,7 @@ public class GameStarter {
                     System.out.println("team is: " + Team.values()[smallestTeam]);
                     System.out.println("available team spawns: " + walls.getSpawns().size());
                     assignedPlayers.put(all, Team.values()[smallestTeam]);
-                    if (smallestTeam >= walls.getSpawns().size()) return;
-                    player.teleport(walls.getSpawns().get(smallestTeam));
+                    player.teleport(walls.getSpawns().get(smallestTeam - 1));
                     Notifier.notify(player, "You have been assigned to " + Walls.teamNames[smallestTeam]);
                     break;
                 case RED:

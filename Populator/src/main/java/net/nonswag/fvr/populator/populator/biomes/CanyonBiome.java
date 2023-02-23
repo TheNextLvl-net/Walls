@@ -7,6 +7,7 @@ import net.nonswag.fvr.populator.populator.structures.FlowerPopulator;
 import net.nonswag.fvr.populator.populator.structures.GravelStackPopulator;
 import net.nonswag.fvr.populator.populator.structures.TreePopulator;
 import net.nonswag.fvr.populator.populator.structures.WildGrassPopulator;
+import org.bukkit.GrassSpecies;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
@@ -23,11 +24,11 @@ public class CanyonBiome extends WorldFiller {
 
     public CanyonBiome(World world, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         super(world, Biome.SMALL_MOUNTAINS, minX, minZ, maxX, maxZ, startY, groundLevel);
+        addPopulator(new WildGrassPopulator(this, GrassSpecies.NORMAL));
+        addPopulator(new FlowerPopulator(this));
+        addPopulator(new GravelStackPopulator(this));
+        addPopulator(new LakeCreekPopulator(this));
         addPopulator(new TreePopulator(TreePopulator.Type.SEASONAL_FOREST));
-        addPopulator(new WildGrassPopulator((byte) 1));
-        addPopulator(new FlowerPopulator());
-        addPopulator(new GravelStackPopulator());
-        addPopulator(new LakeCreekPopulator());
     }
 
     @Override
@@ -50,20 +51,16 @@ public class CanyonBiome extends WorldFiller {
                 for (int i = 0; i < abs; i++) highest = (highest * 9 + groundLevel) / 10;
                 if (n1 > 2) highest -= 5;
                 if (n2 > 3) highest -= 3;
-                if (highest >= world.getMaxHeight()) {
-                    highest = world.getMaxHeight() - 1;
-                }
+                if (highest >= world.getMaxHeight()) highest = world.getMaxHeight() - 1;
                 for (int y = startY; y < highest - 3 && y < world.getMaxHeight(); y++) {
                     world.getBlockAt(x, y, z).setType(stone);
                 }
                 for (int y = highest - 3; y < highest && y < world.getMaxHeight(); y++) {
                     world.getBlockAt(x, y, z).setType(dirt);
                 }
-                Block b = world.getBlockAt(x, highest, z);
-                b.setType(grass);
-                if (this.highest == null || b.getY() > this.highest.getY()) {
-                    this.highest = b;
-                }
+                Block block = world.getBlockAt(x, highest, z);
+                block.setType(grass);
+                if (this.highest == null || block.getY() > this.highest.getY()) this.highest = block;
             }
         }
     }

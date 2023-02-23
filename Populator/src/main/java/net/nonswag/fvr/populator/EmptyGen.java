@@ -12,5 +12,4 @@ public class EmptyGen extends ChunkGenerator {
     public byte[] generate(World world, Random random, int x, int z) {
         return new byte[world.getMaxHeight() * 16 * 16];
     }
-
 }

@@ -3,6 +3,7 @@ Language: en
 peaceTimeMins: 15
 preGameAutoStartPlayers: 4
 preGameAutoStartSeconds: 120
+gameStartSeconds: 30
 combatRelogTime: 10
 relogTime: 90
 UHCMode: false

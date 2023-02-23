@@ -232,7 +232,8 @@ public class Walls extends JavaPlugin implements Listener {
     private final Map<UUID, PlayerInventory> inventory = new HashMap<>();
     public static boolean UHC = false;
     public static int preGameAutoStartPlayers = 4;
-    public static int preGameAutoStartSeconds = 30;
+    public static int preGameAutoStartSeconds = 120;
+    public static int gameStartSeconds = 30;
     public static PlayerJoinType playerJoinRestriction = PlayerJoinType.ANYONE;
     public static boolean diamondWalls = false;
     public static boolean ironWalls = false;
@@ -265,7 +266,8 @@ public class Walls extends JavaPlugin implements Listener {
         playerScoreBoard = new PlayerScoreBoard(this);
         Populator.selectBiomes().forEach((ordinal, biome) -> {
             BIOMES.put(Team.values()[ordinal], biome);
-            System.out.println(biome + " is related to team " + Team.values()[ordinal] + " " + ordinal);
+            Bukkit.getConsoleSender().sendMessage("§6" + biome + "§a is related to team §r" +
+                    teamChatColors[ordinal] + Team.values()[ordinal].name().toLowerCase() + " §8(§7" + ordinal + "§8)");
         });
         WorldEdit.getInstance().getConfiguration().navigationWand = -1;
 
@@ -289,6 +291,7 @@ public class Walls extends JavaPlugin implements Listener {
         peaceTimeMins = getConfig().getInt("peaceTimeMins");
         preGameAutoStartPlayers = getConfig().getInt("preGameAutoStartPlayers");
         preGameAutoStartSeconds = getConfig().getInt("preGameAutoStartSeconds");
+        gameStartSeconds = getConfig().getInt("gameStartSeconds");
         relogTime = getConfig().getInt("relogTime");
         combatRelogTime = getConfig().getInt("combatRelogTime");
         diamondWalls = getConfig().getBoolean("diamondWalls");
@@ -314,10 +317,10 @@ public class Walls extends JavaPlugin implements Listener {
 
         World world = Bukkit.getWorlds().get(0);
 
-        spawns.add(team1Spawn = new Location(world, -149, 65, -17));
-        spawns.add(team2Spawn = new Location(world, 144, 65, -17));
-        spawns.add(team3Spawn = new Location(world, 144, 65, 276));
-        spawns.add(team4Spawn = new Location(world, -149, 65, 276));
+        spawns.add(team1Spawn = new Location(world, -149, 65.5, -17, -45, 0)); // red
+        spawns.add(team2Spawn = new Location(world, 144, 65.5, -17, 45, 0)); // yellow
+        spawns.add(team3Spawn = new Location(world, 144, 65.5, 276, 135, 0)); // green
+        spawns.add(team4Spawn = new Location(world, -149, 65.5, 276, -135, 0)); // blue
 
         corners.add(gameSpawn = new Location(world, -2, world.getHighestBlockYAt(-2, 130), 130));
         corners.add(team1Corner = new Location(world, -23, 62, 108));
@@ -379,6 +382,7 @@ public class Walls extends JavaPlugin implements Listener {
         Walls.BIOME_SIGNS.save();
         clock.interrupt();
         if (WallsCommand.FIX_DB) fixDatabase();
+        database.saveAllData();
         Database.disconnect();
         changeLevelName(nextMap);
     }
@@ -1263,7 +1267,6 @@ public class Walls extends JavaPlugin implements Listener {
                     wallsWinner.minutes = (this.clock.getSeconds() / 60);
                     wallsWinner.wins++;
                 }
-                this.database.saveAllData();
             }
         }
         return this.teams;

@@ -6,6 +6,7 @@ import net.nonswag.fvr.populator.populator.blocks.MediumTreePopulator;
 import net.nonswag.fvr.populator.populator.blocks.SmallTreePopulator;
 import net.nonswag.fvr.populator.populator.blocks.TreePopulator;
 import net.nonswag.fvr.populator.populator.structures.WildGrassPopulator;
+import org.bukkit.GrassSpecies;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
@@ -21,8 +22,8 @@ public class JungleBiome extends WorldFiller {
         addPopulator(new SmallTreePopulator(this));
         addPopulator(new MediumTreePopulator(this));
         addPopulator(new TreePopulator(this));
-        addPopulator(new WildGrassPopulator((byte) 1));
-        addPopulator(new WildGrassPopulator((byte) 2));
+        addPopulator(new WildGrassPopulator(this, GrassSpecies.NORMAL));
+        addPopulator(new WildGrassPopulator(this, GrassSpecies.FERN_LIKE));
     }
 
     @Override

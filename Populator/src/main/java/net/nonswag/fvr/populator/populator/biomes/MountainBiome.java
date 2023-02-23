@@ -5,6 +5,7 @@ import net.nonswag.fvr.populator.WorldFiller;
 import net.nonswag.fvr.populator.populator.blocks.LakeCreekPopulator;
 import net.nonswag.fvr.populator.populator.blocks.MushroomPopulator;
 import net.nonswag.fvr.populator.populator.structures.*;
+import org.bukkit.GrassSpecies;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Biome;
@@ -18,13 +19,13 @@ public class MountainBiome extends WorldFiller {
     public MountainBiome(World world, int minX, int minZ, int maxX, int maxZ, int startY, int groundLevel) {
         super(world, Biome.EXTREME_HILLS, minX, minZ, maxX, maxZ, startY, groundLevel);
         getMobPopulator().getMobs().add(MushroomCow.class);
-        this.addPopulator(new TreePopulator(TreePopulator.Type.FOREST));
-        this.addPopulator(new WildGrassPopulator((byte) 2));
-        this.addPopulator(new FlowerPopulator());
-        this.addPopulator(new GravelStackPopulator());
-        this.addPopulator(new LakeCreekPopulator());
-        this.addPopulator(new MushroomPopulator());
-        this.addPopulator(new MelonPopulator());
+        addPopulator(new WildGrassPopulator(this, GrassSpecies.FERN_LIKE));
+        addPopulator(new FlowerPopulator(this));
+        addPopulator(new GravelStackPopulator(this));
+        addPopulator(new LakeCreekPopulator(this));
+        addPopulator(new MushroomPopulator());
+        addPopulator(new MelonPopulator());
+        addPopulator(new TreePopulator(TreePopulator.Type.FOREST));
     }
 
     @Override

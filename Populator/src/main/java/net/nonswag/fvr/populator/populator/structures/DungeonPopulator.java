@@ -107,14 +107,11 @@ public class DungeonPopulator extends BlockPopulator {
     }
 
     private void placeSpawner(Block block) {
-
         EntityType[] types = new EntityType[] { EntityType.SKELETON, EntityType.ZOMBIE, EntityType.CREEPER, EntityType.SPIDER };
-
         block.setType(Material.MOB_SPAWNER);
         if (block.getState() instanceof CreatureSpawner)
             ((CreatureSpawner) block.getState()).setSpawnedType(types[random.nextInt(types.length)]);
-        else
-            block.setType(Material.MOSSY_COBBLESTONE);
+        else block.setType(Material.MOSSY_COBBLESTONE);
     }
 
     private void placeChest(Block block) {

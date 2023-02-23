@@ -1,5 +1,7 @@
 package net.nonswag.fvr.populator.populator.blocks;
 
+import lombok.RequiredArgsConstructor;
+import net.nonswag.fvr.populator.WorldFiller;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -11,7 +13,9 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 
+@RequiredArgsConstructor
 public class LakeCreekPopulator extends BlockPopulator {
+    private final WorldFiller filler;
 
     private static final int MIN_BLOCK_COUNT = 300;
     private static final int MAX_BLOCK_COUNT = 850;
@@ -24,9 +28,9 @@ public class LakeCreekPopulator extends BlockPopulator {
         if (random.nextInt(100) >= LAKE_CHANCE) return;
         int start_x = random.nextInt(16);
         int start_z = random.nextInt(16);
-        Block lake_start = world.getHighestBlockAt(source.getX() * 16 + start_x, source.getZ() * 16 + start_z);
-        if (lake_start.getY() - 1 <= 60 || lake_start.getY() > 95) return;
-        Set<Block> lake_form = collectLakeLayout(world, lake_start, random);
+        Block block = world.getHighestBlockAt(source.getX() * 16 + start_x, source.getZ() * 16 + start_z);
+        if (block.getY() - 1 <= 60 || block.getY() > 95) return;
+        Set<Block> lake_form = collectLakeLayout(world, block, random);
         Set<Block>[] form_result = startLakeBuildProcess(world, lake_form);
         if (form_result == null) return;
         Block creek_start = buildLake(form_result[0], random);
@@ -80,7 +84,8 @@ public class LakeCreekPopulator extends BlockPopulator {
             for (int x_mod = -radius; x_mod <= radius; x_mod++) {
                 for (int z_mod = -radius; z_mod <= radius; z_mod++) {
                     if ((x_mod * x_mod + z_mod * z_mod) < radius_squared) {
-                        circle.add(center.getRelative(x_mod, 0, z_mod));
+                        Block block = center.getRelative(x_mod, 0, z_mod);
+                        if (filler.contains(x_mod, z_mod)) circle.add(block);
                     }
                 }
             }
@@ -132,39 +137,34 @@ public class LakeCreekPopulator extends BlockPopulator {
         int blockX = start.getX();
         int blockY = start.getY();
         int blockZ = start.getZ();
+        int count = 0;
         while (result.size() < sizelimit) {
-            int radius = 1 + random.nextInt(5);
+            int size = result.size();
+            int radius = random.nextInt(5) + 1;
             int radius_squared = radius * radius + 1;
-
             for (int x_mod = -radius; x_mod <= radius; x_mod++) {
                 for (int z_mod = -radius; z_mod <= radius; z_mod++) {
                     if ((x_mod * x_mod + z_mod * z_mod) <= radius_squared) {
-                        Block collected = world.getBlockAt(blockX + x_mod, blockY, blockZ + z_mod);
-                        result.add(collected);
+                        Block block = world.getBlockAt(blockX + x_mod, blockY, blockZ + z_mod);
+                        if (filler.contains(block)) result.add(block);
                     }
                 }
             }
-
             if (random.nextBoolean()) {
-                if (random.nextBoolean()) {
-                    blockX++;
-                } else {
-                    blockZ++;
-                }
+                if (random.nextBoolean()) blockX++;
+                else blockZ++;
             } else {
-                if (random.nextBoolean()) {
-                    blockX--;
-                } else {
-                    blockZ--;
-                }
+                if (random.nextBoolean()) blockX--;
+                else blockZ--;
             }
-
+            if (size == result.size() && count++ >= 5) return result;
         }
         return result;
     }
 
     private void buildAirAndWaterfall(Set<Block> ground, Set<Block> blocks, Random random) {
         List<Block> candidates = new ArrayList<>();
+        if (ground.isEmpty()) return;
         int ground_height = ground.iterator().next().getY();
         for (Block block : blocks) {
             if (block.getType() != Material.LOG && block.getType() != Material.LEAVES && block.getType() != Material.RED_MUSHROOM && block.getType() != Material.VINE && block.getType() != Material.GLOWSTONE) {
@@ -187,30 +187,17 @@ public class LakeCreekPopulator extends BlockPopulator {
         int lowest = world.getMaxHeight();
         int highest = 0;
         for (Block block : blocks) {
-
             int x = block.getX();
             int z = block.getZ();
             int compare = world.getHighestBlockYAt(x, z);
-
-            if (compare < lowest) {
-                lowest = compare;
-            }
-            if (compare > highest) {
-                highest = compare;
-            }
-            if (compare < 60) {
-                return null;
-            }
+            if (compare < lowest) lowest = compare;
+            if (compare > highest) highest = compare;
+            if (compare < 60) return null;
         }
-
-        if (lowest < 60 || highest - lowest > 25) {
-            return null;
-        }
-
+        if (lowest < 60 || highest - lowest > 25) return null;
         Set<Block>[] result = new Set[2];
         result[0] = new HashSet<>();
         result[1] = new HashSet<>();
-
         for (Block block : blocks) {
             result[0].add(world.getBlockAt(block.getX(), lowest - 1, block.getZ()));
             for (int y = lowest; y <= highest; y++) {
@@ -222,8 +209,6 @@ public class LakeCreekPopulator extends BlockPopulator {
 
     private Block buildLake(Set<Block> top_layer, Random random) {
         int max_lake_depth = random.nextInt(2) + 3;
-
-        //Make sure the lake has a border 
         Set<Block> to_air = new HashSet<>();
         int lowering = 0;
         while (!sliceHasBorder(top_layer) && lowering <= 3) {
