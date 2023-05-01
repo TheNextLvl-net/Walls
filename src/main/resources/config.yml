@@ -1,24 +1,40 @@
 # TheWalls
-Language: en
+
+# the peace time before the walls drop (in minutes)
 peaceTimeMins: 15
+
+# the amount of players required to start a game automatically
 preGameAutoStartPlayers: 4
+
+# the time til the game automatically starts (in seconds)
 preGameAutoStartSeconds: 120
+
+# the time the game takes to start after reaching the player cap or force starting it (in seconds)
 gameStartSeconds: 30
+
+# the time a player counts as "in combat" without fighting (in seconds)
 combatRelogTime: 10
+
+# the time a player has to reconnect before being disqualified (in seconds)
 relogTime: 90
+
+# every player receives a golden apple before fighting
+# no natural regeneration (only magic)
 UHCMode: false
-# --------------------------------------
+
 # tournamentMode true will prevent "autostart happening" requires an op / admin to start the game.
 tournamentMode: false
-# --------------------------------------
+
 # 0-ANYONE, 1-VIP, 2-PRO, 3-LEGENDARY, 4-STAFF
 playerJoinRestriction: ANYONE
+
+# disables the ability to select a team
 allowPickTeams: true
+
 # Either diamond or iron walls
 diamondWalls: false
 ironWalls: false
-# --------------------------------------
-# --------------------------------------
+
 # clanBattle allows clan naming - which affects team names. restricts to only those with the clan names to join and play.
 clanBattle: false
 clan-1: clan 1

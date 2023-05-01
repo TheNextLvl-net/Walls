@@ -10,9 +10,8 @@ import org.bukkit.entity.Player;
 import java.util.UUID;
 
 public class Notifier {
-
-    private static final String PREFIX = "§6§lWalls§r ";
-    public static final String STAFF_CHAT = "§c[§bStaffChat§c] §b";
+    public static final String PREFIX = "§6§lWalls§r ";
+    private static final String STAFF_CHAT = "§c[§bStaffChat§c] §b";
 
     public static void error(CommandSender sender, String message) {
         sender.sendMessage(PREFIX + ChatColor.RED + message);

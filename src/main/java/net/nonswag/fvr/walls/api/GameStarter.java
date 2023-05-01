@@ -5,6 +5,7 @@ import net.nonswag.fvr.walls.Walls.GameState;
 import net.nonswag.fvr.walls.Walls.Team;
 import net.nonswag.fvr.walls.Walls.WallsPlayer;
 import net.nonswag.fvr.walls.commands.FullKitCommand;
+import net.nonswag.fvr.walls.commands.WallsCommand;
 import net.nonswag.fvr.walls.kits.BasicPlayerKit;
 import net.nonswag.fvr.walls.kits.ProStartPlayerKitPerks;
 import net.nonswag.fvr.walls.kits.VipStartPlayerKitPerks;
@@ -15,6 +16,7 @@ import org.bukkit.entity.Player;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class GameStarter {
 
@@ -84,10 +86,38 @@ public class GameStarter {
         walls.kickOffCompassThread();
         Notifier.broadcast("Enemy Finder Compass now activated.");
 
+        countForVotes();
+
         if (Walls.diamondWalls) FullKitCommand.fullDiamond(walls);
         else if (Walls.ironWalls) FullKitCommand.fullIron(walls);
         walls.clock.setClock(walls.getPeaceTimeMins() * 60, walls::dropWalls);
         walls.getPlayerScoreBoard().updateScoreboardScores();
+    }
+
+    private static void countForVotes() {
+        int ironVotes = WallsCommand.IRON_VOTES.size();
+        int diamondVotes = WallsCommand.DIAMOND_VOTES.size();
+
+        if (ironVotes + diamondVotes > 0) {
+            if (diamondVotes > ironVotes) {
+                Notifier.broadcast("DiamondWalls won with " + diamondVotes + " votes");
+                Walls.diamondWalls = true;
+                Walls.ironWalls = false;
+            } else if (ironVotes > diamondVotes) {
+                Notifier.broadcast("IronWalls won with " + ironVotes + " votes");
+                Walls.diamondWalls = false;
+                Walls.ironWalls = true;
+            } else {
+                boolean diamond = ThreadLocalRandom.current().nextBoolean();
+                Notifier.broadcast("§aThe voting ended in a draw! The server voted for " + (diamond ? "§bDiamondWalls" : "§7IronWalls"));
+                Walls.diamondWalls = diamond;
+                Walls.ironWalls = !diamond;
+            }
+        }
+
+
+        WallsCommand.IRON_VOTES.clear();
+        WallsCommand.DIAMOND_VOTES.clear();
     }
 
 

@@ -1,8 +1,11 @@
 package net.nonswag.fvr.walls.api;
 
+import net.minecraft.server.v1_8_R3.EntityPlayer;
+import net.minecraft.server.v1_8_R3.PacketPlayOutPlayerInfo;
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.Walls.Team;
 import org.bukkit.Bukkit;
+import org.bukkit.craftbukkit.v1_8_R3.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -13,7 +16,7 @@ public class PlayerVisibility {
         for (Team team : Team.values()) {
             for (UUID fighter : walls.getTeamList(team)) {
                 Player player = Bukkit.getPlayer(fighter);
-                if (player != null) player.hidePlayer(spec);
+                if (player != null) hidePlayer(player, spec);
             }
         }
     }
@@ -30,8 +33,15 @@ public class PlayerVisibility {
     public static void hideAllSpecs(Walls walls, Player player) {
         for (UUID spectator : walls.getTeamList(Team.SPECTATORS)) {
             Player all = Bukkit.getPlayer(spectator);
-            if (all != null) player.hidePlayer(all);
+            if (all != null) hidePlayer(player, all);
         }
+    }
+
+    private static void hidePlayer(Player viewer, Player viewed) {
+        viewer.hidePlayer(viewed);
+        EntityPlayer viewerHandle = ((CraftPlayer) viewer).getHandle();
+        EntityPlayer viewedHandle = ((CraftPlayer) viewed).getHandle();
+        viewerHandle.playerConnection.sendPacket(new PacketPlayOutPlayerInfo(PacketPlayOutPlayerInfo.EnumPlayerInfoAction.ADD_PLAYER, viewedHandle));
     }
 
     public static void makeInVisPlayerNowVisible(Player wasInvisible) {

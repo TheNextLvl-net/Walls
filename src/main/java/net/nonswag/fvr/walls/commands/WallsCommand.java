@@ -1,5 +1,6 @@
 package net.nonswag.fvr.walls.commands;
 
+import lombok.RequiredArgsConstructor;
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.Walls.PlayerJoinType;
 import net.nonswag.fvr.walls.Walls.Team;
@@ -15,50 +16,74 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static net.nonswag.fvr.walls.api.Notifier.*;
 
+@RequiredArgsConstructor
 public class WallsCommand implements CommandExecutor {
     private final Walls walls;
-
-    public WallsCommand(Walls walls) {
-        this.walls = walls;
-    }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (args.length < 1) {
-            if (sender instanceof Player) error(sender, "usage: /walls votestart");
-            if (sender.isOp()) {
-                error(sender, "usage: /walls drop | rank | autostartplayers | clanrename | clanbattle | captain | restricted | diamondwalls | ironwalls | fixdb");
-            }
-        } else if (args[0].equalsIgnoreCase("diamondwalls")) {
-            if (sender.isOp()) broadcast("Set diamondwalls to " + (Walls.diamondWalls = !Walls.diamondWalls));
-            else error(sender, "You have no rights to do this");
-        } else if (args[0].equalsIgnoreCase("ironwalls")) {
-            if (sender.isOp()) broadcast("Set ironwalls to " + (Walls.ironWalls = !Walls.ironWalls));
-            else error(sender, "You have no rights to do this");
-        } else if (args[0].equalsIgnoreCase("stop")) stop(sender);
+            if (sender instanceof Player) error(sender, "usage: /walls voteStart | voteIron | voteDiamond");
+            if (sender.isOp()) error(sender, "usage: /walls drop | rank | autoStartPlayers | clanRename | " +
+                    "clanBattle | captain | restricted | diamondWalls | ironWalls | fixdb | stop | chat | " +
+                    "noStaffChat | start | addPlayer | silence | captain");
+        } else if (args[0].equalsIgnoreCase("voteDiamond")) voteDiamond(sender);
+        else if (args[0].equalsIgnoreCase("voteIron")) voteIron(sender);
+        else if (args[0].equalsIgnoreCase("diamondWalls")) diamondWalls(sender);
+        else if (args[0].equalsIgnoreCase("ironWalls")) ironWalls(sender);
+        else if (args[0].equalsIgnoreCase("stop")) stop(sender);
         else if (args[0].equalsIgnoreCase("fixdb")) fixdb(sender);
-        else if (args[0].equalsIgnoreCase("votestart")) votestart(sender);
+        else if (args[0].equalsIgnoreCase("voteStart")) voteStart(sender);
         else if (args[0].equalsIgnoreCase("chat")) chatListener(sender);
-        else if (args[0].equalsIgnoreCase("nostaffchat")) noStaffChat(sender);
+        else if (args[0].equalsIgnoreCase("noStaffChat")) noStaffChat(sender);
         else if (args[0].equalsIgnoreCase("start")) startWalls(sender);
-        else if (args[0].equalsIgnoreCase("addplayer")) addPlayer(sender, args);
+        else if (args[0].equalsIgnoreCase("addPlayer")) addPlayer(sender, args);
         else if (args[0].equalsIgnoreCase("silence")) silenceComand(sender);
-        else if (args[0].equalsIgnoreCase("clanrename")) setClanName(sender, args);
+        else if (args[0].equalsIgnoreCase("clanRename")) setClanName(sender, args);
         else if (args[0].equalsIgnoreCase("drop")) drop(sender);
         else if (args[0].equalsIgnoreCase("rank")) setRank(sender, args);
-        else if (args[0].equalsIgnoreCase("autostartplayers")) setAutoStartPlayers(sender, args);
-        else if (args[0].equalsIgnoreCase("clanbattle")) toggleClanBattle(sender);
+        else if (args[0].equalsIgnoreCase("autoStartPlayers")) setAutoStartPlayers(sender, args);
+        else if (args[0].equalsIgnoreCase("clanBattle")) toggleClanBattle(sender);
         else if (args[0].equalsIgnoreCase("restricted")) setPlayerJoinRestriction(sender, args);
-        else if (args[0].equalsIgnoreCase("captain")) this.addCaptain(sender, args);
-        else if (args[0].equalsIgnoreCase("logPlayer")) this.logPlayer(sender, args);
+        else if (args[0].equalsIgnoreCase("captain")) addCaptain(sender, args);
         else error(sender, args[0] + " is not a valid argument");
         return true;
+    }
+
+    public static final Set<Player> DIAMOND_VOTES = Collections.newSetFromMap(new WeakHashMap<>());
+    public static final Set<Player> IRON_VOTES = Collections.newSetFromMap(new WeakHashMap<>());
+
+    private void vote(CommandSender sender, Set<Player> set, String type) {
+        if (sender instanceof Player) {
+            if (set.equals(IRON_VOTES)) DIAMOND_VOTES.remove(sender);
+            if (set.equals(DIAMOND_VOTES)) IRON_VOTES.remove(sender);
+            if (!set.contains(sender)) {
+                set.add((Player) sender);
+                Notifier.broadcast(sender.getName() + " voted for " + type + " walls §8(§7" + set.size() + "§8)");
+            } else Notifier.error(sender, "You already voted for " + type + " walls");
+        } else error(sender, "This is a player command");
+    }
+
+    private void voteDiamond(CommandSender sender) {
+        vote(sender, DIAMOND_VOTES, "diamond");
+    }
+
+    private void voteIron(CommandSender sender) {
+        vote(sender, IRON_VOTES, "iron");
+    }
+
+    private static void diamondWalls(CommandSender sender) {
+        if (sender.isOp()) broadcast("Set diamondwalls to " + (Walls.diamondWalls = !Walls.diamondWalls));
+        else error(sender, "You have no rights to do this");
+    }
+
+    private static void ironWalls(CommandSender sender) {
+        if (sender.isOp()) broadcast("Set ironwalls to " + (Walls.ironWalls = !Walls.ironWalls));
+        else error(sender, "You have no rights to do this");
     }
 
     public static boolean FIX_DB = false;
@@ -76,7 +101,7 @@ public class WallsCommand implements CommandExecutor {
 
     public static final List<UUID> VOTES = new ArrayList<>();
 
-    private void votestart(CommandSender sender) {
+    private void voteStart(CommandSender sender) {
         if (sender instanceof Player) {
             Player player = (Player) sender;
             if (walls.starting) error(player, "The game is already starting");
@@ -97,7 +122,7 @@ public class WallsCommand implements CommandExecutor {
             walls.starting = true;
         } else {
             int players = Walls.preGameAutoStartPlayers / 2 - VOTES.size();
-            broadcast(players + " more vote" + (players != 1 ? "s are" : " is") + " needed §8(§7/walls votestart§8)");
+            broadcast(players + " more vote" + (players != 1 ? "s are" : " is") + " needed §8(§7/walls voteStart§8)");
         }
     }
 
@@ -278,17 +303,6 @@ public class WallsCommand implements CommandExecutor {
         if (sender.isOp()) {
             Walls.clanBattle = !Walls.clanBattle;
             success(sender, "Yup. ClanBattle set to " + Walls.clanBattle);
-        } else error(sender, "You have no rights to do this");
-    }
-
-    private void logPlayer(CommandSender sender, String[] args) {
-        if (sender.isOp()) {
-            if (args.length == 2) {
-                Walls.logPlayer = args[1];
-                success(sender, "Now Logging data for: " + Walls.logPlayer);
-            } else {
-                error(sender, "Nope.");
-            }
         } else error(sender, "You have no rights to do this");
     }
 }

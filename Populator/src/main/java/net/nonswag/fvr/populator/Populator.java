@@ -60,7 +60,6 @@ public class Populator extends JavaPlugin {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
             }
         }, 1);
     }

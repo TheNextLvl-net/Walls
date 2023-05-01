@@ -154,7 +154,6 @@ public class Walls extends JavaPlugin implements Listener {
 
     public static final List<UUID> teamCaptains = new ArrayList<>();
 
-    public static String logPlayer = null;
     public static final String levelName;
     private static String nextMap;
     public static final String DISCORD = "https://discord.gg/vpAgZxQ";

@@ -3,6 +3,10 @@ package net.nonswag.fvr.walls.listeners;
 import lombok.RequiredArgsConstructor;
 import me.filoghost.holographicdisplays.api.HolographicDisplaysAPI;
 import me.filoghost.holographicdisplays.api.hologram.Hologram;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.nonswag.fvr.walls.Walls;
 import net.nonswag.fvr.walls.api.GameStarter;
 import net.nonswag.fvr.walls.api.Notifier;
@@ -39,6 +43,16 @@ public class ConnectionListener implements Listener {
             case PREGAME:
                 player.setTeam(Walls.Team.SPECTATORS);
                 walls.getSpectatorKit().givePlayerKit(event.getPlayer());
+                event.getPlayer().sendMessage(new ComponentBuilder(Notifier.PREFIX)
+                        .append("Click to vote for ")
+                        .append("§b§nDiamondWalls")
+                        .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/walls voteDiamond"))
+                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("/walls voteDiamond")}))
+                        .append(" or ", ComponentBuilder.FormatRetention.NONE)
+                        .append("§7§nIronWalls")
+                        .event(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/walls voteIron"))
+                        .event(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new TextComponent[]{new TextComponent("/walls voteIron")}))
+                        .create());
                 event.getPlayer().setHealth(20);
                 event.getPlayer().setFoodLevel(20);
                 walls.getPlayerScoreBoard().setScoreBoard(event.getPlayer());

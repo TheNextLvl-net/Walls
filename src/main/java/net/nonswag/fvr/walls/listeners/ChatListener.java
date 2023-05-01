@@ -25,7 +25,7 @@ public class ChatListener implements Listener {
         String rank = twp.getRank().display();
         String clan = "";
         if (twp.getClan() != null) {
-            clan = ChatColor.DARK_RED + "" + ChatColor.BOLD + ChatColor.translateAlternateColorCodes('&', twp.getClan()) + ChatColor.WHITE + "◊";
+            clan = ChatColor.DARK_RED + String.valueOf(ChatColor.BOLD) + ChatColor.translateAlternateColorCodes('&', twp.getClan()) + ChatColor.WHITE + "◊";
         }
         switch (walls.getGameState()) {
             case PREGAME:
